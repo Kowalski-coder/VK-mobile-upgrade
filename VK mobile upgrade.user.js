@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.7.1
+// @version      2.7.2
 // @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера, скрытие меню действий в списке чатов, установка картинки из галереи в качестве фона диалогов.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -421,81 +421,31 @@
         }
     }
 
+    let lastAppliedChatBg = null;
     function applyChatBgStyles() {
         if (!customChatBg) {
-            setOrRemoveStyle('vmu-chat-bg-styles', '', false);
+            if (lastAppliedChatBg !== '') {
+                setOrRemoveStyle('vmu-chat-bg-styles', '', false);
+                lastAppliedChatBg = '';
+            }
             return;
         }
 
+        if (lastAppliedChatBg === customChatBg) {
+            return;
+        }
+        lastAppliedChatBg = customChatBg;
+
         const chatBgCss = `
-            /* ФОНОВОЕ ИЗОБРАЖЕНИЕ ВНУТРИ ДИАЛОГОВ */
-            body.vmu-inside-chat,
-            body.vmu-inside-chat :root,
-            body.vmu-inside-chat #root,
-            body.vmu-inside-chat .vk__page,
-            body.vmu-inside-chat .vkui__root,
-            body.vmu-inside-chat .vkuiRoot,
-            body.vmu-inside-chat .vkuiAppRoot,
-            body.vmu-inside-chat .vkuiSplitLayout,
-            body.vmu-inside-chat .vkuiSplitCol,
-            body.vmu-inside-chat .vkuiView,
-            body.vmu-inside-chat .vkuiView__panels,
-            body.vmu-inside-chat .vkuiPanel {
+            /* ФОНОВОЕ ИЗОБРАЖЕНИЕ ТОЛЬКО ВНУТРИ ДИАЛОГОВ */
+            body.vmu-inside-chat {
                 --vkui--color_background_content: transparent !important;
                 --vkui--color_background: transparent !important;
                 --background_content: transparent !important;
                 --background: transparent !important;
-                --vkui--color_background_modal: #19191a !important;
             }
 
-            body.vmu-inside-chat {
-                background-color: transparent !important;
-                background-image: url("${customChatBg}") !important;
-                background-size: cover !important;
-                background-position: center center !important;
-                background-attachment: fixed !important;
-                background-repeat: no-repeat !important;
-            }
-
-            /* Полная прозрачность всех промежуточных контейнеров */
-            body.vmu-inside-chat #root,
-            body.vmu-inside-chat .vk__page,
-            body.vmu-inside-chat .layout,
-            body.vmu-inside-chat #vk_wrap,
-            body.vmu-inside-chat #vk_area_wrap,
-            body.vmu-inside-chat .vkui__root,
-            body.vmu-inside-chat .vkuiRoot,
-            body.vmu-inside-chat .vkuiAppRoot,
-            body.vmu-inside-chat .vkuiSplitLayout,
-            body.vmu-inside-chat .vkuiSplitCol,
-            body.vmu-inside-chat .vkuiView,
-            body.vmu-inside-chat .vkuiView__panels,
-            body.vmu-inside-chat [class*="View"],
-            body.vmu-inside-chat [class*="SplitCol"],
-            body.vmu-inside-chat .vkuiPanel,
-            body.vmu-inside-chat .vkuiPanel__in,
-            body.vmu-inside-chat [class*="Panel__in"],
-            body.vmu-inside-chat [class*="Panel"],
-            body.vmu-inside-chat .vkuiGroup,
-            body.vmu-inside-chat [class*="Group"],
-            body.vmu-inside-chat [class*="Group__inner"],
-            body.vmu-inside-chat [class*="Group--mode-plain"],
-            body.vmu-inside-chat [class*="Group--mode-card"],
-            body.vmu-inside-chat [class*="im-page"],
-            body.vmu-inside-chat [class*="im-page--chat-body"],
-            body.vmu-inside-chat [class*="im-dialog--messages"],
-            body.vmu-inside-chat [class*="messages-list"],
-            body.vmu-inside-chat [class*="MessagesList"],
-            body.vmu-inside-chat [class*="CustomScrollView"],
-            body.vmu-inside-chat .vkuiCustomScrollView__box,
-            body.vmu-inside-chat [class*="CustomScrollView__box"],
-            body.vmu-inside-chat [class*="SimpleCell--theme-chat"],
-            body.vmu-inside-chat [class*="History"] {
-                background-color: transparent !important;
-                background: transparent !important;
-            }
-
-            /* Дублируем фоновую картинку на панель и историю */
+            body.vmu-inside-chat,
             body.vmu-inside-chat .vkuiPanel,
             body.vmu-inside-chat .vkuiPanel__in,
             body.vmu-inside-chat [class*="Panel__in"],
@@ -510,11 +460,31 @@
                 background-repeat: no-repeat !important;
             }
 
+            /* Полная прозрачность внутренних контейнеров диалога */
+            body.vmu-inside-chat #root,
+            body.vmu-inside-chat .vk__page,
+            body.vmu-inside-chat .layout,
+            body.vmu-inside-chat .vkuiSplitLayout,
+            body.vmu-inside-chat .vkuiSplitCol,
+            body.vmu-inside-chat .vkuiView,
+            body.vmu-inside-chat .vkuiView__panels,
+            body.vmu-inside-chat .vkuiGroup,
+            body.vmu-inside-chat [class*="Group"],
+            body.vmu-inside-chat [class*="im-page"],
+            body.vmu-inside-chat [class*="im-page--chat-body"],
+            body.vmu-inside-chat [class*="im-dialog--messages"],
+            body.vmu-inside-chat [class*="messages-list"],
+            body.vmu-inside-chat [class*="MessagesList"],
+            body.vmu-inside-chat [class*="CustomScrollView"],
+            body.vmu-inside-chat .vkuiCustomScrollView__box,
+            body.vmu-inside-chat [class*="CustomScrollView__box"] {
+                background-color: transparent !important;
+                background: transparent !important;
+            }
+
             /* Непрозрачность шапки и панели ввода сообщений */
             body.vmu-inside-chat .vkuiPanelHeader,
             body.vmu-inside-chat [class*="PanelHeader"],
-            body.vmu-inside-chat .vkuiPanelHeader__in,
-            body.vmu-inside-chat [class*="PanelHeader__in"],
             body.vmu-inside-chat .vkmListHeader,
             body.vmu-inside-chat [class*="vkmListHeader"],
             body.vmu-inside-chat [class*="WriteBar"],
@@ -522,79 +492,12 @@
             body.vmu-inside-chat [class*="Writebar"],
             body.vmu-inside-chat [class*="im-chat-input"],
             body.vmu-inside-chat [class*="writebox"] {
-                background-color: #19191a !important;
+                background-color: var(--vkui--color_background_modal, #19191a) !important;
                 background: #19191a !important;
-                position: relative !important;
-                z-index: 10 !important;
             }
         `;
 
         setOrRemoveStyle('vmu-chat-bg-styles', chatBgCss, true);
-    }
-
-    function updateChatBgLayer() {
-        let layer = document.getElementById('vmu-chat-bg-layer');
-        const insideChat = isInsideChatDialog();
-
-        if (!customChatBg) {
-            if (layer) layer.remove();
-            return;
-        }
-
-        if (!layer) {
-            layer = document.createElement('div');
-            layer.id = 'vmu-chat-bg-layer';
-            layer.style.cssText = `
-                position: fixed !important;
-                top: 0 !important;
-                left: 0 !important;
-                right: 0 !important;
-                bottom: 0 !important;
-                width: 100vw !important;
-                height: 100vh !important;
-                z-index: 0 !important;
-                pointer-events: none !important;
-                background-size: cover !important;
-                background-position: center center !important;
-                background-repeat: no-repeat !important;
-                background-attachment: fixed !important;
-                display: none !important;
-            `;
-            const parent = document.body || document.documentElement;
-            if (parent) {
-                parent.insertBefore(layer, parent.firstChild);
-            }
-        }
-
-        layer.style.backgroundImage = `url("${customChatBg}")`;
-
-        if (insideChat) {
-            layer.style.setProperty('display', 'block', 'important');
-        } else {
-            layer.style.setProperty('display', 'none', 'important');
-        }
-    }
-
-    function applyChatBgDirectDom() {
-        const insideChat = isInsideChatDialog();
-        if (!insideChat || !customChatBg) return;
-
-        const transparentTargets = document.querySelectorAll(
-            'body.vmu-inside-chat .vkuiPanel, ' +
-            'body.vmu-inside-chat .vkuiPanel__in, ' +
-            'body.vmu-inside-chat [class*="Panel__in"], ' +
-            'body.vmu-inside-chat .vkuiGroup, ' +
-            'body.vmu-inside-chat [class*="Group"], ' +
-            'body.vmu-inside-chat .vkuiCustomScrollView__box, ' +
-            'body.vmu-inside-chat [class*="im-page"], ' +
-            'body.vmu-inside-chat [class*="ChatHistory"]'
-        );
-        for (let i = 0; i < transparentTargets.length; i++) {
-            const el = transparentTargets[i];
-            if (el.closest('.vkuiPanelHeader, [class*="PanelHeader"], [class*="WriteBar"], [class*="writeBar"], [class*="im-chat-input"]')) continue;
-            el.style.setProperty('background-color', 'transparent', 'important');
-            el.style.setProperty('background', 'transparent', 'important');
-        }
     }
 
     function applyStyles() {
@@ -602,8 +505,6 @@
         setOrRemoveStyle('vmu-color-swap-styles', COLOR_SWAP_CSS, isColorSwapEnabled);
         setOrRemoveStyle('vmu-hide-labels-styles', HIDE_LABELS_CSS, isHideLabelsEnabled);
         applyChatBgStyles();
-        updateChatBgLayer();
-        applyChatBgDirectDom();
         if (isHideLabelsEnabled) {
             updateBottomBarLabels();
         }
@@ -616,41 +517,28 @@
     //    ОПРЕДЕЛЕНИЕ ТЕКУЩЕЙ СТРАНИЦЫ
     // ==========================================
     function isInsideChatDialog() {
-        const href = window.location.href.toLowerCase();
+        const path = window.location.pathname.toLowerCase();
         const search = window.location.search.toLowerCase();
         const hash = window.location.hash.toLowerCase();
-        const path = window.location.pathname.toLowerCase();
 
-        // 1. По URL параметрам
-        if (href.includes('peer=') || href.includes('sel=') || href.includes('act=show') ||
-            href.includes('chat=') || href.includes('/im/convo') || href.includes('/im/chat') ||
-            href.includes('/write') || href.includes('/convo')) {
+        // 1. СТРОГО: путь должен быть связан с мессенджером/чатами
+        const isMailRoute = path.startsWith('/mail') || path.startsWith('/im') || path.startsWith('/write') || path.startsWith('/convo');
+        if (!isMailRoute && !search.includes('peer=') && !search.includes('sel=')) {
+            return false;
+        }
+
+        // 2. Прямые параметры диалога в URL
+        if (search.includes('peer=') || search.includes('sel=') || search.includes('act=show') ||
+            hash.includes('peer=') || hash.includes('sel=') || path.startsWith('/write') || path.startsWith('/convo') ||
+            path.includes('/im/convo') || path.includes('/im/chat')) {
             return true;
         }
 
-        // 2. По строке ввода сообщений в DOM
+        // 3. Строка ввода сообщений в DOM (существует ТОЛЬКО внутри открытого диалога)
         const hasWriteBar = document.querySelector(
-            '[class*="WriteBar"], [class*="writeBar"], [class*="Writebar"], [class*="write_bar"], [class*="im-chat-input"], [class*="writebox"], [class*="ChatInput"], textarea[placeholder*="сообщени" i], input[placeholder*="сообщени" i], [contenteditable="true"][data-testid*="writebar"], [class*="WriteBar__textarea"]'
+            '[class*="WriteBar"], [class*="writeBar"], [class*="Writebar"], [class*="write_bar"], [class*="im-chat-input"], [class*="writebox"], [class*="ChatInput"], textarea[placeholder*="сообщени" i], input[placeholder*="сообщени" i]'
         );
         if (hasWriteBar) {
-            return true;
-        }
-
-        // 3. По наличию сообщений и кнопки «Назад»
-        const hasHistory = document.querySelector(
-            '[class*="im-page--history"], [class*="ChatHistory"], [class*="HistoryMessages"], [class*="im-mess"], [class*="ConvoHistory"], [class*="ConversationMessages"], [class*="history_messages"], [class*="im-page--chat-body"]'
-        );
-        const hasBackBtn = document.querySelector(
-            '.vkuiPanelHeader__before, [class*="PanelHeader__before"], .vkmListHeader__before, [class*="vkmListHeader__before"], [aria-label="Назад"], [data-testid="header-back"]'
-        );
-        const hasSearch = document.querySelector('input[placeholder*="Поиск"], [class*="Search"] input, .vkuiSearch input');
-        const hasSubnav = document.querySelector('[class*="SubnavigationBar"], .vkuiSubnavigationBar');
-
-        if (hasBackBtn && !hasSearch && !hasSubnav) {
-            return true;
-        }
-
-        if (hasHistory && hasBackBtn) {
             return true;
         }
 
@@ -662,13 +550,14 @@
             return false;
         }
 
-        const search = window.location.search.toLowerCase();
-        const hash = window.location.hash.toLowerCase();
         const path = window.location.pathname.toLowerCase();
+        const search = window.location.search.toLowerCase();
 
-        if (search.includes('peer=') || search.includes('sel=') || search.includes('act=show') ||
-            search.includes('act=archive') || search.includes('act=folders') || search.includes('act=settings') ||
-            search.includes('act=write') || hash.includes('peer=') || hash.includes('sel=')) {
+        if (!path.startsWith('/mail') && !path.startsWith('/im')) {
+            return false;
+        }
+
+        if (search.includes('act=archive') || search.includes('act=folders') || search.includes('act=settings') || search.includes('act=write')) {
             return false;
         }
 
@@ -689,15 +578,7 @@
             }
         }
 
-        const hasSubnav = document.querySelector('[class*="SubnavigationBar"], .vkuiSubnavigationBar, [class*="ConvoList"]');
-        const hasSearch = document.querySelector('input[placeholder*="Поиск"], [class*="Search"] input, .vkuiSearch input');
-        const isMessengerTitle = titleEl && titleEl.textContent.trim().toLowerCase() === 'мессенджер';
-
-        if (path.includes('/mail') || path.includes('/im') || isMessengerTitle || hasSubnav || hasSearch) {
-            return true;
-        }
-
-        return false;
+        return true;
     }
 
     function isAppearancePage() {
@@ -1273,7 +1154,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.7.1</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.7.2</span>
         `;
         card.appendChild(header);
 
@@ -1338,21 +1219,14 @@
         if (!isMainMailListPage()) return;
 
         const moreElements = document.querySelectorAll(
-            'body.vmu-page-mail [class*="SimpleCell__after"] button, ' +
-            'body.vmu-page-mail [class*="SimpleCell__after"] [role="button"], ' +
-            'body.vmu-page-mail [class*="SimpleCell__after"] [class*="Tappable"], ' +
-            'body.vmu-page-mail [class*="ConvoItem__actions"], ' +
-            'body.vmu-page-mail [class*="convo-actions"], ' +
-            'body.vmu-page-mail [class*="im-dialog--actions"], ' +
-            'body.vmu-page-mail [class*="im-dialog__actions"], ' +
-            'body.vmu-page-mail [aria-label="Действия"], ' +
-            'body.vmu-page-mail [aria-label="Действия с чатом"], ' +
-            'body.vmu-page-mail [aria-label="Меню чата"], ' +
-            'body.vmu-page-mail [aria-label*="меню" i], ' +
-            'body.vmu-page-mail [aria-label*="действи" i], ' +
-            'body.vmu-page-mail [class*="Icon--more_vertical"], ' +
-            'body.vmu-page-mail [class*="Icon--more_vertical_24"], ' +
-            'body.vmu-page-mail [class*="Icon--more_vertical_28"]'
+            'body.vmu-page-mail [class*="SimpleCell__after"] [class*="Icon--more_vertical"], ' +
+            'body.vmu-page-mail [class*="SimpleCell__after"] [class*="Icon--more_vertical_24"], ' +
+            'body.vmu-page-mail [class*="SimpleCell__after"] [class*="Icon--more_vertical_28"], ' +
+            'body.vmu-page-mail [class*="SimpleCell__after"] [aria-label="Действия"], ' +
+            'body.vmu-page-mail [class*="SimpleCell__after"] [aria-label="Действия с чатом"], ' +
+            'body.vmu-page-mail [class*="SimpleCell__after"] [aria-label="Меню чата"], ' +
+            'body.vmu-page-mail [class*="SimpleCell__after"] [aria-label*="действи" i], ' +
+            'body.vmu-page-mail [class*="ConvoItem__actions"]'
         );
 
         for (let i = 0; i < moreElements.length; i++) {
@@ -1360,40 +1234,15 @@
             if (el.closest('[class*="Counter"], [class*="Badge"]')) continue;
             if (el.closest('.vkuiPanelHeader, [class*="PanelHeader"], .vkmListHeader, [class*="vkmListHeader"], [class*="SubnavigationBar"], #vmu-top-unread-btn')) continue;
 
-            const targetToRemove = el.closest('[class*="ConvoItem__actions"], [class*="im-dialog--actions"], [class*="actions"], button, [role="button"]') || el;
+            const btn = el.closest('button, [role="button"]') || el;
             try {
-                targetToRemove.remove();
+                btn.remove();
             } catch (e) {
-                targetToRemove.style.setProperty('display', 'none', 'important');
-                targetToRemove.style.setProperty('visibility', 'hidden', 'important');
-                targetToRemove.style.setProperty('pointer-events', 'none', 'important');
+                btn.style.setProperty('display', 'none', 'important');
+                btn.style.setProperty('pointer-events', 'none', 'important');
             }
         }
     }
-
-    // Перехват кликов и касаний в области действий чата -> открытие самого диалога вместо контекстного меню
-    function interceptActionMenuClicks(e) {
-        if (!isMainMailListPage()) return;
-        const target = e.target;
-        if (!target) return;
-
-        const isActionBtn = target.closest && target.closest(
-            'button, [role="button"], [class*="actions"], [class*="more"], [aria-label*="действи" i], [aria-label*="меню" i], [class*="more_vertical"]'
-        );
-
-        if (isActionBtn && !isActionBtn.closest('.vkuiPanelHeader, [class*="PanelHeader"], .vkmListHeader, [class*="vkmListHeader"], [class*="SubnavigationBar"], #vmu-top-unread-btn')) {
-            const cell = isActionBtn.closest('[class*="SimpleCell"], [class*="Cell"], [class*="ConvoItem"], [class*="im-dialog"]');
-            e.preventDefault();
-            e.stopPropagation();
-            e.stopImmediatePropagation();
-            if (cell) {
-                cell.click();
-            }
-        }
-    }
-
-    document.addEventListener('click', interceptActionMenuClicks, true);
-    document.addEventListener('touchend', interceptActionMenuClicks, { capture: true, passive: false });
 
     // ==========================================
     //       ИНИЦИАЛИЗАЦИЯ И MUTATION OBSERVER
