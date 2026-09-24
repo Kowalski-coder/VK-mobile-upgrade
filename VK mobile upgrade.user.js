@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.5.2
-// @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера и исправление верстки.
+// @version      2.6
+// @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера, установка картинки из галереи в качестве фона диалогов.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -30,7 +30,8 @@
     // ==========================================
     const STORAGE_KEYS = {
         COLOR_SWAP: 'vmu_color_swap',
-        HIDE_TAB_LABELS: 'vmu_hide_tab_labels'
+        HIDE_TAB_LABELS: 'vmu_hide_tab_labels',
+        CHAT_BG_IMAGE: 'vmu_chat_bg_image'
     };
 
     function getSetting(key, defaultValue) {
@@ -49,8 +50,27 @@
         } catch (e) {}
     }
 
+    function getChatBgImage() {
+        try {
+            return localStorage.getItem(STORAGE_KEYS.CHAT_BG_IMAGE) || '';
+        } catch (e) {
+            return '';
+        }
+    }
+
+    function setChatBgImage(dataUrl) {
+        try {
+            if (dataUrl) {
+                localStorage.setItem(STORAGE_KEYS.CHAT_BG_IMAGE, dataUrl);
+            } else {
+                localStorage.removeItem(STORAGE_KEYS.CHAT_BG_IMAGE);
+            }
+        } catch (e) {}
+    }
+
     let isColorSwapEnabled = getSetting(STORAGE_KEYS.COLOR_SWAP, true);
     let isHideLabelsEnabled = getSetting(STORAGE_KEYS.HIDE_TAB_LABELS, false);
+    let customChatBg = getChatBgImage();
 
     // ==========================================
     //     БАЗОВЫЕ ИСПРАВЛЕНИЯ UI (ВСЕГДА АКТИВНЫ)
@@ -376,10 +396,46 @@
         }
     }
 
+    function applyChatBgStyles() {
+        if (!customChatBg) {
+            setOrRemoveStyle('vmu-chat-bg-styles', '', false);
+            return;
+        }
+
+        const chatBgCss = `
+            /* ФОНОВОЕ ИЗОБРАЖЕНИЕ ВНУТРИ ЧАТОВ */
+            body.vmu-inside-chat .vkuiPanel__in,
+            body.vmu-inside-chat [class*="Panel__in"],
+            body.vmu-inside-chat .im-page--history,
+            body.vmu-inside-chat [class*="im-page--history"],
+            body.vmu-inside-chat [class*="ChatHistory"],
+            body.vmu-inside-chat [class*="ConvoHistory"],
+            body.vmu-inside-chat [class*="HistoryMessages"] {
+                background-image: url("${customChatBg}") !important;
+                background-size: cover !important;
+                background-position: center center !important;
+                background-attachment: fixed !important;
+                background-repeat: no-repeat !important;
+            }
+
+            /* Прозрачность промежуточных слоев для отображения фона */
+            body.vmu-inside-chat [class*="im-page--chat-body"],
+            body.vmu-inside-chat [class*="im-dialog--messages"],
+            body.vmu-inside-chat .vkuiGroup--mode-plain,
+            body.vmu-inside-chat [class*="Group--mode-plain"] {
+                background-color: transparent !important;
+                background: transparent !important;
+            }
+        `;
+
+        setOrRemoveStyle('vmu-chat-bg-styles', chatBgCss, true);
+    }
+
     function applyStyles() {
         setOrRemoveStyle('vmu-base-fixes-styles', FIXES_CSS, true);
         setOrRemoveStyle('vmu-color-swap-styles', COLOR_SWAP_CSS, isColorSwapEnabled);
         setOrRemoveStyle('vmu-hide-labels-styles', HIDE_LABELS_CSS, isHideLabelsEnabled);
+        applyChatBgStyles();
         if (isHideLabelsEnabled) {
             updateBottomBarLabels();
         }
@@ -391,6 +447,22 @@
     // ==========================================
     //    ОПРЕДЕЛЕНИЕ ТЕКУЩЕЙ СТРАНИЦЫ
     // ==========================================
+    function isInsideChatDialog() {
+        const search = window.location.search.toLowerCase();
+        const hash = window.location.hash.toLowerCase();
+
+        if (search.includes('peer=') || search.includes('sel=') || search.includes('act=show') || hash.includes('peer=') || hash.includes('sel=')) {
+            return true;
+        }
+
+        // Поле ввода сообщений или история сообщений
+        if (document.querySelector('input[placeholder*="Сообщение"], textarea[placeholder*="Сообщение"], [class*="WriteBar"], [class*="writebox"], [class*="im-page--chat-body"]')) {
+            return true;
+        }
+
+        return false;
+    }
+
     function isMainMailListPage() {
         const search = window.location.search.toLowerCase();
         const hash = window.location.hash.toLowerCase();
@@ -459,6 +531,7 @@
 
     function updatePageBodyClasses() {
         if (!document.body) return;
+
         const isMail = isMainMailListPage();
         if (isMail) {
             if (!document.body.classList.contains('vmu-page-mail')) {
@@ -467,6 +540,17 @@
         } else {
             if (document.body.classList.contains('vmu-page-mail')) {
                 document.body.classList.remove('vmu-page-mail');
+            }
+        }
+
+        const insideChat = isInsideChatDialog();
+        if (insideChat && customChatBg) {
+            if (!document.body.classList.contains('vmu-inside-chat')) {
+                document.body.classList.add('vmu-inside-chat');
+            }
+        } else {
+            if (document.body.classList.contains('vmu-inside-chat')) {
+                document.body.classList.remove('vmu-inside-chat');
             }
         }
     }
@@ -483,7 +567,6 @@
     }
 
     function findHeaderActionsSlot() {
-        // 1. Ищем контейнер действий справа
         const actionContainers = document.querySelectorAll(
             '.vkmListHeader__actions, [class*="vkmListHeader__actions"], [class*="ListHeader__actions"], .vkuiPanelHeader__after, [class*="PanelHeader__after"], .vkuiPanelHeader__controls, [class*="PanelHeader__controls"], .vkuiPanelHeader__right, [class*="PanelHeader__right"]'
         );
@@ -494,7 +577,6 @@
             }
         }
 
-        // 2. Ищем кнопку Архива или создания чата в шапке
         const candidateBtns = document.querySelectorAll(
             'a[href*="archive"], [aria-label*="Архив"], [aria-label*="Написать"], [aria-label*="Новое сообщение"], a[href*="act=write"], a[href*="new_chat"]'
         );
@@ -506,7 +588,6 @@
             }
         }
 
-        // 3. Ищем кнопки в правой половине шапки
         const header = document.querySelector('.vkmListHeader, [class*="vkmListHeader"], .vkuiPanelHeader, [class*="PanelHeader"]');
         if (header) {
             const allBtns = header.querySelectorAll('a, button, [role="button"], .vkuiPanelHeaderButton, .vkuiTappable');
@@ -587,17 +668,14 @@
 
         const existingBtn = document.getElementById(UNREAD_TOP_BTN_ID);
 
-        // Если кнопка уже вставлена в правильное место, ничего не делаем
         if (existingBtn && existingBtn.parentElement === headerActions) {
             return;
         }
 
-        // Если кнопка была вставлена в неправильный контейнер (например, слева от аватарки) — перемещаем
         if (existingBtn) {
             existingBtn.remove();
         }
 
-        // Предотвращаем перенос кнопок в шапке
         headerActions.style.setProperty('display', 'flex', 'important');
         headerActions.style.setProperty('flex-direction', 'row', 'important');
         headerActions.style.setProperty('flex-wrap', 'nowrap', 'important');
@@ -792,7 +870,162 @@
         return row;
     }
 
-    function updateSettingsVisibility() {
+    function createChatBgRow(onUpdate) {
+        const row = document.createElement('div');
+        row.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        `;
+
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+        fileInput.style.display = 'none';
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Оптимизируем изображение через Canvas
+                    const canvas = document.createElement('canvas');
+                    let w = img.width;
+                    let h = img.height;
+                    const maxDim = 1600;
+                    if (w > maxDim || h > maxDim) {
+                        if (w > h) {
+                            h = Math.round((h * maxDim) / w);
+                            w = maxDim;
+                        } else {
+                            w = Math.round((w * maxDim) / h);
+                            h = maxDim;
+                        }
+                    }
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    const compressedBase64 = canvas.toDataURL('image/jpeg', 0.88);
+
+                    customChatBg = compressedBase64;
+                    setChatBgImage(customChatBg);
+                    applyChatBgStyles();
+                    updatePageBodyClasses();
+                    if (onUpdate) onUpdate();
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        row.appendChild(fileInput);
+
+        const textCol = document.createElement('div');
+        textCol.style.cssText = 'flex: 1; padding-right: 12px; cursor: pointer;';
+
+        const titleEl = document.createElement('div');
+        titleEl.style.cssText = 'font-size: 15px; font-weight: 500; color: var(--vkui--color_text_primary, #ffffff); line-height: 1.3; display: flex; align-items: center; gap: 6px;';
+        titleEl.innerHTML = `<span>🖼️ Фон для диалогов</span>`;
+
+        const descEl = document.createElement('div');
+        descEl.style.cssText = 'font-size: 12px; color: var(--vkui--color_text_secondary, #999999); margin-top: 3px; line-height: 1.3;';
+
+        if (customChatBg) {
+            descEl.textContent = 'Установлена картинка из галереи';
+        } else {
+            descEl.textContent = 'Установить изображение из галереи';
+        }
+
+        textCol.appendChild(titleEl);
+        textCol.appendChild(descEl);
+        row.appendChild(textCol);
+
+        const actionsCol = document.createElement('div');
+        actionsCol.style.cssText = 'display: flex; align-items: center; gap: 8px; flex-shrink: 0;';
+
+        if (customChatBg) {
+            // Превью установленного фото
+            const thumb = document.createElement('img');
+            thumb.src = customChatBg;
+            thumb.style.cssText = 'width: 32px; height: 32px; border-radius: 8px; object-fit: cover; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;';
+            thumb.title = 'Заменить фото';
+            thumb.addEventListener('click', () => fileInput.click());
+            actionsCol.appendChild(thumb);
+
+            // Кнопка удаления фона (сброс к дефолту)
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.title = 'Удалить фон (вернуть исходный)';
+            deleteBtn.style.cssText = `
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 6px 10px;
+                border-radius: 8px;
+                font-size: 12px;
+                font-weight: 600;
+                background: rgba(255, 92, 92, 0.14);
+                color: #FF5C5C;
+                border: 1px solid rgba(255, 92, 92, 0.3);
+                cursor: pointer;
+                user-select: none;
+                transition: background-color 0.2s ease;
+            `;
+            deleteBtn.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 4px;">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                Удалить
+            `;
+            deleteBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                customChatBg = '';
+                setChatBgImage('');
+                applyChatBgStyles();
+                updatePageBodyClasses();
+                if (onUpdate) onUpdate();
+            });
+            actionsCol.appendChild(deleteBtn);
+        } else {
+            // Кнопка выбора фото
+            const chooseBtn = document.createElement('button');
+            chooseBtn.type = 'button';
+            chooseBtn.style.cssText = `
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                padding: 7px 12px;
+                border-radius: 8px;
+                font-size: 12px;
+                font-weight: 600;
+                background: ${isColorSwapEnabled ? '#FF5C5C' : 'var(--vkui--color_background_accent, #2787F5)'};
+                color: #ffffff;
+                border: none;
+                cursor: pointer;
+                user-select: none;
+                transition: opacity 0.2s ease;
+            `;
+            chooseBtn.textContent = 'Выбрать';
+            chooseBtn.addEventListener('click', () => fileInput.click());
+            actionsCol.appendChild(chooseBtn);
+        }
+
+        textCol.addEventListener('click', () => fileInput.click());
+        row.appendChild(actionsCol);
+
+        return row;
+    }
+
+    function renderSettingsCard() {
         const isAppearance = isAppearancePage();
         const existingCard = document.getElementById(SETTINGS_UI_ID);
 
@@ -802,8 +1035,6 @@
             }
             return;
         }
-
-        if (existingCard) return;
 
         const radio = document.querySelector('input[type="radio"], .vkuiRadio, [class*="Radio"], [class*="Appearance"]');
         let target = null;
@@ -820,6 +1051,10 @@
         }
 
         if (!target) return;
+
+        if (existingCard) {
+            existingCard.remove();
+        }
 
         const card = document.createElement('div');
         card.id = SETTINGS_UI_ID;
@@ -852,7 +1087,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.5.2</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.6</span>
         `;
         card.appendChild(header);
 
@@ -865,6 +1100,7 @@
                 isColorSwapEnabled = checked;
                 setSetting(STORAGE_KEYS.COLOR_SWAP, isColorSwapEnabled);
                 applyStyles();
+                renderSettingsCard();
             }
         );
         card.appendChild(row1);
@@ -880,11 +1116,32 @@
                 applyStyles();
             }
         );
-        row2.style.borderBottom = 'none';
         card.appendChild(row2);
+
+        // Пункт 3: Фон для диалогов из галереи
+        const row3 = createChatBgRow(() => {
+            renderSettingsCard();
+        });
+        card.appendChild(row3);
 
         if (target.parentElement) {
             target.insertAdjacentElement('afterend', card);
+        }
+    }
+
+    function updateSettingsVisibility() {
+        const isAppearance = isAppearancePage();
+        const existingCard = document.getElementById(SETTINGS_UI_ID);
+
+        if (!isAppearance) {
+            if (existingCard) {
+                existingCard.remove();
+            }
+            return;
+        }
+
+        if (!existingCard) {
+            renderSettingsCard();
         }
     }
 
