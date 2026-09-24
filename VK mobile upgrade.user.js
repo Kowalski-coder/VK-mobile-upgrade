@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.8.3
-// @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера, скрытие меню действий в списке чатов, скрытие панели папок и исправление верстки.
+// @version      2.8.4
+// @description  Улучшение интерфейса m.vk.ru: тема Snow Black, скрытие стандартного блока темы, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера, скрытие меню действий в списке чатов, скрытие панели папок и исправление верстки.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -223,6 +223,23 @@
             pointer-events: auto !important;
             margin-left: auto !important;
             margin-right: 0 !important;
+        }
+
+        /* 6. СКРЫТИЕ СТАНДАРТНОГО БЛОКА ВЫБОРА ТЕМЫ В НАСТРОЙКАХ ВНЕШНЕГО ВИДА */
+        body.vmu-page-appearance .vkuiGroup:not(#vk-mobile-upgrade-settings-card):has(input[type="radio"]),
+        body.vmu-page-appearance [class*="Group"]:not(#vk-mobile-upgrade-settings-card):has(input[type="radio"]),
+        body.vmu-page-appearance .vkuiGroup:not(#vk-mobile-upgrade-settings-card):has([class*="Radio"]),
+        body.vmu-page-appearance [class*="Group"]:not(#vk-mobile-upgrade-settings-card):has([class*="Radio"]),
+        body.vmu-page-appearance .vkuiGroup:not(#vk-mobile-upgrade-settings-card):has(input[name="theme"]),
+        body.vmu-page-appearance .vkuiGroup:not(#vk-mobile-upgrade-settings-card):has(input[name="scheme"]),
+        body.vmu-page-appearance .vkuiGroup:not(#vk-mobile-upgrade-settings-card):has([class*="Appearance"]) {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            pointer-events: none !important;
+            opacity: 0 !important;
         }
     `;
 
@@ -577,6 +594,17 @@
                 document.body.classList.remove('vmu-page-mail');
             }
         }
+
+        const isApp = isAppearancePage();
+        if (isApp) {
+            if (!document.body.classList.contains('vmu-page-appearance')) {
+                document.body.classList.add('vmu-page-appearance');
+            }
+        } else {
+            if (document.body.classList.contains('vmu-page-appearance')) {
+                document.body.classList.remove('vmu-page-appearance');
+            }
+        }
     }
 
     // ==========================================
@@ -863,6 +891,48 @@
         return row;
     }
 
+    // ==========================================
+    //       ПРИНУДИТЕЛЬНАЯ ТЕМНАЯ ТЕМА
+    // ==========================================
+    function enforceDarkTheme() {
+        try {
+            if (localStorage.getItem('vkui_theme') !== 'space_gray') {
+                localStorage.setItem('vkui_theme', 'space_gray');
+            }
+            if (localStorage.getItem('vk_theme') !== 'dark') {
+                localStorage.setItem('vk_theme', 'dark');
+            }
+            if (localStorage.getItem('theme') !== 'dark') {
+                localStorage.setItem('theme', 'dark');
+            }
+            if (localStorage.getItem('scheme') !== 'space_gray') {
+                localStorage.setItem('scheme', 'space_gray');
+            }
+        } catch (e) {}
+
+        const lightRadio = document.querySelector(
+            'input[type="radio"][value*="light"], input[type="radio"][value*="bright_light"], input[type="radio"][value="1"], input[type="radio"][id*="light"]'
+        );
+        const darkRadio = document.querySelector(
+            'input[type="radio"][value*="dark"], input[type="radio"][value*="space_gray"], input[type="radio"][value="2"], input[type="radio"][id*="dark"]'
+        );
+
+        if (lightRadio && lightRadio.checked && darkRadio) {
+            darkRadio.checked = true;
+            darkRadio.click();
+        }
+
+        const systemSwitch = document.querySelector(
+            'input[name*="system"], [class*="Switch"][aria-label*="системн" i], input[type="checkbox"][id*="system"]'
+        );
+        if (systemSwitch) {
+            const input = systemSwitch.tagName === 'INPUT' ? systemSwitch : systemSwitch.querySelector('input');
+            if (input && input.checked) {
+                input.click();
+            }
+        }
+    }
+
     function updateSettingsVisibility() {
         const isAppearance = isAppearancePage();
         const existingCard = document.getElementById(SETTINGS_UI_ID);
@@ -874,23 +944,45 @@
             return;
         }
 
-        if (existingCard) return;
-
-        const radio = document.querySelector('input[type="radio"], .vkuiRadio, [class*="Radio"], [class*="Appearance"]');
-        let target = null;
+        // Прячем стандартный блок выбора темы
+        const radio = document.querySelector('input[type="radio"], .vkuiRadio, [class*="Radio"], input[name="theme"], input[name="scheme"], [class*="Appearance"]');
+        let nativeGroup = null;
 
         if (radio) {
-            target = radio.closest('.vkuiGroup, [class*="Group"]') || radio.parentElement;
+            nativeGroup = radio.closest('.vkuiGroup, [class*="Group"]') || radio.parentElement;
         }
 
+        if (!nativeGroup) {
+            const groups = document.querySelectorAll('.vkuiGroup, [class*="Group"]');
+            for (let i = 0; i < groups.length; i++) {
+                if (groups[i].id !== SETTINGS_UI_ID && (groups[i].textContent.includes('Светлая') || groups[i].textContent.includes('Тёмная') || groups[i].textContent.includes('системную'))) {
+                    nativeGroup = groups[i];
+                    break;
+                }
+            }
+        }
+
+        if (nativeGroup && nativeGroup.id !== SETTINGS_UI_ID) {
+            nativeGroup.style.setProperty('display', 'none', 'important');
+            nativeGroup.style.setProperty('visibility', 'hidden', 'important');
+            nativeGroup.style.setProperty('height', '0', 'important');
+            nativeGroup.style.setProperty('margin', '0', 'important');
+            nativeGroup.style.setProperty('padding', '0', 'important');
+            nativeGroup.style.setProperty('pointer-events', 'none', 'important');
+        }
+
+        if (existingCard) return;
+
+        let target = nativeGroup;
         if (!target) {
             const groups = document.querySelectorAll('.vkuiGroup, [class*="Group"]');
             if (groups.length > 0) {
                 target = groups[groups.length - 1];
             }
         }
-
-        if (!target) return;
+        if (!target) {
+            target = document.querySelector('.vkuiPanel__in, [class*="Panel__in"], .layout, main') || document.body;
+        }
 
         const card = document.createElement('div');
         card.id = SETTINGS_UI_ID;
@@ -923,14 +1015,14 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.8.3</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.8.4</span>
         `;
         card.appendChild(header);
 
-        // Тумблер 1: Подмена цветов
+        // Тумблер 1: Тема Snow Black
         const row1 = createSwitchRow(
-            'Подмена цветов темы',
-            'Меняет местами #71AAEB (акценты/имена) и #FF5C5C (лайки/ошибки)',
+            'Тема Snow Black',
+            'Заменяет темную тему на кастомную',
             isColorSwapEnabled,
             (checked) => {
                 isColorSwapEnabled = checked;
@@ -967,8 +1059,10 @@
         row3.style.borderBottom = 'none';
         card.appendChild(row3);
 
-        if (target.parentElement) {
+        if (target.parentElement && target !== document.body) {
             target.insertAdjacentElement('afterend', card);
+        } else if (target) {
+            target.appendChild(card);
         }
     }
 
@@ -1048,6 +1142,7 @@
         try {
             updatePageBodyClasses();
             applyStyles();
+            enforceDarkTheme();
             updateSettingsVisibility();
             handleUnreadFilter();
             hideChatListActions();
