@@ -535,46 +535,7 @@
             return;
         }
 
-        // 1. Скрываем нижний подвал по селекторам
-        const footerSwitches = document.querySelectorAll(
-            '.ConvoList__footerSwitch, [class*="ConvoList__footerSwitch"], [class*="footerSwitch"], [class*="footer_switch"], [class*="FooterSwitch"], [class*="unreadSwitch"]'
-        );
-        for (let i = 0; i < footerSwitches.length; i++) {
-            const el = footerSwitches[i];
-            el.style.setProperty('display', 'none', 'important');
-            el.style.setProperty('visibility', 'hidden', 'important');
-            el.style.setProperty('height', '0', 'important');
-            el.style.setProperty('max-height', '0', 'important');
-            el.style.setProperty('overflow', 'hidden', 'important');
-            el.style.setProperty('pointer-events', 'none', 'important');
-        }
-
-        // 2. Резервный поиск текстового элемента "Только непрочитанные" снизу
-        const all = document.querySelectorAll('*');
-        for (let i = 0; i < all.length; i++) {
-            const el = all[i];
-            if (el.children.length === 0 && el.textContent && el.textContent.trim().toLowerCase() === 'только непрочитанные') {
-                const row = el.closest('label, [class*="Cell"], [class*="Row"], [class*="Switch"]') || el.parentElement;
-                if (row && row !== document.body && row.id !== 'root' && !row.classList.contains('vkuiPanel')) {
-                    row.style.setProperty('display', 'none', 'important');
-                    row.style.setProperty('visibility', 'hidden', 'important');
-                    row.style.setProperty('height', '0', 'important');
-                    row.style.setProperty('max-height', '0', 'important');
-                    row.style.setProperty('overflow', 'hidden', 'important');
-                    row.style.setProperty('pointer-events', 'none', 'important');
-
-                    const parent = row.parentElement;
-                    if (parent && parent.children.length <= 3 && parent !== document.body && parent.id !== 'root' && !parent.classList.contains('vkuiPanel')) {
-                        parent.style.setProperty('display', 'none', 'important');
-                        parent.style.setProperty('visibility', 'hidden', 'important');
-                        parent.style.setProperty('height', '0', 'important');
-                    }
-                }
-                break;
-            }
-        }
-
-        // 3. Внедряем кнопку в шапку мессенджера (строго на главной странице)
+        // Внедряем кнопку в шапку мессенджера (строго на главной странице)
         injectTopUnreadToggle();
     }
 
@@ -669,16 +630,6 @@
                     input.click();
                 } else {
                     currentSw.click();
-                }
-            } else {
-                const allElements = document.querySelectorAll('*');
-                for (let i = 0; i < allElements.length; i++) {
-                    const el = allElements[i];
-                    if (el.children.length === 0 && el.textContent && el.textContent.trim().toLowerCase() === 'только непрочитанные') {
-                        const clickTarget = el.closest('label, [class*="Cell"], [class*="Switch"], div') || el;
-                        clickTarget.click();
-                        break;
-                    }
                 }
             }
         }
@@ -891,18 +842,36 @@
     // ==========================================
     //       ИНИЦИАЛИЗАЦИЯ И MUTATION OBSERVER
     // ==========================================
+    let isRunningFixes = false;
+    let fixesScheduled = false;
+
     function runAllFixes() {
-        updatePageBodyClasses();
-        applyStyles();
-        updateSettingsVisibility();
-        handleUnreadFilter();
+        if (isRunningFixes) return;
+        isRunningFixes = true;
+        try {
+            updatePageBodyClasses();
+            applyStyles();
+            updateSettingsVisibility();
+            handleUnreadFilter();
+        } finally {
+            isRunningFixes = false;
+        }
+    }
+
+    function scheduleFixes() {
+        if (fixesScheduled) return;
+        fixesScheduled = true;
+        requestAnimationFrame(() => {
+            fixesScheduled = false;
+            runAllFixes();
+        });
     }
 
     let observer = null;
     function startObserver() {
         if (observer) return;
         observer = new MutationObserver(() => {
-            runAllFixes();
+            scheduleFixes();
         });
         observer.observe(document.documentElement, {
             childList: true,
@@ -920,21 +889,19 @@
         startObserver();
     }
 
-    setInterval(runAllFixes, 200);
-
-    window.addEventListener('load', runAllFixes);
-    window.addEventListener('popstate', runAllFixes);
-    window.addEventListener('hashchange', runAllFixes);
+    window.addEventListener('load', scheduleFixes);
+    window.addEventListener('popstate', scheduleFixes);
+    window.addEventListener('hashchange', scheduleFixes);
 
     const origPushState = history.pushState;
     history.pushState = function() {
         origPushState.apply(this, arguments);
-        runAllFixes();
+        scheduleFixes();
     };
 
     const origReplaceState = history.replaceState;
     history.replaceState = function() {
         origReplaceState.apply(this, arguments);
-        runAllFixes();
+        scheduleFixes();
     };
 })();
