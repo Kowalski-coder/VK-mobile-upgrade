@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.0
+// @version      2.1
 // @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера и исправление верстки.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -89,29 +89,22 @@
             font-weight: 600 !important;
         }
 
-        /* 2. ОТСТУП СПИСКА ДИАЛОГОВ В МЕССЕНДЖЕРЕ (m.vk.ru/mail и /im) */
-        #mail_dialogs,
-        .mail_dialogs,
-        .im_dialogs,
-        [class*="MailDialogs"],
-        [class*="DialogsList"],
-        [class*="im-page--dialogs"] {
-            margin-top: 44px !important;
-            padding-top: 6px !important;
+        /* 2. ОТСТУП СПИСКА ДИАЛОГОВ ПОД ШТОРКОЙ КАТЕГОРИЙ (m.vk.ru/mail) */
+        [class*="HorizontalScroll"] + [class*="Group"],
+        [class*="SubnavigationBar"] + [class*="Group"],
+        [class*="Tabs"] + [class*="Group"],
+        [class*="HorizontalScroll"] + div,
+        [class*="SubnavigationBar"] + div {
+            margin-top: 14px !important;
+            padding-top: 4px !important;
         }
 
-        /* 3. СКРЫТИЕ НИЖНЕЙ ШТОРКИ "ТОЛЬКО НЕПРОЧИТАННЫЕ" */
-        #mail_filter_unread,
-        .mail_filter_unread,
-        [class*="mail_filter_unread"],
-        [class*="im_filter_unread"],
-        [class*="unread_toggle"],
-        [class*="UnreadToggle"],
+        /* 3. БЕЗОПАСНОЕ СКРЫТИЕ НИЖНЕЙ ШТОРКИ "ТОЛЬКО НЕПРОЧИТАННЫЕ" */
+        [class*="FixedLayout--vertical-bottom"]:has(input):not(:has(nav)),
+        [class*="FixedLayout--bottom"]:has(input):not(:has(nav)),
+        .vkuiFixedLayout--vertical-bottom:has(input):not(:has(nav)),
         [class*="im-page--unread-filter"],
-        [class*="im-unread-filter"],
-        [class*="DialogsUnreadFilter"],
-        .im_unread_toggle,
-        .im-page--unread {
+        [class*="im-unread-filter"] {
             display: none !important;
         }
     `;
@@ -339,7 +332,6 @@
     function updateBottomBarLabels() {
         if (!isHideLabelsEnabled) return;
 
-        // Ищем СТРОГО нижнюю панель
         const navs = document.querySelectorAll(
             'nav.vkuiTabbar, nav[class*="Tabbar"], nav[class*="TabBar"], #bottom_nav, .bottom_nav, .Tabbar'
         );
@@ -389,21 +381,18 @@
         return path.startsWith('/mail') || path.startsWith('/im') || path.includes('/mail') || path.includes('/im');
     }
 
-    function hideNativeUnreadBottomBar() {
-        if (!isMailOrMessengerPage()) return;
-        const all = document.querySelectorAll('div, [class*="FixedLayout"], [class*="filter"], [class*="unread"]');
-        for (let i = 0; i < all.length; i++) {
-            const el = all[i];
-            if (el.id === UNREAD_TOP_BTN_ID || el.closest('#' + UNREAD_TOP_BTN_ID)) continue;
-            if (el.id === SETTINGS_UI_ID || el.closest('#' + SETTINGS_UI_ID)) continue;
-
-            if (el.textContent && el.textContent.includes('Только непрочитанные') && el.querySelector('[role="switch"], input, [class*="Switch"], [class*="switch"]')) {
-                el.style.setProperty('display', 'none', 'important');
-                if (el.parentElement && el.parentElement !== document.body && el.parentElement.children.length === 1) {
-                    el.parentElement.style.setProperty('display', 'none', 'important');
-                }
+    function findNativeUnreadSwitch() {
+        const switches = document.querySelectorAll(
+            '[class*="FixedLayout"] input[type="checkbox"], [class*="FixedLayout"] [role="switch"], [class*="unread"] input, #mail_filter_unread input'
+        );
+        for (let i = 0; i < switches.length; i++) {
+            const sw = switches[i];
+            const text = sw.closest('label, div, [class*="Cell"]')?.textContent || '';
+            if (text.includes('непрочитанные') || text.includes('Непрочитанные')) {
+                return sw;
             }
         }
+        return switches[0] || null;
     }
 
     function injectTopUnreadToggle() {
@@ -413,11 +402,9 @@
             return;
         }
 
-        hideNativeUnreadBottomBar();
-
         if (document.getElementById(UNREAD_TOP_BTN_ID)) return;
 
-        // Ищем контейнер шапки мессенджера (кнопки справа: архив и создание сообщения)
+        // Ищем правый блок шапки (рядом с архивом и созданием чата)
         const headerRight = document.querySelector(
             '.vkuiPanelHeader__after, .PanelHeader__after, [class*="PanelHeader__after"], [class*="PanelHeader__right"], .vkuiPanelHeader__right, .im-page--header-right, [class*="PanelHeader"] [class*="Right"], .mail_header_actions'
         );
@@ -469,15 +456,9 @@
             isUnread = !isUnread;
             updateBtnVisual();
 
-            // Кликаем по нативному переключателю VK
-            const nativeSwitch = document.querySelector(
-                '[class*="unread"] [role="switch"], [class*="unread"] input[type="checkbox"], [id*="unread"] input, #mail_filter_unread input, .mail_filter_unread input'
-            );
+            const nativeSwitch = findNativeUnreadSwitch();
             if (nativeSwitch) {
                 nativeSwitch.click();
-            } else {
-                const unreadContainer = document.querySelector('[class*="unread_toggle"], .mail_filter_unread, [class*="unread_filter"]');
-                if (unreadContainer) unreadContainer.click();
             }
         });
 
@@ -493,7 +474,7 @@
         const path = window.location.pathname.toLowerCase();
         const search = window.location.search.toLowerCase();
 
-        // СТРОГАЯ ЗАЩИТА: Не отображать в диалогах, ленте, клипах, профилях и т.д.
+        // Строгая изоляция: не отображать в чатах, ленте, клипах, профилях и т.д.
         if (path.startsWith('/im') || path.startsWith('/mail') || path.startsWith('/feed') ||
             path.startsWith('/clips') || path.startsWith('/video') || path.startsWith('/music') ||
             path.startsWith('/id') || path.startsWith('/wall') || path.startsWith('/audios') ||
@@ -667,7 +648,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.0</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.1</span>
         `;
         card.appendChild(header);
 
@@ -718,7 +699,6 @@
         init();
     }
 
-    // Периодическая проверка видимости элементов
     setInterval(() => {
         updateSettingsVisibility();
         injectTopUnreadToggle();
@@ -727,7 +707,6 @@
         }
     }, 250);
 
-    // SPA навигация
     function onNavigate() {
         applyStyles();
         updateSettingsVisibility();
