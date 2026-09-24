@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      1.5
-// @description  Улучшение и кастомизация интерфейса мобильной версии VK (m.vk.ru / vk.ru). Опциональная смена акцентных цветов (#71AAEB ⇄ #FF5C5C) и надежное скрытие подписей в нижней панели.
+// @version      1.6
+// @description  Улучшение и кастомизация интерфейса мобильной версии VK (m.vk.ru / vk.ru). Опциональная смена акцентных цветов (#71AAEB ⇄ #FF5C5C) и бесшовное скрытие подписей в нижней панели без мерцаний (0ms flicker).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -197,7 +197,23 @@
     `;
 
     const HIDE_LABELS_CSS = `
-        /* Полное скрытие текстовых подписей нижней панели через CSS */
+        /* 1. Нулевой размер шрифта для элементов таб-бара (скрывает текст до первого кадра) */
+        [class*="TabbarItem"],
+        [class*="TabBarItem"],
+        [class*="bottom_nav__item"],
+        [class*="BottomNavigationItem"],
+        nav[class*="Tabbar"] a,
+        nav[class*="TabBar"] a,
+        nav a[class*="TabbarItem"],
+        nav a[class*="TabBarItem"],
+        #bottom_nav a,
+        .bottom_nav a {
+            font-size: 0 !important;
+            line-height: 0 !important;
+            letter-spacing: -9999px !important;
+        }
+
+        /* 2. Полное скрытие всех текстовых контейнеров, спанов и подписей */
         [class*="TabbarItem__label"],
         [class*="TabbarItem__text"],
         [class*="TabBarItem__label"],
@@ -222,14 +238,43 @@
         nav[class*="TabBar"] [class*="Subhead"],
         nav[class*="Tabbar"] [class*="Footnote"],
         nav[class*="TabBar"] [class*="Footnote"],
-        nav[class*="Tabbar"] a > span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
-        nav[class*="TabBar"] a > span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
-        [id*="bottom_nav"] a > span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
-        [class*="bottom_nav"] a > span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]) {
+        nav[class*="Tabbar"] a span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
+        nav[class*="TabBar"] a span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
+        [id*="bottom_nav"] a span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
+        [class*="bottom_nav"] a span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
+        [class*="TabbarItem"] span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
+        [class*="TabBarItem"] span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
+        [class*="TabbarItem__in"] > span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
+        [class*="TabBarItem__in"] > span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]) {
             display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            height: 0 !important;
+            width: 0 !important;
+            overflow: hidden !important;
+            pointer-events: none !important;
         }
 
-        /* Центрирование иконок по вертикали */
+        /* 3. Сохранение читаемости для бейджей и счетчиков */
+        [class*="Counter"],
+        [class*="counter"],
+        [class*="Badge"],
+        [class*="badge"],
+        [class*="Counter"] span,
+        [class*="Badge"] span,
+        [class*="Counter"] [class*="Typography"],
+        [class*="Badge"] [class*="Typography"] {
+            font-size: 11px !important;
+            line-height: normal !important;
+            letter-spacing: normal !important;
+            display: inline-flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            height: auto !important;
+            width: auto !important;
+        }
+
+        /* 4. Центрирование иконок по вертикали */
         [class*="TabbarItem"],
         [class*="TabBarItem"],
         [class*="bottom_nav__item"],
@@ -239,8 +284,8 @@
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            padding-top: 0 !important;
-            padding-bottom: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
         }
 
         [class*="TabbarItem__in"],
@@ -253,6 +298,7 @@
             align-items: center !important;
             justify-content: center !important;
             padding: 0 !important;
+            margin: 0 !important;
             height: 100% !important;
         }
 
@@ -296,7 +342,8 @@
     }
 
     function updateBottomBarLabels() {
-        // Находим все возможные контейнеры нижней навигации
+        if (!isHideLabelsEnabled) return;
+
         const navs = document.querySelectorAll(
             'nav, [class*="Tabbar"], [class*="TabBar"], [class*="bottom_nav"], [id*="bottom_nav"], [class*="FixedLayout--bottom"], [class*="FixedLayout"]'
         );
@@ -309,7 +356,6 @@
                 const allElements = item.querySelectorAll('*');
                 for (let k = 0; k < allElements.length; k++) {
                     const el = allElements[k];
-                    // Пропускаем SVG, иконки и счетчики уведомлений
                     if (el.tagName === 'SVG' || el.tagName === 'PATH' || el.closest('svg')) continue;
                     if (el.querySelector('svg')) continue;
                     const className = String(el.className || '');
@@ -318,11 +364,7 @@
 
                     const text = el.textContent ? el.textContent.trim() : '';
                     if (text && !/^\d+$/.test(text)) {
-                        if (isHideLabelsEnabled) {
-                            el.style.setProperty('display', 'none', 'important');
-                        } else {
-                            el.style.removeProperty('display');
-                        }
+                        el.style.setProperty('display', 'none', 'important');
                     }
                 }
             }
@@ -332,10 +374,12 @@
     function applyStyles() {
         setOrRemoveStyle('vmu-color-swap-styles', COLOR_SWAP_CSS, isColorSwapEnabled);
         setOrRemoveStyle('vmu-hide-labels-styles', HIDE_LABELS_CSS, isHideLabelsEnabled);
-        updateBottomBarLabels();
+        if (isHideLabelsEnabled) {
+            updateBottomBarLabels();
+        }
     }
 
-    // Применяем стили мгновенно
+    // Применяем стили мгновенно на этапе инициализации
     applyStyles();
 
     // ==========================================
@@ -442,7 +486,6 @@
         if (!isAppearancePage()) return;
         if (document.getElementById(SETTINGS_UI_ID)) return;
 
-        // Ищем элементы на странице темы
         const radio = document.querySelector('input[type="radio"], .vkuiRadio, [class*="Radio"], [class*="Appearance"]');
         let target = null;
         let method = 'afterend';
@@ -496,7 +539,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v1.5</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v1.6</span>
         `;
         card.appendChild(header);
 
@@ -556,13 +599,16 @@
         if (isHideLabelsEnabled) {
             updateBottomBarLabels();
         }
-    }, 400);
+    }, 300);
 
     // SPA навигация
     function onNavigate() {
         applyStyles();
         setTimeout(tryInjectSettings, 100);
         setTimeout(tryInjectSettings, 400);
+        if (isHideLabelsEnabled) {
+            updateBottomBarLabels();
+        }
     }
 
     window.addEventListener('load', onNavigate);
