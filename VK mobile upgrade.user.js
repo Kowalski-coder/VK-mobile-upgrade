@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.7.4
+// @version      2.7.5
 // @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера, скрытие меню действий в списке чатов, установка картинки из галереи в качестве фона диалогов.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -142,14 +142,36 @@
             flex-wrap: nowrap !important;
         }
 
-        /* 5. СКРЫТИЕ ИКОНКИ МЕНЮ ДЕЙСТВИЙ (3 ТОЧКИ) В СПИСКЕ ДИАЛОГОВ */
+        /* 5. СКРЫТИЕ КНОПКИ ДЕЙСТВИЙ (3 ТОЧКИ) В СПИСКЕ ДИАЛОГОВ БЕЗ БЛОКИРОВКИ КЛИКОВ ПО ЧАТАМ */
+        [class*="ConvoList"] [class*="SimpleCell__after"] button,
+        [class*="ConvoList"] [class*="SimpleCell__after"] [class*="IconButton"],
+        [class*="ConvoItem"] [class*="SimpleCell__after"] button,
+        [class*="ConvoItem"] [class*="SimpleCell__after"] [class*="IconButton"],
+        [class*="im-dialog"] [class*="SimpleCell__after"] button,
+        [class*="im-dialog"] [class*="SimpleCell__after"] [class*="IconButton"],
         [class*="ConvoList"] [class*="Icon--more_vertical"],
         [class*="ConvoItem"] [class*="Icon--more_vertical"],
         [class*="im-dialog"] [class*="Icon--more_vertical"],
-        [class*="ConvoItem__actions"] {
+        [class*="ConvoItem__actions"],
+        [class*="im-dialog--actions"] {
             display: none !important;
             visibility: hidden !important;
             pointer-events: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            min-width: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: hidden !important;
+        }
+
+        [class*="SimpleCell__after"] [class*="Counter"],
+        [class*="SimpleCell__after"] [class*="Badge"],
+        [class*="SimpleCell__after"] .vkuiCounter,
+        [class*="SimpleCell__after"] .im_peer_counter {
+            display: inline-flex !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
         }
     `;
 
@@ -378,83 +400,94 @@
         }
     }
 
-    function updateBottomBarLabels() {
-        if (!isHideLabelsEnabled) return;
-
-        const tabItems = document.querySelectorAll(
-            '[class*="TabbarItem"], [class*="TabBarItem"], .vkuiTabbarItem, .bottom_nav__item, #bottom_nav a, .bottom_nav a'
-        );
-
-        for (let i = 0; i < tabItems.length; i++) {
-            const item = tabItems[i];
-            const allElements = item.querySelectorAll('*');
-            for (let j = 0; j < allElements.length; j++) {
-                const el = allElements[j];
-                if (el.tagName === 'SVG' || el.tagName === 'PATH' || el.closest('svg')) continue;
-                if (el.querySelector('svg')) continue;
-                const className = String(el.className || '');
-                if (className.toLowerCase().includes('counter') || className.toLowerCase().includes('badge')) continue;
-                if (el.closest('[class*="Counter"], [class*="counter"], [class*="Badge"], [class*="badge"]')) continue;
-
-                const text = el.textContent ? el.textContent.trim() : '';
-                if (text && !/^\d+$/.test(text)) {
-                    el.style.setProperty('display', 'none', 'important');
-                }
-            }
-        }
-    }
-
-    let lastAppliedChatBg = null;
     function applyChatBgStyles() {
         if (!customChatBg) {
-            if (lastAppliedChatBg !== '') {
-                setOrRemoveStyle('vmu-chat-bg-styles', '', false);
-                lastAppliedChatBg = '';
-            }
+            setOrRemoveStyle('vmu-chat-bg-styles', '', false);
             return;
         }
-
-        if (lastAppliedChatBg === customChatBg) {
-            return;
-        }
-        lastAppliedChatBg = customChatBg;
 
         const chatBgCss = `
-            /* ФОНОВОЕ ИЗОБРАЖЕНИЕ ТОЛЬКО ВНУТРИ ИСТОРИИ СООБЩЕНИЙ ЧАТА */
+            /* Прозрачность слоев чата над фоновым изображением */
             [class*="im-page--history"],
+            [class*="im-page--chat-body"],
             [class*="ChatHistory"],
             [class*="ConvoHistory"],
             [class*="HistoryMessages"],
             [class*="im-dialog--messages"],
-            [class*="im-page--chat-body"] {
-                background-image: url("${customChatBg}") !important;
-                background-size: cover !important;
-                background-position: center center !important;
-                background-attachment: fixed !important;
-                background-repeat: no-repeat !important;
-            }
-
-            [class*="im-page--history"] .vkuiGroup,
-            [class*="im-page--history"] [class*="Group"],
-            [class*="im-page--history"] .vkuiCustomScrollView__box,
-            [class*="im-page--history"] [class*="CustomScrollView__box"],
-            [class*="im-page--history"] [class*="messages-list"],
-            [class*="im-page--history"] [class*="MessagesList"],
-            [class*="ChatHistory"] .vkuiGroup,
-            [class*="ChatHistory"] [class*="Group"],
-            [class*="ChatHistory"] .vkuiCustomScrollView__box,
-            [class*="ChatHistory"] [class*="CustomScrollView__box"],
-            [class*="ChatHistory"] [class*="messages-list"],
-            [class*="ChatHistory"] [class*="MessagesList"],
-            [class*="ConvoHistory"] [class*="Group"],
-            [class*="HistoryMessages"] [class*="Group"],
-            [class*="im-dialog--messages"] {
+            [class*="messages-list"],
+            [class*="MessagesList"],
+            [class*="im_history"],
+            [class*="HistoryScroll"],
+            [class*="im-page"] .vkuiGroup,
+            [class*="im-page"] [class*="Group"],
+            [class*="im-page"] .vkuiCustomScrollView__box,
+            [class*="im-page"] [class*="CustomScrollView__box"],
+            [class*="im-page"] .vkuiPanel__in,
+            [class*="im-page"] [class*="Panel__in"] {
                 background-color: transparent !important;
                 background: transparent !important;
+            }
+
+            /* Непрозрачность шапки и панели ввода сообщений в чатах */
+            [class*="im-page"] .vkuiPanelHeader,
+            [class*="im-page"] [class*="PanelHeader"],
+            [class*="im-page"] .vkmListHeader,
+            [class*="im-page"] [class*="vkmListHeader"],
+            [class*="im-page"] [class*="WriteBar"],
+            [class*="im-page"] [class*="writeBar"],
+            [class*="im-page"] [class*="Writebar"],
+            [class*="im-page"] [class*="im-chat-input"],
+            [class*="im-page"] [class*="writebox"] {
+                background-color: var(--vkui--color_background_modal, #19191a) !important;
+                background: #19191a !important;
+                position: relative !important;
+                z-index: 10 !important;
             }
         `;
 
         setOrRemoveStyle('vmu-chat-bg-styles', chatBgCss, true);
+    }
+
+    function updateChatWallpaper() {
+        let wp = document.getElementById('vmu-chat-wallpaper');
+        if (!customChatBg) {
+            if (wp) wp.remove();
+            return;
+        }
+
+        const insideChat = isInsideChatDialog();
+        if (!insideChat) {
+            if (wp) {
+                wp.style.setProperty('display', 'none', 'important');
+            }
+            return;
+        }
+
+        if (!wp) {
+            wp = document.createElement('div');
+            wp.id = 'vmu-chat-wallpaper';
+            wp.style.cssText = `
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                z-index: 0 !important;
+                pointer-events: none !important;
+                background-size: cover !important;
+                background-position: center center !important;
+                background-repeat: no-repeat !important;
+            `;
+            document.documentElement.appendChild(wp);
+        }
+
+        const bgUrl = `url("${customChatBg}")`;
+        if (wp.style.backgroundImage !== bgUrl) {
+            wp.style.backgroundImage = bgUrl;
+        }
+        wp.style.setProperty('display', 'block', 'important');
     }
 
     function applyStyles() {
@@ -462,9 +495,7 @@
         setOrRemoveStyle('vmu-color-swap-styles', COLOR_SWAP_CSS, isColorSwapEnabled);
         setOrRemoveStyle('vmu-hide-labels-styles', HIDE_LABELS_CSS, isHideLabelsEnabled);
         applyChatBgStyles();
-        if (isHideLabelsEnabled) {
-            updateBottomBarLabels();
-        }
+        updateChatWallpaper();
     }
 
     // Применяем стили мгновенно при старте
@@ -478,12 +509,13 @@
         const search = window.location.search.toLowerCase();
         const hash = window.location.hash.toLowerCase();
 
-        // 1. СТРОГО: исключаем все разделы, не относящиеся к диалогам
+        // 1. Исключаем все не относящиеся к диалогам страницы
         if (path.startsWith('/settings') || path.startsWith('/menu') || path.startsWith('/feed') ||
             path.startsWith('/clips') || path.startsWith('/video') || path.startsWith('/music') ||
             path.startsWith('/id') || path.startsWith('/wall') || path.startsWith('/friends') ||
             path.startsWith('/groups') || path.startsWith('/photos') || path.startsWith('/docs') ||
-            path.startsWith('/bookmarks') || path.startsWith('/call') || search.includes('act=appearance')) {
+            path.startsWith('/bookmarks') || path.startsWith('/call') || search.includes('act=appearance') ||
+            search.includes('act=archive') || search.includes('act=folders')) {
             return false;
         }
 
@@ -494,16 +526,13 @@
             return true;
         }
 
-        // 3. Только внутри /mail или /im: проверяем наличие видимой строки ввода
+        // 3. Строка ввода сообщений в DOM
         if (path.startsWith('/mail') || path.startsWith('/im')) {
-            const writeBars = document.querySelectorAll(
-                '[class*="WriteBar"], [class*="writeBar"], [class*="Writebar"], [class*="im-chat-input"], [class*="writebox"]'
+            const writeBar = document.querySelector(
+                '[class*="WriteBar"], [class*="writeBar"], [class*="Writebar"], [class*="im-chat-input"], [class*="writebox"], textarea[placeholder*="сообщени" i]'
             );
-            for (let i = 0; i < writeBars.length; i++) {
-                const wb = writeBars[i];
-                if (wb.offsetWidth > 0 && wb.offsetHeight > 0 && wb.offsetParent !== null) {
-                    return true;
-                }
+            if (writeBar && (writeBar.offsetWidth > 0 || writeBar.offsetHeight > 0 || writeBar.getClientRects().length > 0)) {
+                return true;
             }
         }
 
@@ -644,43 +673,6 @@
             return;
         }
 
-        const footerSwitches = document.querySelectorAll(
-            '.ConvoList__footerSwitch, [class*="ConvoList__footerSwitch"], [class*="footerSwitch"], [class*="footer_switch"], [class*="FooterSwitch"], [class*="unreadSwitch"]'
-        );
-        for (let i = 0; i < footerSwitches.length; i++) {
-            const el = footerSwitches[i];
-            el.style.setProperty('display', 'none', 'important');
-            el.style.setProperty('visibility', 'hidden', 'important');
-            el.style.setProperty('height', '0', 'important');
-            el.style.setProperty('max-height', '0', 'important');
-            el.style.setProperty('overflow', 'hidden', 'important');
-            el.style.setProperty('pointer-events', 'none', 'important');
-        }
-
-        const all = document.querySelectorAll('*');
-        for (let i = 0; i < all.length; i++) {
-            const el = all[i];
-            if (el.children.length === 0 && el.textContent && el.textContent.trim().toLowerCase() === 'только непрочитанные') {
-                const row = el.closest('label, [class*="Cell"], [class*="Row"], [class*="Switch"]') || el.parentElement;
-                if (row && row !== document.body && row.id !== 'root' && !row.classList.contains('vkuiPanel')) {
-                    row.style.setProperty('display', 'none', 'important');
-                    row.style.setProperty('visibility', 'hidden', 'important');
-                    row.style.setProperty('height', '0', 'important');
-                    row.style.setProperty('max-height', '0', 'important');
-                    row.style.setProperty('overflow', 'hidden', 'important');
-                    row.style.setProperty('pointer-events', 'none', 'important');
-
-                    const parent = row.parentElement;
-                    if (parent && parent.children.length <= 3 && parent !== document.body && parent.id !== 'root' && !parent.classList.contains('vkuiPanel')) {
-                        parent.style.setProperty('display', 'none', 'important');
-                        parent.style.setProperty('visibility', 'hidden', 'important');
-                        parent.style.setProperty('height', '0', 'important');
-                    }
-                }
-                break;
-            }
-        }
-
         injectTopUnreadToggle();
     }
 
@@ -772,16 +764,6 @@
                     input.click();
                 } else {
                     currentSw.click();
-                }
-            } else {
-                const allElements = document.querySelectorAll('*');
-                for (let i = 0; i < allElements.length; i++) {
-                    const el = allElements[i];
-                    if (el.children.length === 0 && el.textContent && el.textContent.trim().toLowerCase() === 'только непрочитанные') {
-                        const clickTarget = el.closest('label, [class*="Cell"], [class*="Switch"], div') || el;
-                        clickTarget.click();
-                        break;
-                    }
                 }
             }
         }
@@ -940,8 +922,7 @@
 
                     customChatBg = compressedBase64;
                     setChatBgImage(customChatBg);
-                    applyChatBgStyles();
-                    updatePageBodyClasses();
+                    applyStyles();
                     if (onUpdate) onUpdate();
                 };
                 img.src = event.target.result;
@@ -1012,8 +993,7 @@
                 e.stopPropagation();
                 customChatBg = '';
                 setChatBgImage('');
-                applyChatBgStyles();
-                updatePageBodyClasses();
+                applyStyles();
                 if (onUpdate) onUpdate();
             });
             actionsCol.appendChild(deleteBtn);
@@ -1108,7 +1088,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.7.4</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.7.5</span>
         `;
         card.appendChild(header);
 
@@ -1215,8 +1195,6 @@
         runAllFixes();
         startObserver();
     }
-
-    setInterval(scheduleFixes, 250);
 
     window.addEventListener('load', scheduleFixes);
     window.addEventListener('popstate', scheduleFixes);
