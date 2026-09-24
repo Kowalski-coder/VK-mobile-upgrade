@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.8.2
-// @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера, скрытие меню действий в списке чатов и исправление верстки.
+// @version      2.8.3
+// @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера, скрытие меню действий в списке чатов, скрытие панели папок и исправление верстки.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -30,7 +30,8 @@
     // ==========================================
     const STORAGE_KEYS = {
         COLOR_SWAP: 'vmu_color_swap',
-        HIDE_TAB_LABELS: 'vmu_hide_tab_labels'
+        HIDE_TAB_LABELS: 'vmu_hide_tab_labels',
+        HIDE_FOLDERS_BAR: 'vmu_hide_folders_bar'
     };
 
     function getSetting(key, defaultValue) {
@@ -51,6 +52,7 @@
 
     let isColorSwapEnabled = getSetting(STORAGE_KEYS.COLOR_SWAP, true);
     let isHideLabelsEnabled = getSetting(STORAGE_KEYS.HIDE_TAB_LABELS, false);
+    let isHideFoldersEnabled = getSetting(STORAGE_KEYS.HIDE_FOLDERS_BAR, true);
 
     // ==========================================
     //     БАЗОВЫЕ ИСПРАВЛЕНИЯ UI (ВСЕГДА АКТИВНЫ)
@@ -424,6 +426,41 @@
         }
     `;
 
+    const HIDE_FOLDERS_CSS = `
+        /* ПОЛНОЕ СКРЫТИЕ ПАНЕЛИ ПАПОК/КАТЕГОРИЙ В МЕССЕНДЖЕРЕ ("Все, Каналы, Бизнес, Чаты...") И ЕЁ ОТСТУПОВ */
+        [class*="ConvoList"] [class*="SubnavigationBar"],
+        [class*="ConvoList"] .vkuiSubnavigationBar,
+        [class*="ConvoList"] [class*="HorizontalScroll"],
+        [class*="ConvoList"] [class*="Tabs"],
+        [class*="ConvoList__subnavigation"],
+        [class*="ConvoList__folders"],
+        [class*="convo-folders"],
+        [class*="im-page--folders"],
+        [class*="im-folders"],
+        a[href*="act=folders"],
+        body.vmu-page-mail [class*="SubnavigationBar"],
+        body.vmu-page-mail .vkuiSubnavigationBar,
+        body.vmu-page-mail [class*="HorizontalScroll"],
+        body.vmu-page-mail [class*="Tabs"] {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            max-height: 0 !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            pointer-events: none !important;
+            opacity: 0 !important;
+        }
+
+        body.vmu-page-mail [class*="Search"],
+        body.vmu-page-mail .vkuiSearch,
+        body.vmu-page-mail [class*="vkmListHeader"] + [class*="Search"] {
+            margin-bottom: 2px !important;
+        }
+    `;
+
     // ==========================================
     //           УПРАВЛЕНИЕ СТИЛЯМИ
     // ==========================================
@@ -453,6 +490,7 @@
         setOrRemoveStyle('vmu-base-fixes-styles', FIXES_CSS, true);
         setOrRemoveStyle('vmu-color-swap-styles', COLOR_SWAP_CSS, isColorSwapEnabled);
         setOrRemoveStyle('vmu-hide-labels-styles', HIDE_LABELS_CSS, isHideLabelsEnabled);
+        setOrRemoveStyle('vmu-hide-folders-styles', HIDE_FOLDERS_CSS, isHideFoldersEnabled);
     }
 
     // Применяем стили мгновенно при старте
@@ -885,7 +923,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.8.2</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.8.3</span>
         `;
         card.appendChild(header);
 
@@ -913,8 +951,21 @@
                 applyStyles();
             }
         );
-        row2.style.borderBottom = 'none';
         card.appendChild(row2);
+
+        // Тумблер 3: Скрыть панель папок / категорий
+        const row3 = createSwitchRow(
+            'Скрыть вкладки папок в мессенджере',
+            'Убирает панель категорий (Все, Каналы, Бизнес, Чаты) и лишние отступы',
+            isHideFoldersEnabled,
+            (checked) => {
+                isHideFoldersEnabled = checked;
+                setSetting(STORAGE_KEYS.HIDE_FOLDERS_BAR, isHideFoldersEnabled);
+                applyStyles();
+            }
+        );
+        row3.style.borderBottom = 'none';
+        card.appendChild(row3);
 
         if (target.parentElement) {
             target.insertAdjacentElement('afterend', card);
