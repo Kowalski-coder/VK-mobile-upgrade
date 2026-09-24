@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.7.7
-// @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера и исправление верстки.
+// @version      2.7.8
+// @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера, скрытие меню действий в списке чатов и исправление верстки.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -104,13 +104,25 @@
         [class*="footer_switch"],
         [class*="FooterSwitch"],
         [class*="unreadSwitch"],
-        [class*="im-unread-filter"] {
+        [class*="im-unread-filter"],
+        [class*="ConvoList__footer"],
+        [class*="convo-list-footer"],
+        [class*="im-page--filter"],
+        [class*="im-footer-filter"],
+        .ConvoList [class*="Switch"],
+        [class*="ConvoList"] [class*="Switch"],
+        [class*="ConvoList"] [role="switch"],
+        [class*="ConvoList"] [class*="FixedLayout--bottom"],
+        [class*="ConvoList"] [class*="FixedLayout"] {
             display: none !important;
             visibility: hidden !important;
             height: 0 !important;
             max-height: 0 !important;
             overflow: hidden !important;
             pointer-events: none !important;
+            opacity: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
 
         /* 4. ЗАПРЕТ ПЕРЕНОСА КНОПОК В ШАПКЕ МЕССЕНДЖЕРА НА НОВУЮ СТРОКУ */
@@ -122,6 +134,39 @@
         [class*="PanelHeader__right"],
         [class*="PanelHeader__controls"] {
             flex-wrap: nowrap !important;
+        }
+
+        /* 5. СКРЫТИЕ КНОПКИ ДЕЙСТВИЙ (3 ТОЧКИ) В СПИСКЕ ДИАЛОГОВ */
+        [class*="ConvoList"] [class*="SimpleCell__after"] button,
+        [class*="ConvoList"] [class*="SimpleCell__after"] [class*="IconButton"],
+        [class*="ConvoItem"] [class*="SimpleCell__after"] button,
+        [class*="ConvoItem"] [class*="SimpleCell__after"] [class*="IconButton"],
+        [class*="im-dialog"] [class*="SimpleCell__after"] button,
+        [class*="im-dialog"] [class*="SimpleCell__after"] [class*="IconButton"],
+        [class*="ConvoList"] [class*="Icon--more_vertical"],
+        [class*="ConvoItem"] [class*="Icon--more_vertical"],
+        [class*="im-dialog"] [class*="Icon--more_vertical"],
+        [class*="ConvoItem__actions"],
+        [class*="im-dialog--actions"],
+        [class*="ConvoItem__more"] {
+            display: none !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            min-width: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: hidden !important;
+        }
+
+        [class*="SimpleCell__after"] [class*="Counter"],
+        [class*="SimpleCell__after"] [class*="Badge"],
+        [class*="SimpleCell__after"] .vkuiCounter,
+        [class*="SimpleCell__after"] .im_peer_counter {
+            display: inline-flex !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
         }
     `;
 
@@ -506,6 +551,18 @@
             return;
         }
 
+        // Скрываем нижний нативный переключатель, если найден
+        const sw = getNativeUnreadSwitch();
+        if (sw) {
+            const swRow = sw.closest('[class*="footerSwitch"], [class*="FooterSwitch"], [class*="footer_switch"], [class*="unreadSwitch"], [class*="FixedLayout"], label, [class*="Cell"]');
+            if (swRow && !swRow.classList.contains('vkuiPanel') && swRow.id !== 'root' && swRow !== document.body) {
+                swRow.style.setProperty('display', 'none', 'important');
+                swRow.style.setProperty('visibility', 'hidden', 'important');
+                swRow.style.setProperty('height', '0', 'important');
+                swRow.style.setProperty('pointer-events', 'none', 'important');
+            }
+        }
+
         // Внедряем кнопку в шапку мессенджера (строго на главной странице)
         injectTopUnreadToggle();
     }
@@ -774,7 +831,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.7.7</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.7.8</span>
         `;
         card.appendChild(header);
 
