@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      1.3
-// @description  Улучшение и кастомизация интерфейса мобильной версии VK (m.vk.ru / vk.ru). Опциональная смена акцентных цветов (#71AAEB ⇄ #FF5C5C) и скрытие подписей в нижней панели. Легковесный, без зависаний.
+// @version      1.4
+// @description  Улучшение и кастомизация интерфейса мобильной версии VK (m.vk.ru / vk.ru). Опциональная смена акцентных цветов (#71AAEB ⇄ #FF5C5C) и скрытие подписей в нижней панели. Надежное отображение меню настроек.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -283,7 +283,7 @@
         setOrRemoveStyle('vmu-hide-labels-styles', HIDE_LABELS_CSS, isHideLabelsEnabled);
     }
 
-    // Применяем стили мгновенно на этапе загрузки страницы (0ms overhead)
+    // Применяем стили мгновенно на этапе загрузки страницы
     applyStyles();
 
     // ==========================================
@@ -292,9 +292,17 @@
     const SETTINGS_UI_ID = 'vk-mobile-upgrade-settings-card';
 
     function isAppearancePage() {
-        const path = window.location.pathname;
-        const search = window.location.search;
-        return search.includes('act=appearance') || path.includes('/settings/appearance') || (path.startsWith('/settings') && search.includes('appearance'));
+        const href = window.location.href.toLowerCase();
+        if (href.includes('appearance') || href.includes('act=appearance')) {
+            return true;
+        }
+        // Также проверяем наличие радиокнопок тем на странице
+        if (document.querySelector('input[type="radio"], .vkuiRadio, [class*="Radio"], [class*="AppearanceSettings"]')) {
+            if (href.includes('settings') || href.includes('setting')) {
+                return true;
+            }
+        }
+        return false;
     }
 
     function createSwitchRow(title, desc, initialChecked, onToggle) {
@@ -383,45 +391,61 @@
         if (!isAppearancePage()) return;
         if (document.getElementById(SETTINGS_UI_ID)) return;
 
-        // Ищем контейнер страницы внешнего вида
-        const targetContainer = document.querySelector(
-            '[class*="AppearanceSettings"], [class*="settings_appearance"], [class*="SettingsAppearance"], .vkuiPanel__in, .Panel__in, main, #content'
-        );
-        if (!targetContainer) return;
+        // Ищем элементы на странице темы
+        const radio = document.querySelector('input[type="radio"], .vkuiRadio, [class*="Radio"], [class*="Appearance"]');
+        let target = null;
+        let method = 'afterend';
 
-        // Ищем существующие группы темы (Светлая/Темная/Системная)
-        const groups = targetContainer.querySelectorAll('.vkuiGroup, [class*="Group"]');
-        const insertAfterElement = groups.length > 0 ? groups[groups.length - 1] : null;
+        if (radio) {
+            target = radio.closest('.vkuiGroup, [class*="Group"]') || radio.parentElement;
+        }
+
+        if (!target) {
+            const groups = document.querySelectorAll('.vkuiGroup, [class*="Group"]');
+            if (groups.length > 0) {
+                target = groups[groups.length - 1];
+            }
+        }
+
+        if (!target) {
+            target = document.querySelector('[class*="Panel__in"], .vkuiPanel__in, [class*="Panel"], main, .vkuiAppRoot, #root, body');
+            method = 'append';
+        }
+
+        if (!target) return;
 
         const card = document.createElement('div');
         card.id = SETTINGS_UI_ID;
         card.className = 'vkuiGroup vkuiGroup--mode-card';
         card.style.cssText = `
-            margin: 16px 12px 24px;
-            background: var(--vkui--color_background_content, var(--background_content, #222222));
-            border-radius: 14px;
-            overflow: hidden;
-            border: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08));
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-            font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", sans-serif);
+            margin: 16px 12px 32px !important;
+            background: var(--vkui--color_background_content, var(--background_content, #222222)) !important;
+            border-radius: 14px !important;
+            overflow: hidden !important;
+            border: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08)) !important;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+            font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", sans-serif) !important;
+            display: block !important;
+            position: relative !important;
+            z-index: 100 !important;
         `;
 
         const header = document.createElement('div');
         header.style.cssText = `
-            padding: 14px 16px 8px;
-            font-weight: 700;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-            color: var(--vkui--color_text_subhead, #888888);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08));
+            padding: 14px 16px 8px !important;
+            font-weight: 700 !important;
+            font-size: 13px !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.6px !important;
+            color: var(--vkui--color_text_subhead, #888888) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            border-bottom: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08)) !important;
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v1.3</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v1.4</span>
         `;
         card.appendChild(header);
 
@@ -452,35 +476,18 @@
         row2.style.borderBottom = 'none';
         card.appendChild(row2);
 
-        if (insertAfterElement) {
-            insertAfterElement.insertAdjacentElement('afterend', card);
+        if (method === 'afterend' && target.parentElement) {
+            target.insertAdjacentElement('afterend', card);
         } else {
-            targetContainer.appendChild(card);
+            target.appendChild(card);
         }
     }
 
     // ==========================================
-    //       ОПТИМИЗИРОВАННЫЙ НАБЛЮДАТЕЛЬ
+    //               ИНИЦИАЛИЗАЦИЯ
     // ==========================================
-    let debounceTimer = null;
-    const observer = new MutationObserver(() => {
-        if (!isAppearancePage()) return;
-        if (debounceTimer) return;
-
-        debounceTimer = setTimeout(() => {
-            debounceTimer = null;
-            tryInjectSettings();
-        }, 200);
-    });
-
     function init() {
         applyStyles();
-        if (document.documentElement) {
-            observer.observe(document.documentElement, {
-                childList: true,
-                subtree: true
-            });
-        }
         tryInjectSettings();
     }
 
@@ -489,6 +496,13 @@
     } else {
         init();
     }
+
+    // Периодическая проверка наличия карточки при открытии страницы настроек
+    setInterval(() => {
+        if (isAppearancePage() && !document.getElementById(SETTINGS_UI_ID)) {
+            tryInjectSettings();
+        }
+    }, 400);
 
     // SPA навигация
     function onNavigate() {
