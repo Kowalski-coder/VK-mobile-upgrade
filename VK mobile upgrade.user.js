@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      1.9
-// @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, перемещение фильтра непрочитанных в шапку и фиксы верстки.
+// @version      2.0
+// @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера и исправление верстки.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -89,27 +89,29 @@
             font-weight: 600 !important;
         }
 
-        /* 2. ИСПРАВЛЕНИЕ ПЕРЕКРЫТИЯ ПЕРВОГО ЧАТА ("ИЗБРАННОЕ") ШТОРКОЙ КАТЕГОРИЙ */
-        [class*="im-page--dialogs"],
+        /* 2. ОТСТУП СПИСКА ДИАЛОГОВ В МЕССЕНДЖЕРЕ (m.vk.ru/mail и /im) */
+        #mail_dialogs,
+        .mail_dialogs,
+        .im_dialogs,
+        [class*="MailDialogs"],
         [class*="DialogsList"],
-        [class*="ConversationsList"],
-        [class*="im-page--history"],
-        [class*="im-page--chat-body"],
-        [class*="im-page--content"],
-        [class*="im-page--d-list"] {
-            margin-top: 48px !important;
-            padding-top: 8px !important;
+        [class*="im-page--dialogs"] {
+            margin-top: 44px !important;
+            padding-top: 6px !important;
         }
 
-        /* 3. СКРЫТИЕ НИЖНЕЙ ШТОРКИ "ТОЛЬКО НЕПРОЧИТАННЫЕ" В МЕССЕНДЖЕРЕ */
+        /* 3. СКРЫТИЕ НИЖНЕЙ ШТОРКИ "ТОЛЬКО НЕПРОЧИТАННЫЕ" */
+        #mail_filter_unread,
+        .mail_filter_unread,
+        [class*="mail_filter_unread"],
+        [class*="im_filter_unread"],
+        [class*="unread_toggle"],
+        [class*="UnreadToggle"],
         [class*="im-page--unread-filter"],
         [class*="im-unread-filter"],
-        [class*="im-page--filters-bottom"],
         [class*="DialogsUnreadFilter"],
         .im_unread_toggle,
-        .im-page--unread,
-        [class*="FixedLayout--bottom"]:has([class*="unread"]),
-        div:has(> [class*="im-page--unread-filter"]) {
+        .im-page--unread {
             display: none !important;
         }
     `;
@@ -259,70 +261,36 @@
     `;
 
     const HIDE_LABELS_CSS = `
-        /* 1. ИЗОЛИРОВАННОЕ СКРЫТИЕ ПОДПИСЕЙ СТРОГО В НИЖНЕЙ ПАНЕЛИ (TABBAR) */
-        nav.vkuiTabbar,
-        nav[class*="Tabbar"],
-        nav[class*="TabBar"],
-        #bottom_nav,
-        .bottom_nav,
-        .Tabbar {
-            /* Не затрагивает верхние шапки и другие навигационные блоки */
-        }
-
-        nav.vkuiTabbar a,
-        nav[class*="Tabbar"] a,
-        nav[class*="TabBar"] a,
-        #bottom_nav a,
-        .bottom_nav a,
-        .vkuiTabbarItem,
-        .TabbarItem,
-        [class*="TabbarItem"] {
-            font-size: 0 !important;
-            line-height: 0 !important;
-            letter-spacing: -9999px !important;
-        }
-
+        /* СТРОГО ВНУТРИ НИЖНЕЙ НАВИГАЦИОННОЙ ПАНЕЛИ (TABBAR) */
         nav.vkuiTabbar .vkuiTabbarItem__label,
-        nav.vkuiTabbar [class*="TabbarItem__label"],
         nav[class*="Tabbar"] [class*="TabbarItem__label"],
         nav[class*="TabBar"] [class*="TabBarItem__label"],
-        .vkuiTabbarItem__label,
-        .TabbarItem__label,
-        .TabBarItem__label,
+        nav[class*="Tabbar"] [class*="TabbarItem__text"],
+        nav[class*="TabBar"] [class*="TabBarItem__text"],
+        #bottom_nav [class*="label"],
+        #bottom_nav [class*="text"],
+        .bottom_nav [class*="label"],
+        .bottom_nav [class*="text"],
         .bottom_nav__label,
-        [class*="TabbarItem__label"],
-        [class*="TabBarItem__label"] {
+        .bottom_nav__text {
             display: none !important;
             visibility: hidden !important;
             opacity: 0 !important;
             height: 0 !important;
             width: 0 !important;
             overflow: hidden !important;
+            font-size: 0 !important;
+            line-height: 0 !important;
             pointer-events: none !important;
         }
 
-        /* 2. Сохранение читаемости для бейджей и счетчиков в таб-баре */
-        nav.vkuiTabbar [class*="Counter"],
-        nav.vkuiTabbar [class*="Badge"],
-        nav[class*="Tabbar"] [class*="Counter"],
-        nav[class*="TabBar"] [class*="Counter"],
-        .vkuiTabbarItem [class*="Counter"],
-        [class*="TabbarItem"] [class*="Counter"] {
-            font-size: 11px !important;
-            line-height: normal !important;
-            letter-spacing: normal !important;
-            display: inline-flex !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            height: auto !important;
-            width: auto !important;
-        }
-
-        /* 3. Центрирование иконок по вертикали в таб-баре */
-        .vkuiTabbarItem,
-        .TabbarItem,
-        [class*="TabbarItem"],
-        [class*="TabBarItem"] {
+        /* Центрирование иконок в таб-баре */
+        nav.vkuiTabbar .vkuiTabbarItem,
+        nav[class*="Tabbar"] [class*="TabbarItem"],
+        nav[class*="TabBar"] [class*="TabBarItem"],
+        #bottom_nav a,
+        .bottom_nav a,
+        .bottom_nav__item {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -330,27 +298,16 @@
             margin: 0 !important;
         }
 
-        .vkuiTabbarItem__in,
-        .TabbarItem__in,
-        [class*="TabbarItem__in"],
-        [class*="TabBarItem__in"] {
+        nav.vkuiTabbar .vkuiTabbarItem__in,
+        nav[class*="Tabbar"] [class*="TabbarItem__in"],
+        nav[class*="TabBar"] [class*="TabBarItem__in"],
+        .bottom_nav__in {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
             padding: 0 !important;
             margin: 0 !important;
             height: 100% !important;
-        }
-
-        .vkuiTabbarItem__icon,
-        .TabbarItem__icon,
-        [class*="TabbarItem__icon"],
-        [class*="TabBarItem__icon"] {
-            margin: 0 !important;
-            padding: 0 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
         }
     `;
 
@@ -389,7 +346,7 @@
 
         for (let i = 0; i < navs.length; i++) {
             const nav = navs[i];
-            const items = nav.querySelectorAll('a, .vkuiTabbarItem, .TabbarItem, [class*="TabbarItem"], [class*="TabBarItem"]');
+            const items = nav.querySelectorAll('a, .vkuiTabbarItem, .TabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item');
             for (let j = 0; j < items.length; j++) {
                 const item = items[j];
                 const allElements = item.querySelectorAll('*');
@@ -419,97 +376,112 @@
         }
     }
 
-    // Применяем стили мгновенно на этапе инициализации
+    // Применяем стили мгновенно
     applyStyles();
 
     // ==========================================
-    //    ПЕРЕМЕЩЕНИЕ ФИЛЬТРА НЕПРОЧИТАННЫХ В ШАПКУ
+    //    ФИЛЬТР НЕПРОЧИТАННЫХ В ШАПКЕ (m.vk.ru/mail)
     // ==========================================
     const UNREAD_TOP_BTN_ID = 'vmu-top-unread-btn';
 
-    function isMessengerPage() {
+    function isMailOrMessengerPage() {
         const path = window.location.pathname.toLowerCase();
-        return path.startsWith('/im') || path.startsWith('/mail') || path.includes('/im');
+        return path.startsWith('/mail') || path.startsWith('/im') || path.includes('/mail') || path.includes('/im');
     }
 
-    function injectTopUnreadButton() {
-        if (!isMessengerPage()) {
-            const existingBtn = document.getElementById(UNREAD_TOP_BTN_ID);
-            if (existingBtn) existingBtn.remove();
+    function hideNativeUnreadBottomBar() {
+        if (!isMailOrMessengerPage()) return;
+        const all = document.querySelectorAll('div, [class*="FixedLayout"], [class*="filter"], [class*="unread"]');
+        for (let i = 0; i < all.length; i++) {
+            const el = all[i];
+            if (el.id === UNREAD_TOP_BTN_ID || el.closest('#' + UNREAD_TOP_BTN_ID)) continue;
+            if (el.id === SETTINGS_UI_ID || el.closest('#' + SETTINGS_UI_ID)) continue;
+
+            if (el.textContent && el.textContent.includes('Только непрочитанные') && el.querySelector('[role="switch"], input, [class*="Switch"], [class*="switch"]')) {
+                el.style.setProperty('display', 'none', 'important');
+                if (el.parentElement && el.parentElement !== document.body && el.parentElement.children.length === 1) {
+                    el.parentElement.style.setProperty('display', 'none', 'important');
+                }
+            }
+        }
+    }
+
+    function injectTopUnreadToggle() {
+        if (!isMailOrMessengerPage()) {
+            const btn = document.getElementById(UNREAD_TOP_BTN_ID);
+            if (btn) btn.remove();
             return;
         }
 
+        hideNativeUnreadBottomBar();
+
         if (document.getElementById(UNREAD_TOP_BTN_ID)) return;
 
-        // Ищем контейнер шапки мессенджера (рядом с архивом и кнопкой нового чата)
-        const headerAfter = document.querySelector(
-            '[class*="PanelHeader__after"], [class*="PanelHeader__right"], .vkuiPanelHeader__after, .PanelHeader__after'
+        // Ищем контейнер шапки мессенджера (кнопки справа: архив и создание сообщения)
+        const headerRight = document.querySelector(
+            '.vkuiPanelHeader__after, .PanelHeader__after, [class*="PanelHeader__after"], [class*="PanelHeader__right"], .vkuiPanelHeader__right, .im-page--header-right, [class*="PanelHeader"] [class*="Right"], .mail_header_actions'
         );
-        if (!headerAfter) return;
+        if (!headerRight) return;
 
         const btn = document.createElement('div');
         btn.id = UNREAD_TOP_BTN_ID;
         btn.title = 'Только непрочитанные';
         btn.style.cssText = `
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
-            user-select: none;
-            margin-right: 4px;
-            color: var(--vkui--color_icon_accent, #71AAEB);
-            background: transparent;
-            transition: background-color 0.2s ease, transform 0.15s ease, color 0.2s ease;
-            -webkit-tap-highlight-color: transparent;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 38px !important;
+            height: 38px !important;
+            border-radius: 50% !important;
+            cursor: pointer !important;
+            user-select: none !important;
+            margin-right: 4px !important;
+            color: var(--vkui--color_icon_secondary, #828282) !important;
+            background: transparent !important;
+            transition: background-color 0.2s ease, color 0.2s ease !important;
+            -webkit-tap-highlight-color: transparent !important;
+            flex-shrink: 0 !important;
         `;
 
-        // Иконка непрочитанных сообщений со светящейся точкой
         btn.innerHTML = `
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                <circle cx="12" cy="10" r="2" fill="currentColor"></circle>
+                <circle cx="12" cy="10" r="2.5" fill="currentColor"></circle>
             </svg>
         `;
 
-        let isUnreadActive = false;
+        let isUnread = false;
 
-        function updateBtnState() {
-            if (isUnreadActive) {
-                btn.style.backgroundColor = 'rgba(255, 92, 92, 0.16)';
-                btn.style.color = '#FF5C5C';
+        function updateBtnVisual() {
+            if (isUnread) {
+                btn.style.setProperty('background-color', 'rgba(255, 92, 92, 0.16)', 'important');
+                btn.style.setProperty('color', '#FF5C5C', 'important');
             } else {
-                btn.style.backgroundColor = 'transparent';
-                btn.style.color = 'var(--vkui--color_icon_secondary, #828282)';
+                btn.style.setProperty('background-color', 'transparent', 'important');
+                btn.style.setProperty('color', 'var(--vkui--color_icon_secondary, #828282)', 'important');
             }
         }
-
-        updateBtnState();
 
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
 
-            isUnreadActive = !isUnreadActive;
-            updateBtnState();
+            isUnread = !isUnread;
+            updateBtnVisual();
 
-            // Кликаем по нативному скрытому переключателю VK
-            const nativeToggle = document.querySelector(
-                '[class*="im-page--unread-filter"] [role="switch"], [class*="im-page--unread-filter"] input, [class*="im-unread"] input, [class*="UnreadFilter"] input'
+            // Кликаем по нативному переключателю VK
+            const nativeSwitch = document.querySelector(
+                '[class*="unread"] [role="switch"], [class*="unread"] input[type="checkbox"], [id*="unread"] input, #mail_filter_unread input, .mail_filter_unread input'
             );
-            if (nativeToggle) {
-                nativeToggle.click();
+            if (nativeSwitch) {
+                nativeSwitch.click();
             } else {
-                // Fallback: симулируем клик по элементу фильтра
-                const filterEl = document.querySelector('[class*="im-page--unread-filter"], [class*="im-unread"]');
-                if (filterEl) filterEl.click();
+                const unreadContainer = document.querySelector('[class*="unread_toggle"], .mail_filter_unread, [class*="unread_filter"]');
+                if (unreadContainer) unreadContainer.click();
             }
         });
 
-        // Вставляем кнопку первой перед архивом
-        headerAfter.insertBefore(btn, headerAfter.firstChild);
+        headerRight.insertBefore(btn, headerRight.firstChild);
     }
 
     // ==========================================
@@ -568,7 +540,6 @@
         textCol.appendChild(titleEl);
         textCol.appendChild(descEl);
 
-        // Контейнер переключателя (точный дизайн под Photo 2)
         const switchBtn = document.createElement('div');
         switchBtn.role = 'switch';
         switchBtn.setAttribute('aria-checked', initialChecked ? 'true' : 'false');
@@ -607,7 +578,6 @@
                 slider.style.backgroundColor = '#ffffff';
                 slider.style.transform = 'translateX(20px)';
             } else {
-                // ВЫКЛЮЧЕННОЕ СОСТОЯНИЕ (темно-серый трек и серый ползунок, как на Фото 2)
                 switchBtn.style.backgroundColor = '#2c2d2e';
                 switchBtn.style.borderColor = 'rgba(255, 255, 255, 0.12)';
                 slider.style.backgroundColor = '#8c9096';
@@ -641,7 +611,6 @@
         const isAppearance = isAppearancePage();
         const existingCard = document.getElementById(SETTINGS_UI_ID);
 
-        // Если мы НЕ на странице внешнего вида — немедленно удаляем карточку из DOM
         if (!isAppearance) {
             if (existingCard) {
                 existingCard.remove();
@@ -651,7 +620,6 @@
 
         if (existingCard) return;
 
-        // Ищем группу тем оформления
         const radio = document.querySelector('input[type="radio"], .vkuiRadio, [class*="Radio"], [class*="Appearance"]');
         let target = null;
 
@@ -699,7 +667,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v1.9</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.0</span>
         `;
         card.appendChild(header);
 
@@ -741,7 +709,7 @@
     function init() {
         applyStyles();
         updateSettingsVisibility();
-        injectTopUnreadButton();
+        injectTopUnreadToggle();
     }
 
     if (document.readyState === 'loading') {
@@ -753,7 +721,7 @@
     // Периодическая проверка видимости элементов
     setInterval(() => {
         updateSettingsVisibility();
-        injectTopUnreadButton();
+        injectTopUnreadToggle();
         if (isHideLabelsEnabled) {
             updateBottomBarLabels();
         }
@@ -763,11 +731,11 @@
     function onNavigate() {
         applyStyles();
         updateSettingsVisibility();
-        injectTopUnreadButton();
+        injectTopUnreadToggle();
         setTimeout(updateSettingsVisibility, 100);
-        setTimeout(injectTopUnreadButton, 100);
+        setTimeout(injectTopUnreadToggle, 100);
         setTimeout(updateSettingsVisibility, 300);
-        setTimeout(injectTopUnreadButton, 300);
+        setTimeout(injectTopUnreadToggle, 300);
         if (isHideLabelsEnabled) {
             updateBottomBarLabels();
         }
