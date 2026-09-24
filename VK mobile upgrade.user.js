@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.8.7
+// @version      2.8.8
 // @description  Улучшение интерфейса m.vk.ru: тема Snow Black, скрытие стандартного блока темы, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера, скрытие меню действий в списке чатов, скрытие панели папок и исправление верстки.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -388,7 +388,7 @@
     `;
 
     const HIDE_LABELS_CSS = `
-        /* СКРЫТИЕ ТОЛЬКО ТЕКСТОВЫХ ПОДПИСЕЙ В НИЖНЕЙ НАВИГАЦИОННОЙ ПАНЕЛИ */
+        /* 1. СКРЫТИЕ ВСЕХ ТЕКСТОВЫХ ПОДПИСЕЙ В НИЖНЕЙ НАВИГАЦИОННОЙ ПАНЕЛИ */
         .vkuiTabbarItem__text,
         .vkuiTabbarItem__children,
         [class*="TabbarItem__text"],
@@ -396,10 +396,22 @@
         [class*="TabbarItem__children"],
         [class*="TabBarItem__children"],
         .bottom_nav__text,
+        .bottom_nav__label,
+        #bottom_nav [class*="label"],
         #bottom_nav [class*="text"],
-        .bottom_nav [class*="text"],
         #bottom_nav [class*="caption"],
-        .bottom_nav [class*="caption"] {
+        .bottom_nav [class*="label"],
+        .bottom_nav [class*="text"],
+        .bottom_nav [class*="caption"],
+        .vkuiTabbarItem__in > .vkuiTabbarItem__label:not([class*="Counter"]):not([class*="Badge"]):not([class*="Indicator"]):not([class*="indicator"]),
+        [class*="TabbarItem__in"] > [class*="TabbarItem__label"]:not([class*="Counter"]):not([class*="Badge"]):not([class*="Indicator"]):not([class*="indicator"]),
+        [class*="TabBarItem__in"] > [class*="TabBarItem__label"]:not([class*="Counter"]):not([class*="Badge"]):not([class*="Indicator"]):not([class*="indicator"]),
+        .vkuiTabbarItem__label:not([class*="Counter"]):not([class*="Badge"]):not([class*="Indicator"]):not([class*="indicator"]):not(:has([class*="Counter"])):not(:has([class*="Badge"])):not([class*="icon"]):not([class*="Icon"]),
+        [class*="TabbarItem__label"]:not([class*="Counter"]):not([class*="Badge"]):not([class*="Indicator"]):not([class*="indicator"]):not(:has([class*="Counter"])):not(:has([class*="Badge"])):not([class*="icon"]):not([class*="Icon"]),
+        [class*="TabBarItem__label"]:not([class*="Counter"]):not([class*="Badge"]):not([class*="Indicator"]):not([class*="indicator"]):not(:has([class*="Counter"])):not(:has([class*="Badge"])):not([class*="icon"]):not([class*="Icon"]),
+        .vkuiTabbarItem > .vkuiTabbarItem__in > span:last-child:not([class*="Counter"]):not([class*="Badge"]):not([class*="Indicator"]):not([class*="indicator"]),
+        [class*="TabbarItem"] > [class*="TabbarItem__in"] > span:last-child:not([class*="Counter"]):not([class*="Badge"]):not([class*="Indicator"]):not([class*="indicator"]),
+        [class*="TabBarItem"] > [class*="TabBarItem__in"] > span:last-child:not([class*="Counter"]):not([class*="Badge"]):not([class*="Indicator"]):not([class*="indicator"]) {
             display: none !important;
             visibility: hidden !important;
             opacity: 0 !important;
@@ -412,92 +424,85 @@
             pointer-events: none !important;
         }
 
-        /* Идеальное вертикальное и горизонтальное центрирование иконок */
-        [class*="Tabbar"],
-        .vkuiTabbar,
-        #bottom_nav,
-        .bottom_nav {
-            display: flex !important;
-            flex-direction: row !important;
-            width: 100% !important;
-            align-items: center !important;
-            justify-content: space-around !important;
-            height: 52px !important;
-            min-height: 52px !important;
-            box-sizing: border-box !important;
-        }
-
-        [class*="TabbarItem"],
-        [class*="TabBarItem"],
-        .vkuiTabbarItem,
-        .bottom_nav__item,
-        #bottom_nav a,
-        .bottom_nav a {
-            flex: 1 1 0% !important;
-            min-width: 0 !important;
-            max-width: none !important;
-            height: 100% !important;
-            min-height: 100% !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
-            text-align: center !important;
-            position: relative !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            box-sizing: border-box !important;
-        }
-
-        [class*="TabbarItem__in"],
-        [class*="TabBarItem__in"],
-        .vkuiTabbarItem__in,
-        .bottom_nav__in {
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
-            text-align: center !important;
-            width: 100% !important;
-            height: 100% !important;
-            position: relative !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            box-sizing: border-box !important;
-        }
-
-        [class*="TabbarItem__icon"],
-        [class*="TabBarItem__icon"],
-        .vkuiTabbarItem__icon {
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            position: relative !important;
-            width: 28px !important;
-            height: 28px !important;
-            margin: auto !important;
-        }
-
-        /* Индикатор / бейдж / счетчик сообщений (.vkuiTabbarItem__label) - СТРОГО ВИДИМ */
-        .vkuiTabbarItem__label,
-        [class*="TabbarItem__label"],
-        [class*="TabBarItem__label"],
-        .vkuiTabbarItem__badge,
-        .vkuiTabbarItem__indicator,
-        .vkuiIndicator,
+        /* 2. СТРОГОЕ СОХРАНЕНИЕ ВИДИМОСТИ ИНДИКАТОРОВ И СЧЕТЧИКОВ СООБЩЕНИЙ */
+        .vkuiTabbar [class*="Counter"],
+        .vkuiTabbar [class*="Badge"],
+        .vkuiTabbar [class*="Indicator"],
+        .vkuiTabbar [class*="indicator"],
+        .vkuiTabbar .vkuiCounter,
+        .vkuiTabbar .vkuiBadge,
+        .vkuiTabbar .vkuiIndicator,
+        [class*="Tabbar"] [class*="Counter"],
+        [class*="Tabbar"] [class*="Badge"],
+        [class*="Tabbar"] [class*="Indicator"],
+        [class*="Tabbar"] [class*="indicator"],
         [class*="TabbarItem"] [class*="Counter"],
         [class*="TabbarItem"] [class*="Badge"],
+        [class*="TabbarItem"] [class*="Indicator"],
+        [class*="TabbarItem"] [class*="indicator"],
         [class*="TabBarItem"] [class*="Counter"],
         [class*="TabBarItem"] [class*="Badge"],
+        [class*="TabBarItem"] [class*="Indicator"],
+        [class*="TabBarItem"] [class*="indicator"],
+        .vkuiTabbarItem__indicator,
+        .vkuiTabbarItem__badge,
+        .vkuiIndicator,
+        [class*="TabbarItem__icon"] [class*="indicator"],
+        [class*="TabbarItem__icon"] [class*="Indicator"],
+        [class*="TabbarItem__icon"] [class*="badge"],
+        [class*="TabbarItem__icon"] [class*="Badge"],
+        [class*="TabbarItem__icon"] [class*="counter"],
+        [class*="TabbarItem__icon"] [class*="Counter"],
+        .vkuiTabbarItem__icon .vkuiTabbarItem__indicator,
+        .vkuiTabbarItem__icon .vkuiTabbarItem__badge,
+        .vkuiTabbarItem__icon .vkuiIndicator,
+        .vkuiTabbarItem__icon .vkuiCounter,
+        #bottom_nav [class*="counter"],
+        #bottom_nav [class*="badge"],
+        #bottom_nav [class*="Counter"],
+        #bottom_nav [class*="Badge"],
+        #bottom_nav [class*="indicator"],
         .bottom_nav [class*="counter"],
         .bottom_nav [class*="badge"],
+        .bottom_nav [class*="Counter"],
+        .bottom_nav [class*="Badge"],
         .bottom_nav [class*="indicator"] {
             display: inline-flex !important;
             visibility: visible !important;
             opacity: 1 !important;
             pointer-events: auto !important;
-            position: absolute !important;
-            z-index: 10 !important;
+        }
+
+        /* 3. ЦЕНТРИРОВАНИЕ ИКОНОК В ТАБ-БАРЕ БЕЗ НАРУШЕНИЯ ФИКСИРОВАННОГО ПОЛОЖЕНИЯ */
+        .vkuiTabbarItem,
+        [class*="TabbarItem"],
+        [class*="TabBarItem"],
+        .bottom_nav__item,
+        #bottom_nav a,
+        .bottom_nav a {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        .vkuiTabbarItem__in,
+        [class*="TabbarItem__in"],
+        [class*="TabBarItem__in"],
+        .bottom_nav__in {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            height: 100% !important;
+        }
+
+        .vkuiTabbarItem__icon,
+        [class*="TabbarItem__icon"],
+        [class*="TabBarItem__icon"] {
+            margin: 0 auto !important;
         }
     `;
 
@@ -1073,7 +1078,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.8.7</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.8.8</span>
         `;
         card.appendChild(header);
 
