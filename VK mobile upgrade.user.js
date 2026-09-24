@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      1.0
-// @description  Улучшение и кастомизация интерфейса мобильной версии VK (m.vk.ru / vk.ru). Смена акцентных цветов, имен в чатах, лайков и системных статусов.
+// @version      1.1
+// @description  Улучшение и кастомизация интерфейса мобильной версии VK (m.vk.ru / vk.ru). Опциональная смена акцентных цветов (#71AAEB ⇄ #FF5C5C) и скрытие подписей в нижней панели с настройками в «Внешний вид».
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -25,13 +25,40 @@
 (function() {
     'use strict';
 
+    // ==========================================
+    //            НАСТРОЙКИ (STORAGE)
+    // ==========================================
+    const STORAGE_KEYS = {
+        COLOR_SWAP: 'vmu_color_swap',
+        HIDE_TAB_LABELS: 'vmu_hide_tab_labels'
+    };
+
+    function getSetting(key, defaultValue) {
+        try {
+            const val = localStorage.getItem(key);
+            if (val === null) return defaultValue;
+            return val === 'true';
+        } catch (e) {
+            return defaultValue;
+        }
+    }
+
+    function setSetting(key, value) {
+        try {
+            localStorage.setItem(key, String(value));
+        } catch (e) {}
+    }
+
+    let isColorSwapEnabled = getSetting(STORAGE_KEYS.COLOR_SWAP, true);
+    let isHideLabelsEnabled = getSetting(STORAGE_KEYS.HIDE_TAB_LABELS, false);
+
+    // ==========================================
+    //         ЦВЕТА И СТИЛИ ПОДМЕНЫ
+    // ==========================================
     const COLOR_ACCENT_SWAPPED = '#FF5C5C'; // Изначально #71AAEB -> теперь красный
     const COLOR_NEGATIVE_SWAPPED = '#71AAEB'; // Изначально #FF5C5C -> теперь голубой
 
-    // ==========================================
-    //       ГЛОБАЛЬНЫЕ СТИЛИ И СЕМАНТИКА
-    // ==========================================
-    const CUSTOM_CSS = `
+    const COLOR_SWAP_CSS = `
         /* 1. ПОЛНАЯ ЗАМЕНА ТОКЕНОВ И ПЕРЕМЕННЫХ VKUI И VK MOBILE */
         *, *::before, *::after,
         :root, html, body,
@@ -168,25 +195,73 @@
         }
     `;
 
-    const STYLE_ID = 'vk-mobile-upgrade-styles';
+    const HIDE_LABELS_CSS = `
+        /* Скрытие подписей под иконками в нижней панели */
+        [class*="TabBarItem__text"],
+        [class*="TabBarItem__label"],
+        [class*="TabBarItem__in"] > [class*="Typography"],
+        [class*="BottomNavigationItem__text"],
+        [class*="BottomNavigationItem__label"],
+        [class*="TabBarItem"] > span[class*="Typography"],
+        [class*="TabBarItem"] [class*="Caption"],
+        [class*="TabBarItem"] [class*="Footnote"],
+        [class*="TabBarItem"] [class*="Subhead"],
+        .TabBarItem__text,
+        .TabBarItem__label,
+        .BottomNavigationItem__label {
+            display: none !important;
+        }
 
-    function injectMasterStyle() {
-        let style = document.getElementById(STYLE_ID);
+        /* Вертикальное центрирование иконок */
+        [class*="TabBarItem__in"],
+        [class*="TabBarItem"],
+        [class*="BottomNavigationItem"] {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }
+
+        [class*="TabBarItem__icon"],
+        [class*="BottomNavigationItem__icon"] {
+            margin: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+    `;
+
+    // ==========================================
+    //           УПРАВЛЕНИЕ СТИЛЯМИ
+    // ==========================================
+    function setOrRemoveStyle(id, css, enabled) {
+        let style = document.getElementById(id);
+        if (!enabled) {
+            if (style) style.remove();
+            return;
+        }
+
         const parent = document.head || document.documentElement;
         if (!parent) return;
 
         if (!style) {
             style = document.createElement('style');
-            style.id = STYLE_ID;
+            style.id = id;
             style.type = 'text/css';
             parent.appendChild(style);
         } else if (style.parentElement !== parent) {
             parent.appendChild(style);
         }
 
-        if (style.textContent !== CUSTOM_CSS) {
-            style.textContent = CUSTOM_CSS;
+        if (style.textContent !== css) {
+            style.textContent = css;
         }
+    }
+
+    function applyCurrentStyles() {
+        setOrRemoveStyle('vmu-color-swap-styles', COLOR_SWAP_CSS, isColorSwapEnabled);
+        setOrRemoveStyle('vmu-hide-labels-styles', HIDE_LABELS_CSS, isHideLabelsEnabled);
     }
 
     // ==========================================
@@ -226,7 +301,7 @@
     }
 
     function processElement(el) {
-        if (!el || el.nodeType !== 1) return;
+        if (!isColorSwapEnabled || !el || el.nodeType !== 1) return;
 
         // 1. Атрибуты SVG Fill / Stroke
         const fill = el.getAttribute('fill');
@@ -260,7 +335,7 @@
     }
 
     function processTree(root) {
-        if (!root || root.nodeType !== 1) return;
+        if (!isColorSwapEnabled || !root || root.nodeType !== 1) return;
         processElement(root);
         const children = root.querySelectorAll('*');
         for (let i = 0; i < children.length; i++) {
@@ -269,30 +344,164 @@
     }
 
     // ==========================================
+    //    ИНТЕРФЕЙС НАСТРОЕК В m.vk.ru/settings
+    // ==========================================
+    const SETTINGS_UI_ID = 'vk-mobile-upgrade-settings-card';
+
+    function isAppearancePage() {
+        const url = window.location.href;
+        return url.includes('act=appearance') || url.includes('/settings/appearance') || (url.includes('/settings') && url.includes('appearance'));
+    }
+
+    function injectSettingsUI() {
+        if (!isAppearancePage()) return;
+        if (document.getElementById(SETTINGS_UI_ID)) return;
+
+        // Ищем подходящий контейнер настроек
+        const container = document.querySelector(
+            '[class*="AppearanceSettings"], [class*="settings_appearance"], [class*="SettingsAppearance"], .vkuiPanel__in, .Panel__in, main, [class*="Panel"]'
+        );
+        if (!container) return;
+
+        // Создаем блок настроек
+        const card = document.createElement('div');
+        card.id = SETTINGS_UI_ID;
+        card.style.cssText = `
+            margin: 16px 12px;
+            background: var(--vkui--color_background_content, var(--background_content, #222222));
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08));
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", sans-serif);
+        `;
+
+        card.innerHTML = `
+            <style>
+                .vmu-switch-wrapper {
+                    position: relative;
+                    display: inline-block;
+                    width: 46px;
+                    height: 26px;
+                    flex-shrink: 0;
+                }
+                .vmu-switch-wrapper input {
+                    opacity: 0;
+                    width: 0;
+                    height: 0;
+                }
+                .vmu-switch-slider {
+                    position: absolute;
+                    cursor: pointer;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    background-color: var(--vkui--color_track_background, rgba(255, 255, 255, 0.2));
+                    transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                    border-radius: 26px;
+                }
+                .vmu-switch-slider:before {
+                    position: absolute;
+                    content: "";
+                    height: 20px;
+                    width: 20px;
+                    left: 3px;
+                    bottom: 3px;
+                    background-color: #ffffff;
+                    transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                    border-radius: 50%;
+                    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+                }
+                .vmu-switch-wrapper input:checked + .vmu-switch-slider {
+                    background-color: var(--vkui--color_background_accent, #2787F5);
+                }
+                .vmu-switch-wrapper input:checked + .vmu-switch-slider:before {
+                    transform: translateX(20px);
+                }
+            </style>
+            <div style="padding: 14px 16px 8px; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--vkui--color_text_subhead, #888888); display: flex; align-items: center; justify-content: space-between;">
+                <span>🚀 VK Mobile Upgrade</span>
+                <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v1.1</span>
+            </div>
+
+            <!-- Тумблер 1: Подмена цветов -->
+            <label style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08)); user-select: none;">
+                <div style="flex: 1; padding-right: 14px;">
+                    <div style="font-size: 15px; font-weight: 500; color: var(--vkui--color_text_primary, #ffffff); line-height: 1.3;">Подмена цветов темы</div>
+                    <div style="font-size: 12px; color: var(--vkui--color_text_secondary, #999999); margin-top: 3px; line-height: 1.3;">Меняет местами #71AAEB (акценты/имена) и #FF5C5C (лайки/ошибки)</div>
+                </div>
+                <div class="vmu-switch-wrapper">
+                    <input type="checkbox" id="vmu-toggle-color-swap" ${isColorSwapEnabled ? 'checked' : ''}>
+                    <span class="vmu-switch-slider"></span>
+                </div>
+            </label>
+
+            <!-- Тумблер 2: Скрыть подписи на панели -->
+            <label style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; user-select: none;">
+                <div style="flex: 1; padding-right: 14px;">
+                    <div style="font-size: 15px; font-weight: 500; color: var(--vkui--color_text_primary, #ffffff); line-height: 1.3;">Скрыть подписи на нижней панели</div>
+                    <div style="font-size: 12px; color: var(--vkui--color_text_secondary, #999999); margin-top: 3px; line-height: 1.3;">Оставлять только иконки (Главная, Поиск, Мессенджер, Клипы, Ещё)</div>
+                </div>
+                <div class="vmu-switch-wrapper">
+                    <input type="checkbox" id="vmu-toggle-hide-labels" ${isHideLabelsEnabled ? 'checked' : ''}>
+                    <span class="vmu-switch-slider"></span>
+                </div>
+            </label>
+        `;
+
+        container.appendChild(card);
+
+        // Обработчики переключения
+        const colorCheckbox = card.querySelector('#vmu-toggle-color-swap');
+        if (colorCheckbox) {
+            colorCheckbox.addEventListener('change', (e) => {
+                isColorSwapEnabled = e.target.checked;
+                setSetting(STORAGE_KEYS.COLOR_SWAP, isColorSwapEnabled);
+                applyCurrentStyles();
+                if (isColorSwapEnabled) {
+                    processTree(document.documentElement);
+                }
+            });
+        }
+
+        const labelsCheckbox = card.querySelector('#vmu-toggle-hide-labels');
+        if (labelsCheckbox) {
+            labelsCheckbox.addEventListener('change', (e) => {
+                isHideLabelsEnabled = e.target.checked;
+                setSetting(STORAGE_KEYS.HIDE_TAB_LABELS, isHideLabelsEnabled);
+                applyCurrentStyles();
+            });
+        }
+    }
+
+    // ==========================================
     //               НАБЛЮДАТЕЛЬ
     // ==========================================
     const observer = new MutationObserver((mutations) => {
-        injectMasterStyle();
+        applyCurrentStyles();
+        injectSettingsUI();
 
-        for (let i = 0; i < mutations.length; i++) {
-            const m = mutations[i];
-            if (m.type === 'childList') {
-                for (let j = 0; j < m.addedNodes.length; j++) {
-                    const node = m.addedNodes[j];
-                    if (node.nodeType === 1) {
-                        processTree(node);
+        if (isColorSwapEnabled) {
+            for (let i = 0; i < mutations.length; i++) {
+                const m = mutations[i];
+                if (m.type === 'childList') {
+                    for (let j = 0; j < m.addedNodes.length; j++) {
+                        const node = m.addedNodes[j];
+                        if (node.nodeType === 1) {
+                            processTree(node);
+                        }
                     }
+                } else if (m.type === 'attributes') {
+                    processElement(m.target);
                 }
-            } else if (m.type === 'attributes') {
-                processElement(m.target);
             }
         }
     });
 
     function start() {
-        injectMasterStyle();
+        applyCurrentStyles();
         if (document.documentElement) {
-            processTree(document.documentElement);
+            if (isColorSwapEnabled) {
+                processTree(document.documentElement);
+            }
             observer.observe(document.documentElement, {
                 childList: true,
                 subtree: true,
@@ -300,10 +509,11 @@
                 attributeFilter: ['style', 'fill', 'stroke']
             });
         }
+        injectSettingsUI();
     }
 
-    // Запуск на ранней стадии
-    injectMasterStyle();
+    // Запуск на раннем этапе
+    applyCurrentStyles();
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', start);
@@ -311,6 +521,13 @@
         start();
     }
 
-    window.addEventListener('load', injectMasterStyle);
-    window.addEventListener('popstate', injectMasterStyle);
+    window.addEventListener('load', () => {
+        applyCurrentStyles();
+        injectSettingsUI();
+    });
+
+    window.addEventListener('popstate', () => {
+        applyCurrentStyles();
+        injectSettingsUI();
+    });
 })();
