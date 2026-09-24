@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.2
+// @version      2.3
 // @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера и исправление верстки.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -89,27 +89,11 @@
             font-weight: 600 !important;
         }
 
-        /* 2. ОТСТУП СПИСКА ДИАЛОГОВ ПОД ШТОРКОЙ КАТЕГОРИЙ (ТОЛЬКО В МЕССЕНДЖЕРЕ) */
+        /* 2. АККУРАТНЫЙ ОТСТУП СПИСКА ДИАЛОГОВ ПОД ШТОРКОЙ КАТЕГОРИЙ */
         body.vmu-page-mail [class*="SubnavigationBar"],
         body.vmu-page-mail .vkuiSubnavigationBar,
         body.vmu-page-mail [class*="HorizontalScroll"] {
-            margin-bottom: 24px !important;
-        }
-
-        body.vmu-page-mail [class*="SubnavigationBar"] + *,
-        body.vmu-page-mail .vkuiSubnavigationBar + *,
-        body.vmu-page-mail [class*="HorizontalScroll"] + * {
-            margin-top: 24px !important;
-            padding-top: 6px !important;
-        }
-
-        /* 3. СКРЫТИЕ НИЖНЕЙ ШТОРКИ "ТОЛЬКО НЕПРОЧИТАННЫЕ" В МЕССЕНДЖЕРЕ */
-        body.vmu-page-mail [class*="FixedLayout"]:has(input[type="checkbox"]):not(:has([class*="Tabbar"])):not(:has([class*="TabBar"])),
-        body.vmu-page-mail [class*="FixedLayout"]:has([role="switch"]):not(:has([class*="Tabbar"])):not(:has([class*="TabBar"])),
-        body.vmu-page-mail [class*="FixedLayout"]:has([class*="Switch"]):not(:has([class*="Tabbar"])):not(:has([class*="TabBar"])),
-        body.vmu-page-mail [class*="im-page--unread-filter"],
-        body.vmu-page-mail [class*="im-unread-filter"] {
-            display: none !important;
+            margin-bottom: 6px !important;
         }
     `;
 
@@ -381,12 +365,20 @@
     // ==========================================
     function isMailOrMessengerPage() {
         const path = (window.location.pathname + window.location.hash + window.location.search).toLowerCase();
-        if (path.includes('/mail') || path.includes('/im') || path.includes('act=mail') || path.includes('sel=') || path.includes('al_im')) {
+        if (path.includes('/mail') || path.includes('/im') || path.includes('act=mail') || path.includes('sel=') || path.includes('al_im') || path.includes('chats') || path.includes('dialogs')) {
             return true;
         }
-        if (document.querySelector('[class*="im-page"], [class*="im-dialogs"], [data-testid="chat-list"], [class*="DialogsList"], [class*="im-header"]')) {
+
+        const headerTitle = document.querySelector('.vkuiPanelHeader__typography, [class*="PanelHeader__typography"], .vkuiPanelHeader__content, [class*="PanelHeader__content"], h1, h2');
+        if (headerTitle && headerTitle.textContent && headerTitle.textContent.trim().toLowerCase() === 'мессенджер') {
             return true;
         }
+
+        const tabs = document.querySelector('[class*="SubnavigationBar"], .vkuiSubnavigationBar');
+        if (tabs && tabs.textContent.includes('Каналы') && tabs.textContent.includes('Чаты')) {
+            return true;
+        }
+
         return false;
     }
 
@@ -394,7 +386,6 @@
         const path = window.location.pathname.toLowerCase();
         const search = window.location.search.toLowerCase();
 
-        // Строгая изоляция: не отображать в чатах, ленте, клипах, профилях и т.д.
         if (path.startsWith('/im') || path.startsWith('/mail') || path.startsWith('/feed') ||
             path.startsWith('/clips') || path.startsWith('/video') || path.startsWith('/music') ||
             path.startsWith('/id') || path.startsWith('/wall') || path.startsWith('/audios') ||
@@ -434,40 +425,65 @@
     const UNREAD_TOP_BTN_ID = 'vmu-top-unread-btn';
 
     function handleUnreadFilter() {
-        if (!isMailOrMessengerPage()) {
-            const btn = document.getElementById(UNREAD_TOP_BTN_ID);
-            if (btn) btn.remove();
-            return;
-        }
-
-        // 1. Находим нативный переключатель и скрываем его плавающий контейнер снизу
+        const allEls = document.querySelectorAll('label, div, span, p, [class*="Cell"], [class*="Row"]');
+        let unreadRow = null;
         let nativeSwitch = null;
-        const candidates = document.querySelectorAll('input[type="checkbox"], [role="switch"], [class*="Switch"], [class*="switch"]');
 
-        for (let i = 0; i < candidates.length; i++) {
-            const sw = candidates[i];
-            const text = (sw.closest('label, div, [class*="Cell"], [class*="Row"]')?.textContent || '') + (sw.getAttribute('aria-label') || '');
-            if (text.toLowerCase().includes('непрочитан')) {
-                nativeSwitch = sw;
-                const container = sw.closest('[class*="FixedLayout"], [class*="Card"], [class*="Cell"], [class*="Banner"]') || sw.parentElement;
-                if (container && container !== document.body && container.id !== 'root') {
-                    if (!container.querySelector('[class*="Tabbar"], [class*="TabBar"], [class*="PanelHeader"], [class*="im-page--history"]')) {
-                        container.style.setProperty('display', 'none', 'important');
-                    }
-                }
+        for (let i = 0; i < allEls.length; i++) {
+            const el = allEls[i];
+            if (el.children.length <= 4 && el.textContent && el.textContent.trim().toLowerCase().includes('только непрочитанные')) {
+                unreadRow = el;
+                break;
             }
         }
 
-        // 2. Внедряем кнопку в шапку мессенджера
-        injectTopUnreadToggle(nativeSwitch);
+        if (unreadRow) {
+            nativeSwitch = unreadRow.querySelector('input[type="checkbox"], [role="switch"], [class*="Switch"], [class*="switch"]') ||
+                           unreadRow.parentElement?.querySelector('input[type="checkbox"], [role="switch"]');
+
+            let container = unreadRow;
+            while (container && container !== document.body && container.id !== 'root') {
+                const style = window.getComputedStyle(container);
+                const isFixed = style.position === 'fixed' || style.position === 'sticky' || style.position === 'absolute';
+                const isVkuiWrapper = container.classList.contains('vkuiFixedLayout') || 
+                                      container.classList.contains('vkuiCard') || 
+                                      container.classList.contains('vkuiCell') ||
+                                      container.classList.contains('vkuiSimpleCell') ||
+                                      (container.className && typeof container.className === 'string' && container.className.includes('FixedLayout'));
+
+                const hasTabbar = container.querySelector('[class*="Tabbar"], [class*="TabBar"], .vkuiTabbar');
+                const hasHeader = container.querySelector('[class*="PanelHeader"], .vkuiPanelHeader');
+
+                if ((isFixed || isVkuiWrapper) && !hasTabbar && !hasHeader) {
+                    container.style.setProperty('display', 'none', 'important');
+                    container.style.setProperty('visibility', 'hidden', 'important');
+                    container.style.setProperty('height', '0', 'important');
+                    container.style.setProperty('overflow', 'hidden', 'important');
+                    break;
+                }
+                if (container.parentElement === document.body || container.parentElement?.id === 'root') {
+                    unreadRow.style.setProperty('display', 'none', 'important');
+                    break;
+                }
+                container = container.parentElement;
+            }
+
+            injectTopUnreadToggle(nativeSwitch, unreadRow);
+        } else {
+            if (!isMailOrMessengerPage()) {
+                const btn = document.getElementById(UNREAD_TOP_BTN_ID);
+                if (btn) btn.remove();
+            }
+        }
     }
 
-    function injectTopUnreadToggle(nativeSwitch) {
+    function injectTopUnreadToggle(nativeSwitch, unreadRow) {
         if (document.getElementById(UNREAD_TOP_BTN_ID)) return;
 
         const headerRight = document.querySelector(
-            '.vkuiPanelHeader__after, .PanelHeader__after, [class*="PanelHeader__after"], [class*="PanelHeader__right"], .vkuiPanelHeader__right, .im-page--header-right, [class*="PanelHeader"] [class*="Right"], .mail_header_actions, [class*="PanelHeader__in"]'
-        );
+            '.vkuiPanelHeader__after, [class*="PanelHeader__after"], .vkuiPanelHeader__controls, [class*="PanelHeader__controls"], .vkuiPanelHeader__right, [class*="PanelHeader__right"], [class*="PanelHeader"] [class*="After"], [class*="PanelHeader"] [class*="Right"]'
+        ) || document.querySelector('.vkuiPanelHeader__in, [class*="PanelHeader__in"], .vkuiPanelHeader, [class*="PanelHeader"]');
+
         if (!headerRight) return;
 
         const btn = document.createElement('div');
@@ -478,12 +494,12 @@
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            width: 40px !important;
-            height: 40px !important;
+            width: 44px !important;
+            height: 44px !important;
             border-radius: 50% !important;
             cursor: pointer !important;
             user-select: none !important;
-            margin-right: 4px !important;
+            margin-right: 2px !important;
             color: var(--vkui--color_icon_secondary, #828282) !important;
             background: transparent !important;
             transition: background-color 0.2s ease, color 0.2s ease !important;
@@ -518,48 +534,40 @@
 
         updateBtnVisual();
 
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+        function triggerToggle(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
 
             isUnread = !isUnread;
             updateBtnVisual();
 
             if (nativeSwitch && typeof nativeSwitch.click === 'function') {
                 nativeSwitch.click();
+            } else if (unreadRow) {
+                const clickable = unreadRow.querySelector('label, [class*="Switch"], [role="switch"], input') || unreadRow;
+                clickable.click();
             } else {
-                const switches = document.querySelectorAll('input[type="checkbox"], [role="switch"]');
-                for (let i = 0; i < switches.length; i++) {
-                    const sw = switches[i];
-                    const text = (sw.closest('label, div, [class*="Cell"]')?.textContent || '') + (sw.getAttribute('aria-label') || '');
-                    if (text.toLowerCase().includes('непрочитан')) {
-                        sw.click();
+                const candidates = document.querySelectorAll('label, div, span, input');
+                for (let i = 0; i < candidates.length; i++) {
+                    const c = candidates[i];
+                    if (c.textContent && c.textContent.trim().toLowerCase().includes('только непрочитанные')) {
+                        const clickTarget = c.closest('label, [class*="Cell"], div') || c;
+                        clickTarget.click();
                         break;
                     }
                 }
             }
-        });
+        }
+
+        btn.addEventListener('click', triggerToggle);
+        btn.addEventListener('touchend', triggerToggle, { passive: false });
 
         if (headerRight.firstChild) {
             headerRight.insertBefore(btn, headerRight.firstChild);
         } else {
             headerRight.appendChild(btn);
-        }
-    }
-
-    function fixChatListOverlap() {
-        if (!isMailOrMessengerPage()) return;
-        const subnav = document.querySelector('[class*="SubnavigationBar"], .vkuiSubnavigationBar, [class*="HorizontalScroll"]');
-        if (subnav) {
-            subnav.style.setProperty('margin-bottom', '24px', 'important');
-            let next = subnav.nextElementSibling;
-            while (next) {
-                if (next.offsetHeight > 0) {
-                    next.style.setProperty('margin-top', '16px', 'important');
-                    break;
-                }
-                next = next.nextElementSibling;
-            }
         }
     }
 
@@ -722,7 +730,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.2</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.3</span>
         `;
         card.appendChild(header);
 
@@ -766,7 +774,6 @@
         applyStyles();
         updateSettingsVisibility();
         handleUnreadFilter();
-        fixChatListOverlap();
     }
 
     let observer = null;
@@ -791,7 +798,6 @@
         startObserver();
     }
 
-    // Резервный таймер для гарантии мгновенной реакции SPA
     setInterval(runAllFixes, 200);
 
     window.addEventListener('load', runAllFixes);
