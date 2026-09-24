@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.8.1
+// @version      2.8.2
 // @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера, скрытие меню действий в списке чатов и исправление верстки.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -137,22 +137,46 @@
         }
 
         /* 5. СКРЫТИЕ КНОПКИ ДЕЙСТВИЙ (3 ТОЧКИ) В СПИСКЕ ДИАЛОГОВ И СМЕЩЕНИЕ СЧЕТЧИКА ВПРАВО */
+        [class*="SimpleCell__after"] button,
+        [class*="SimpleCell__after"] [role="button"],
+        [class*="SimpleCell__after"] [class*="IconButton"],
+        [class*="SimpleCell__after"] [class*="Tappable"]:not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter),
+        [class*="SimpleCell__after"] > *:not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter),
+        [class*="Cell__after"] button,
+        [class*="Cell__after"] [role="button"],
+        [class*="Cell__after"] [class*="IconButton"],
+        [class*="Cell__after"] [class*="Tappable"]:not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter),
+        [class*="Cell__after"] > *:not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter),
+        [class*="SimpleCell"] button:has([class*="more"]),
+        [class*="SimpleCell"] [role="button"]:has([class*="more"]),
+        [class*="SimpleCell"] [class*="IconButton"]:has([class*="more"]),
+        [class*="Cell"] button:has([class*="more"]),
+        [class*="Cell"] [role="button"]:has([class*="more"]),
+        [class*="Cell"] [class*="IconButton"]:has([class*="more"]),
+        [class*="ConvoItem"] [class*="Icon--more"],
+        [class*="ConvoItem"] [class*="more_vertical"],
+        [class*="ConvoItem"] [class*="more_horizontal"],
+        [class*="ConvoItem__actions"],
+        [class*="im-dialog--actions"],
+        [class*="ConvoItem__more"],
         [class*="SimpleCell__after"] [class*="Icon--more"],
-        [class*="Cell__after"] [class*="Icon--more"],
+        [class*="SimpleCell__after"] [class*="more_vertical"],
+        [class*="SimpleCell__after"] [class*="more_horizontal"],
         [class*="SimpleCell__after"] [class*="Icon--more_vertical"],
-        [class*="Cell__after"] [class*="Icon--more_vertical"],
         [class*="SimpleCell__after"] [class*="Icon--more_horizontal"],
+        [class*="Cell__after"] [class*="Icon--more"],
+        [class*="Cell__after"] [class*="more_vertical"],
+        [class*="Cell__after"] [class*="more_horizontal"],
+        [class*="Cell__after"] [class*="Icon--more_vertical"],
         [class*="Cell__after"] [class*="Icon--more_horizontal"],
         [class*="SimpleCell__after"] [aria-label*="действи" i],
         [class*="Cell__after"] [aria-label*="действи" i],
         [class*="SimpleCell__after"] [aria-label*="меню" i],
         [class*="Cell__after"] [aria-label*="меню" i],
-        [class*="ConvoItem__actions"],
-        [class*="im-dialog--actions"],
-        [class*="ConvoItem__more"],
-        [class*="ConvoList"] [class*="SimpleCell__after"] > *:not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter),
-        [class*="ConvoItem"] [class*="SimpleCell__after"] > *:not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter),
-        [class*="im-dialog"] [class*="SimpleCell__after"] > *:not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter),
+        [class*="SimpleCell__after"] [aria-label*="еще" i],
+        [class*="Cell__after"] [aria-label*="еще" i],
+        [class*="SimpleCell__after"] [aria-label*="ещё" i],
+        [class*="Cell__after"] [aria-label*="ещё" i],
         body.vmu-page-mail [class*="SimpleCell__after"] > *:not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter),
         body.vmu-page-mail [class*="Cell__after"] > *:not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter),
         body.vmu-page-mail [class*="SimpleCell__after"] button,
@@ -861,7 +885,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.8.1</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.8.2</span>
         `;
         card.appendChild(header);
 
@@ -906,7 +930,7 @@
             return null;
         }
         return target.closest(
-            '[class*="Icon--more_vertical"], [class*="Icon--more_horizontal"], [class*="Icon--more"], [class*="ConvoItem__actions"], [class*="im-dialog--actions"], [class*="ConvoItem__more"], [aria-label*="действи" i], [aria-label*="меню" i], [data-testid*="more" i], [data-testid*="action" i]'
+            '[class*="Icon--more_vertical"], [class*="Icon--more_horizontal"], [class*="Icon--more"], [class*="more_vertical"], [class*="more_horizontal"], [class*="ConvoItem__actions"], [class*="im-dialog--actions"], [class*="ConvoItem__more"], [aria-label*="действи" i], [aria-label*="меню" i], [aria-label*="еще" i], [aria-label*="ещё" i], [data-testid*="more" i], [data-testid*="action" i]'
         );
     }
 
@@ -932,6 +956,30 @@
         }
     }
 
+    function hideChatListActions() {
+        const moreIcons = document.querySelectorAll(
+            '[class*="more_vertical"], [class*="more_horizontal"], [class*="Icon--more"], [aria-label*="действи" i], [aria-label*="меню" i], [aria-label*="еще" i], [aria-label*="ещё" i], [class*="ConvoItem__actions"], [class*="im-dialog--actions"], [class*="ConvoItem__more"]'
+        );
+        for (let i = 0; i < moreIcons.length; i++) {
+            const el = moreIcons[i];
+            if (el.closest('.vkuiPanelHeader, [class*="PanelHeader"], .vkmListHeader, [class*="vkmListHeader"], #vmu-top-unread-btn, #vk-mobile-upgrade-settings-card')) {
+                continue;
+            }
+            const btn = el.closest('button, [role="button"], [class*="IconButton"], [class*="Tappable"], [class*="ConvoItem__actions"], [class*="ConvoItem__more"], [class*="im-dialog--actions"]') || el;
+            btn.style.setProperty('display', 'none', 'important');
+            btn.style.setProperty('visibility', 'hidden', 'important');
+            btn.style.setProperty('width', '0', 'important');
+            btn.style.setProperty('height', '0', 'important');
+            btn.style.setProperty('min-width', '0', 'important');
+            btn.style.setProperty('max-width', '0', 'important');
+            btn.style.setProperty('margin', '0', 'important');
+            btn.style.setProperty('padding', '0', 'important');
+            btn.style.setProperty('pointer-events', 'none', 'important');
+            btn.style.setProperty('opacity', '0', 'important');
+            btn.style.setProperty('overflow', 'hidden', 'important');
+        }
+    }
+
     document.addEventListener('click', interceptChatMoreActions, true);
     document.addEventListener('pointerdown', blockMorePointer, true);
     document.addEventListener('touchstart', blockMorePointer, true);
@@ -951,6 +999,7 @@
             applyStyles();
             updateSettingsVisibility();
             handleUnreadFilter();
+            hideChatListActions();
         } finally {
             isRunningFixes = false;
         }
