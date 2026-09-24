@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.7.6
+// @version      2.7.7
 // @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера и исправление верстки.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -350,39 +350,10 @@
         }
     }
 
-    function updateBottomBarLabels() {
-        if (!isHideLabelsEnabled) return;
-
-        const tabItems = document.querySelectorAll(
-            '[class*="TabbarItem"], [class*="TabBarItem"], .vkuiTabbarItem, .bottom_nav__item, #bottom_nav a, .bottom_nav a'
-        );
-
-        for (let i = 0; i < tabItems.length; i++) {
-            const item = tabItems[i];
-            const allElements = item.querySelectorAll('*');
-            for (let j = 0; j < allElements.length; j++) {
-                const el = allElements[j];
-                if (el.tagName === 'SVG' || el.tagName === 'PATH' || el.closest('svg')) continue;
-                if (el.querySelector('svg')) continue;
-                const className = String(el.className || '');
-                if (className.toLowerCase().includes('counter') || className.toLowerCase().includes('badge')) continue;
-                if (el.closest('[class*="Counter"], [class*="counter"], [class*="Badge"], [class*="badge"]')) continue;
-
-                const text = el.textContent ? el.textContent.trim() : '';
-                if (text && !/^\d+$/.test(text)) {
-                    el.style.setProperty('display', 'none', 'important');
-                }
-            }
-        }
-    }
-
     function applyStyles() {
         setOrRemoveStyle('vmu-base-fixes-styles', FIXES_CSS, true);
         setOrRemoveStyle('vmu-color-swap-styles', COLOR_SWAP_CSS, isColorSwapEnabled);
         setOrRemoveStyle('vmu-hide-labels-styles', HIDE_LABELS_CSS, isHideLabelsEnabled);
-        if (isHideLabelsEnabled) {
-            updateBottomBarLabels();
-        }
     }
 
     // Применяем стили мгновенно при старте
@@ -803,7 +774,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.7.6</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.7.7</span>
         `;
         card.appendChild(header);
 
@@ -892,16 +863,4 @@
     window.addEventListener('load', scheduleFixes);
     window.addEventListener('popstate', scheduleFixes);
     window.addEventListener('hashchange', scheduleFixes);
-
-    const origPushState = history.pushState;
-    history.pushState = function() {
-        origPushState.apply(this, arguments);
-        scheduleFixes();
-    };
-
-    const origReplaceState = history.replaceState;
-    history.replaceState = function() {
-        origReplaceState.apply(this, arguments);
-        scheduleFixes();
-    };
 })();
