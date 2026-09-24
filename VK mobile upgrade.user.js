@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      1.8
-// @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики сообщений и строго изолированное меню настроек.
+// @version      1.9
+// @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, перемещение фильтра непрочитанных в шапку и фиксы верстки.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -56,7 +56,7 @@
     //     БАЗОВЫЕ ИСПРАВЛЕНИЯ UI (ВСЕГДА АКТИВНЫ)
     // ==========================================
     const FIXES_CSS = `
-        /* 1. ИСПРАВЛЕНИЕ ОВАЛЬНЫХ СЧЕТЧИКОВ СООБЩЕНИЙ/УВЕДОМЛЕНИЙ -> АККУРАТНЫЕ КРУГЛЫЕ */
+        /* 1. ИСПРАВЛЕНИЕ ОВАЛЬНЫХ СЧЕТЧИКОВ СООБЩЕНИЙ/УВЕДОМЛЕНИЙ -> КРУГЛЫЕ */
         [class*="Counter"],
         .vkuiCounter,
         .im_peer_counter,
@@ -90,31 +90,27 @@
         }
 
         /* 2. ИСПРАВЛЕНИЕ ПЕРЕКРЫТИЯ ПЕРВОГО ЧАТА ("ИЗБРАННОЕ") ШТОРКОЙ КАТЕГОРИЙ */
-        [class*="SubnavigationBar"],
-        [class*="DialogsFilters"],
-        [class*="im-page--filters"],
-        [class*="HorizontalScroll"][class*="SubnavigationBar"] {
-            margin-bottom: 8px !important;
-            padding-bottom: 4px !important;
-        }
-
         [class*="im-page--dialogs"],
         [class*="DialogsList"],
         [class*="ConversationsList"],
         [class*="im-page--history"],
         [class*="im-page--chat-body"],
-        [class*="im-page--content"] {
-            margin-top: 6px !important;
-            padding-top: 4px !important;
+        [class*="im-page--content"],
+        [class*="im-page--d-list"] {
+            margin-top: 48px !important;
+            padding-top: 8px !important;
         }
 
-        [class*="im-page--dialogs"] [class*="SimpleCell"]:first-child,
-        [class*="DialogsList"] [class*="SimpleCell"]:first-child,
-        [class*="DialogsList"] > div:first-child,
-        [class*="im-page--dialogs"] > div:first-child,
-        [class*="ConversationsList"] > div:first-child,
-        [class*="im-page--history"] > div:first-child {
-            margin-top: 6px !important;
+        /* 3. СКРЫТИЕ НИЖНЕЙ ШТОРКИ "ТОЛЬКО НЕПРОЧИТАННЫЕ" В МЕССЕНДЖЕРЕ */
+        [class*="im-page--unread-filter"],
+        [class*="im-unread-filter"],
+        [class*="im-page--filters-bottom"],
+        [class*="DialogsUnreadFilter"],
+        .im_unread_toggle,
+        .im-page--unread,
+        [class*="FixedLayout--bottom"]:has([class*="unread"]),
+        div:has(> [class*="im-page--unread-filter"]) {
+            display: none !important;
         }
     `;
 
@@ -125,7 +121,7 @@
     const COLOR_NEGATIVE_SWAPPED = '#71AAEB'; // Изначально #FF5C5C -> теперь голубой
 
     const COLOR_SWAP_CSS = `
-        /* 1. ПОЛНАЯ ЗАМЕНА ТОКЕНОВ И ПЕРЕМЕННЫХ VKUI И VK MOBILE */
+        /* ПОЛНАЯ ЗАМЕНА ТОКЕНОВ И ПЕРЕМЕННЫХ VKUI И VK MOBILE */
         *, *::before, *::after,
         :root, html, body,
         .vk__page, .vkui__root, .vkuiRoot, .vkuiAppRoot,
@@ -195,7 +191,7 @@
             --like_hover_color: ${COLOR_NEGATIVE_SWAPPED} !important;
         }
 
-        /* 2. ПРЯМЫЕ СТИЛИ ДЛЯ ИМЕН В ЧАТАХ (color_im_text_name) */
+        /* Имена в чатах */
         [class*="im-page--history-name"],
         [class*="PeerName"],
         [class*="peer-name"],
@@ -209,7 +205,7 @@
             color: ${COLOR_ACCENT_SWAPPED} !important;
         }
 
-        /* 3. ПРЯМЫЕ СТИЛИ ДЛЯ ССЫЛОК И АКЦЕНТНЫХ ЭЛЕМЕНТОВ */
+        /* Ссылки и активные элементы */
         a.vkuiLink,
         .vkuiLink,
         [class*="Link--accent"],
@@ -221,7 +217,7 @@
             color: ${COLOR_ACCENT_SWAPPED} !important;
         }
 
-        /* 4. КНОПКИ И СЧЕТЧИКИ */
+        /* Кнопки и счетчики */
         [class*="Button--mode-primary"],
         [class*="vkuiButton--mode-primary"] {
             background-color: ${COLOR_ACCENT_SWAPPED} !important;
@@ -242,7 +238,7 @@
             background-color: ${COLOR_NEGATIVE_SWAPPED} !important;
         }
 
-        /* 5. ОШИБКИ И НЕГАТИВНЫЕ СТАТУСЫ */
+        /* Ошибки и негативные статусы */
         [class*="FormStatus--mode-error"],
         [class*="ErrorMessage"],
         [class*="SubnavigationBar--negative"],
@@ -250,7 +246,7 @@
             color: ${COLOR_NEGATIVE_SWAPPED} !important;
         }
 
-        /* 6. ЛАЙКИ (активные реакции) */
+        /* Лайки (активные реакции) */
         [class*="like_active"] svg,
         [class*="Like__active"] svg,
         [class*="PostBottomAction--active"] svg,
@@ -263,55 +259,39 @@
     `;
 
     const HIDE_LABELS_CSS = `
-        /* 1. Нулевой размер шрифта для элементов таб-бара (скрывает текст до первого кадра) */
-        [class*="TabbarItem"],
-        [class*="TabBarItem"],
-        [class*="bottom_nav__item"],
-        [class*="BottomNavigationItem"],
+        /* 1. ИЗОЛИРОВАННОЕ СКРЫТИЕ ПОДПИСЕЙ СТРОГО В НИЖНЕЙ ПАНЕЛИ (TABBAR) */
+        nav.vkuiTabbar,
+        nav[class*="Tabbar"],
+        nav[class*="TabBar"],
+        #bottom_nav,
+        .bottom_nav,
+        .Tabbar {
+            /* Не затрагивает верхние шапки и другие навигационные блоки */
+        }
+
+        nav.vkuiTabbar a,
         nav[class*="Tabbar"] a,
         nav[class*="TabBar"] a,
-        nav a[class*="TabbarItem"],
-        nav a[class*="TabBarItem"],
         #bottom_nav a,
-        .bottom_nav a {
+        .bottom_nav a,
+        .vkuiTabbarItem,
+        .TabbarItem,
+        [class*="TabbarItem"] {
             font-size: 0 !important;
             line-height: 0 !important;
             letter-spacing: -9999px !important;
         }
 
-        /* 2. Полное скрытие всех текстовых контейнеров, спанов и подписей */
-        [class*="TabbarItem__label"],
-        [class*="TabbarItem__text"],
-        [class*="TabBarItem__label"],
-        [class*="TabBarItem__text"],
-        [class*="bottom_nav__label"],
-        [class*="bottom_nav__text"],
-        [class*="BottomNav__label"],
-        [class*="BottomNav__text"],
+        nav.vkuiTabbar .vkuiTabbarItem__label,
+        nav.vkuiTabbar [class*="TabbarItem__label"],
+        nav[class*="Tabbar"] [class*="TabbarItem__label"],
+        nav[class*="TabBar"] [class*="TabBarItem__label"],
         .vkuiTabbarItem__label,
-        .vkuiTabbarItem__text,
         .TabbarItem__label,
-        .TabbarItem__text,
         .TabBarItem__label,
-        .TabBarItem__text,
         .bottom_nav__label,
-        .bottom_nav__text,
-        nav[class*="Tabbar"] [class*="Typography"]:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
-        nav[class*="TabBar"] [class*="Typography"]:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
-        nav[class*="Tabbar"] [class*="Caption"],
-        nav[class*="TabBar"] [class*="Caption"],
-        nav[class*="Tabbar"] [class*="Subhead"],
-        nav[class*="TabBar"] [class*="Subhead"],
-        nav[class*="Tabbar"] [class*="Footnote"],
-        nav[class*="TabBar"] [class*="Footnote"],
-        nav[class*="Tabbar"] a span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
-        nav[class*="TabBar"] a span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
-        [id*="bottom_nav"] a span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
-        [class*="bottom_nav"] a span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
-        [class*="TabbarItem"] span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
-        [class*="TabBarItem"] span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
-        [class*="TabbarItem__in"] > span:not([class*="Counter"]):not([class*="Badge"]),
-        [class*="TabBarItem__in"] > span:not([class*="Counter"]):not([class*="Badge"]) {
+        [class*="TabbarItem__label"],
+        [class*="TabBarItem__label"] {
             display: none !important;
             visibility: hidden !important;
             opacity: 0 !important;
@@ -321,15 +301,13 @@
             pointer-events: none !important;
         }
 
-        /* 3. Сохранение читаемости для бейджей и счетчиков */
-        [class*="Counter"],
-        [class*="counter"],
-        [class*="Badge"],
-        [class*="badge"],
-        [class*="Counter"] span,
-        [class*="Badge"] span,
-        [class*="Counter"] [class*="Typography"],
-        [class*="Badge"] [class*="Typography"] {
+        /* 2. Сохранение читаемости для бейджей и счетчиков в таб-баре */
+        nav.vkuiTabbar [class*="Counter"],
+        nav.vkuiTabbar [class*="Badge"],
+        nav[class*="Tabbar"] [class*="Counter"],
+        nav[class*="TabBar"] [class*="Counter"],
+        .vkuiTabbarItem [class*="Counter"],
+        [class*="TabbarItem"] [class*="Counter"] {
             font-size: 11px !important;
             line-height: normal !important;
             letter-spacing: normal !important;
@@ -340,13 +318,11 @@
             width: auto !important;
         }
 
-        /* 4. Центрирование иконок по вертикали */
-        [class*="TabbarItem"],
-        [class*="TabBarItem"],
-        [class*="bottom_nav__item"],
+        /* 3. Центрирование иконок по вертикали в таб-баре */
         .vkuiTabbarItem,
         .TabbarItem,
-        .TabBarItem {
+        [class*="TabbarItem"],
+        [class*="TabBarItem"] {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -354,12 +330,10 @@
             margin: 0 !important;
         }
 
-        [class*="TabbarItem__in"],
-        [class*="TabBarItem__in"],
-        [class*="bottom_nav__in"],
         .vkuiTabbarItem__in,
         .TabbarItem__in,
-        .TabBarItem__in {
+        [class*="TabbarItem__in"],
+        [class*="TabBarItem__in"] {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -368,12 +342,10 @@
             height: 100% !important;
         }
 
-        [class*="TabbarItem__icon"],
-        [class*="TabBarItem__icon"],
-        [class*="bottom_nav__icon"],
         .vkuiTabbarItem__icon,
         .TabbarItem__icon,
-        .TabBarItem__icon {
+        [class*="TabbarItem__icon"],
+        [class*="TabBarItem__icon"] {
             margin: 0 !important;
             padding: 0 !important;
             display: flex !important;
@@ -410,13 +382,14 @@
     function updateBottomBarLabels() {
         if (!isHideLabelsEnabled) return;
 
+        // Ищем СТРОГО нижнюю панель
         const navs = document.querySelectorAll(
-            'nav, [class*="Tabbar"], [class*="TabBar"], [class*="bottom_nav"], [id*="bottom_nav"], [class*="FixedLayout--bottom"], [class*="FixedLayout"]'
+            'nav.vkuiTabbar, nav[class*="Tabbar"], nav[class*="TabBar"], #bottom_nav, .bottom_nav, .Tabbar'
         );
 
         for (let i = 0; i < navs.length; i++) {
             const nav = navs[i];
-            const items = nav.querySelectorAll('a, [class*="TabbarItem"], [class*="TabBarItem"], [class*="bottom_nav__item"]');
+            const items = nav.querySelectorAll('a, .vkuiTabbarItem, .TabbarItem, [class*="TabbarItem"], [class*="TabBarItem"]');
             for (let j = 0; j < items.length; j++) {
                 const item = items[j];
                 const allElements = item.querySelectorAll('*');
@@ -450,6 +423,96 @@
     applyStyles();
 
     // ==========================================
+    //    ПЕРЕМЕЩЕНИЕ ФИЛЬТРА НЕПРОЧИТАННЫХ В ШАПКУ
+    // ==========================================
+    const UNREAD_TOP_BTN_ID = 'vmu-top-unread-btn';
+
+    function isMessengerPage() {
+        const path = window.location.pathname.toLowerCase();
+        return path.startsWith('/im') || path.startsWith('/mail') || path.includes('/im');
+    }
+
+    function injectTopUnreadButton() {
+        if (!isMessengerPage()) {
+            const existingBtn = document.getElementById(UNREAD_TOP_BTN_ID);
+            if (existingBtn) existingBtn.remove();
+            return;
+        }
+
+        if (document.getElementById(UNREAD_TOP_BTN_ID)) return;
+
+        // Ищем контейнер шапки мессенджера (рядом с архивом и кнопкой нового чата)
+        const headerAfter = document.querySelector(
+            '[class*="PanelHeader__after"], [class*="PanelHeader__right"], .vkuiPanelHeader__after, .PanelHeader__after'
+        );
+        if (!headerAfter) return;
+
+        const btn = document.createElement('div');
+        btn.id = UNREAD_TOP_BTN_ID;
+        btn.title = 'Только непрочитанные';
+        btn.style.cssText = `
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            user-select: none;
+            margin-right: 4px;
+            color: var(--vkui--color_icon_accent, #71AAEB);
+            background: transparent;
+            transition: background-color 0.2s ease, transform 0.15s ease, color 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+        `;
+
+        // Иконка непрочитанных сообщений со светящейся точкой
+        btn.innerHTML = `
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="10" r="2" fill="currentColor"></circle>
+            </svg>
+        `;
+
+        let isUnreadActive = false;
+
+        function updateBtnState() {
+            if (isUnreadActive) {
+                btn.style.backgroundColor = 'rgba(255, 92, 92, 0.16)';
+                btn.style.color = '#FF5C5C';
+            } else {
+                btn.style.backgroundColor = 'transparent';
+                btn.style.color = 'var(--vkui--color_icon_secondary, #828282)';
+            }
+        }
+
+        updateBtnState();
+
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            isUnreadActive = !isUnreadActive;
+            updateBtnState();
+
+            // Кликаем по нативному скрытому переключателю VK
+            const nativeToggle = document.querySelector(
+                '[class*="im-page--unread-filter"] [role="switch"], [class*="im-page--unread-filter"] input, [class*="im-unread"] input, [class*="UnreadFilter"] input'
+            );
+            if (nativeToggle) {
+                nativeToggle.click();
+            } else {
+                // Fallback: симулируем клик по элементу фильтра
+                const filterEl = document.querySelector('[class*="im-page--unread-filter"], [class*="im-unread"]');
+                if (filterEl) filterEl.click();
+            }
+        });
+
+        // Вставляем кнопку первой перед архивом
+        headerAfter.insertBefore(btn, headerAfter.firstChild);
+    }
+
+    // ==========================================
     //    ИНТЕРФЕЙС НАСТРОЕК В m.vk.ru/settings
     // ==========================================
     const SETTINGS_UI_ID = 'vk-mobile-upgrade-settings-card';
@@ -458,16 +521,15 @@
         const path = window.location.pathname.toLowerCase();
         const search = window.location.search.toLowerCase();
 
-        // СТРОГАЯ ЗАЩИТА: Ни в коем случае не отображать в диалогах, ленте, клипах, профилях и т.д.
-        if (path.startsWith('/im') || path.startsWith('/feed') || path.startsWith('/clips') ||
-            path.startsWith('/video') || path.startsWith('/music') || path.startsWith('/id') ||
-            path.startsWith('/wall') || path.startsWith('/audios') || path.startsWith('/friends') ||
-            path.startsWith('/groups') || path.startsWith('/photos') || path.startsWith('/docs') ||
-            path.startsWith('/bookmarks') || path.startsWith('/call')) {
+        // СТРОГАЯ ЗАЩИТА: Не отображать в диалогах, ленте, клипах, профилях и т.д.
+        if (path.startsWith('/im') || path.startsWith('/mail') || path.startsWith('/feed') ||
+            path.startsWith('/clips') || path.startsWith('/video') || path.startsWith('/music') ||
+            path.startsWith('/id') || path.startsWith('/wall') || path.startsWith('/audios') ||
+            path.startsWith('/friends') || path.startsWith('/groups') || path.startsWith('/photos') ||
+            path.startsWith('/docs') || path.startsWith('/bookmarks') || path.startsWith('/call')) {
             return false;
         }
 
-        // Проверяем страницу настроек темы
         if (search.includes('act=appearance') || path.includes('/settings/appearance')) {
             return true;
         }
@@ -506,6 +568,7 @@
         textCol.appendChild(titleEl);
         textCol.appendChild(descEl);
 
+        // Контейнер переключателя (точный дизайн под Photo 2)
         const switchBtn = document.createElement('div');
         switchBtn.role = 'switch';
         switchBtn.setAttribute('aria-checked', initialChecked ? 'true' : 'false');
@@ -514,8 +577,9 @@
             width: 48px;
             height: 28px;
             border-radius: 28px;
-            background-color: ${initialChecked ? 'var(--vkui--color_background_accent, #2787F5)' : 'var(--vkui--color_track_background, rgba(255, 255, 255, 0.2))'};
-            transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-sizing: border-box;
+            transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease;
             flex-shrink: 0;
             cursor: pointer;
         `;
@@ -523,20 +587,35 @@
         const slider = document.createElement('div');
         slider.style.cssText = `
             position: absolute;
-            top: 3px;
-            left: 3px;
+            top: 2px;
+            left: 2px;
             width: 22px;
             height: 22px;
             border-radius: 50%;
-            background-color: #ffffff;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            transform: ${initialChecked ? 'translateX(20px)' : 'translateX(0)'};
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.25s ease;
             pointer-events: none;
         `;
         switchBtn.appendChild(slider);
 
         let isChecked = initialChecked;
+
+        function updateSwitchVisual(checked) {
+            if (checked) {
+                switchBtn.style.backgroundColor = isColorSwapEnabled ? '#FF5C5C' : 'var(--vkui--color_background_accent, #2787F5)';
+                switchBtn.style.borderColor = 'transparent';
+                slider.style.backgroundColor = '#ffffff';
+                slider.style.transform = 'translateX(20px)';
+            } else {
+                // ВЫКЛЮЧЕННОЕ СОСТОЯНИЕ (темно-серый трек и серый ползунок, как на Фото 2)
+                switchBtn.style.backgroundColor = '#2c2d2e';
+                switchBtn.style.borderColor = 'rgba(255, 255, 255, 0.12)';
+                slider.style.backgroundColor = '#8c9096';
+                slider.style.transform = 'translateX(0)';
+            }
+        }
+
+        updateSwitchVisual(isChecked);
 
         function handleToggle(e) {
             if (e) {
@@ -545,10 +624,7 @@
             }
             isChecked = !isChecked;
             switchBtn.setAttribute('aria-checked', isChecked ? 'true' : 'false');
-            switchBtn.style.backgroundColor = isChecked
-                ? 'var(--vkui--color_background_accent, #2787F5)'
-                : 'var(--vkui--color_track_background, rgba(255, 255, 255, 0.2))';
-            slider.style.transform = isChecked ? 'translateX(20px)' : 'translateX(0)';
+            updateSwitchVisual(isChecked);
             onToggle(isChecked);
         }
 
@@ -573,10 +649,9 @@
             return;
         }
 
-        // Если мы на странице внешнего вида и карточка уже есть — ничего не делаем
         if (existingCard) return;
 
-        // Ищем целевую группу радио-кнопок тем на странице внешнего вида
+        // Ищем группу тем оформления
         const radio = document.querySelector('input[type="radio"], .vkuiRadio, [class*="Radio"], [class*="Appearance"]');
         let target = null;
 
@@ -624,7 +699,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v1.8</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v1.9</span>
         `;
         card.appendChild(header);
 
@@ -666,6 +741,7 @@
     function init() {
         applyStyles();
         updateSettingsVisibility();
+        injectTopUnreadButton();
     }
 
     if (document.readyState === 'loading') {
@@ -674,9 +750,10 @@
         init();
     }
 
-    // Периодическая синхронизация видимости настроек и скрытия подписей
+    // Периодическая проверка видимости элементов
     setInterval(() => {
         updateSettingsVisibility();
+        injectTopUnreadButton();
         if (isHideLabelsEnabled) {
             updateBottomBarLabels();
         }
@@ -686,8 +763,11 @@
     function onNavigate() {
         applyStyles();
         updateSettingsVisibility();
+        injectTopUnreadButton();
         setTimeout(updateSettingsVisibility, 100);
+        setTimeout(injectTopUnreadButton, 100);
         setTimeout(updateSettingsVisibility, 300);
+        setTimeout(injectTopUnreadButton, 300);
         if (isHideLabelsEnabled) {
             updateBottomBarLabels();
         }
