@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.6
+// @version      2.6.1
 // @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера, установка картинки из галереи в качестве фона диалогов.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -403,10 +403,16 @@
         }
 
         const chatBgCss = `
-            /* ФОНОВОЕ ИЗОБРАЖЕНИЕ ВНУТРИ ЧАТОВ */
+            /* ФОНОВОЕ ИЗОБРАЖЕНИЕ ВНУТРИ ДИАЛОГОВ */
+            body.vmu-inside-chat,
+            body.vmu-inside-chat #root,
+            body.vmu-inside-chat .vkuiSplitLayout,
+            body.vmu-inside-chat .vkuiSplitCol,
+            body.vmu-inside-chat .vkuiView,
+            body.vmu-inside-chat .vkuiPanel,
             body.vmu-inside-chat .vkuiPanel__in,
             body.vmu-inside-chat [class*="Panel__in"],
-            body.vmu-inside-chat .im-page--history,
+            body.vmu-inside-chat [class*="im-page"],
             body.vmu-inside-chat [class*="im-page--history"],
             body.vmu-inside-chat [class*="ChatHistory"],
             body.vmu-inside-chat [class*="ConvoHistory"],
@@ -418,13 +424,28 @@
                 background-repeat: no-repeat !important;
             }
 
-            /* Прозрачность промежуточных слоев для отображения фона */
+            /* Прозрачность внутренних контейнеров для отображения фона */
+            body.vmu-inside-chat .vkuiGroup,
+            body.vmu-inside-chat [class*="Group"],
+            body.vmu-inside-chat [class*="Group--mode-plain"],
             body.vmu-inside-chat [class*="im-page--chat-body"],
             body.vmu-inside-chat [class*="im-dialog--messages"],
-            body.vmu-inside-chat .vkuiGroup--mode-plain,
-            body.vmu-inside-chat [class*="Group--mode-plain"] {
+            body.vmu-inside-chat [class*="messages-list"],
+            body.vmu-inside-chat [class*="MessagesList"],
+            body.vmu-inside-chat [class*="SimpleCell--theme-chat"],
+            body.vmu-inside-chat [class*="History"] {
                 background-color: transparent !important;
                 background: transparent !important;
+            }
+
+            /* Непрозрачность шапки и панели ввода */
+            body.vmu-inside-chat .vkuiPanelHeader,
+            body.vmu-inside-chat [class*="PanelHeader"],
+            body.vmu-inside-chat [class*="WriteBar"],
+            body.vmu-inside-chat [class*="writeBar"],
+            body.vmu-inside-chat [class*="Writebar"],
+            body.vmu-inside-chat [class*="im-chat-input"] {
+                background-color: var(--vkui--color_background_content, #19191a) !important;
             }
         `;
 
@@ -450,13 +471,22 @@
     function isInsideChatDialog() {
         const search = window.location.search.toLowerCase();
         const hash = window.location.hash.toLowerCase();
+        const path = window.location.pathname.toLowerCase();
 
-        if (search.includes('peer=') || search.includes('sel=') || search.includes('act=show') || hash.includes('peer=') || hash.includes('sel=')) {
+        if (search.includes('peer=') || search.includes('sel=') || search.includes('act=show') ||
+            hash.includes('peer=') || hash.includes('sel=') || path.includes('/im/convo') || path.includes('/im/chat')) {
             return true;
         }
 
-        // Поле ввода сообщений или история сообщений
-        if (document.querySelector('input[placeholder*="Сообщение"], textarea[placeholder*="Сообщение"], [class*="WriteBar"], [class*="writebox"], [class*="im-page--chat-body"]')) {
+        // Поле ввода сообщений или панель написания
+        if (document.querySelector('input[placeholder*="сообщение" i], textarea[placeholder*="сообщение" i], [contenteditable="true"], [class*="WriteBar"], [class*="writeBar"], [class*="writebox"], [class*="im-chat-input"], [data-testid*="writebar"]')) {
+            if (!document.querySelector('input[placeholder*="Поиск"], [class*="SubnavigationBar"]')) {
+                return true;
+            }
+        }
+
+        // Сообщения или история диалога в DOM
+        if (document.querySelector('[class*="im-page--history"], [class*="ChatHistory"], [class*="im-mess"], [class*="HistoryMessages"], [class*="ConversationMessages"]')) {
             return true;
         }
 
@@ -468,14 +498,12 @@
         const hash = window.location.hash.toLowerCase();
         const path = window.location.pathname.toLowerCase();
 
-        // 1. Если есть параметры перехода в конкретный чат/архив/папки/настройки
         if (search.includes('peer=') || search.includes('sel=') || search.includes('act=show') ||
             search.includes('act=archive') || search.includes('act=folders') || search.includes('act=settings') ||
             search.includes('act=write') || hash.includes('peer=') || hash.includes('sel=')) {
             return false;
         }
 
-        // 2. Если в шапке есть кнопка "Назад" (стрелочка) или "Закрыть" (крестик) -> это экран внутри чата/архива/папок
         const beforeBtn = document.querySelector(
             '.vkuiPanelHeader__before, [class*="PanelHeader__before"], .vkmListHeader__before, [class*="vkmListHeader__before"], [aria-label="Назад"], [aria-label="Закрыть"], [data-testid="header-back"]'
         );
@@ -483,7 +511,6 @@
             return false;
         }
 
-        // 3. Заголовок шапки
         const titleEl = document.querySelector(
             '.vkmListHeader__title, [class*="vkmListHeader__title"], .vkuiPanelHeader__typography, [class*="PanelHeader__typography"], .vkuiPanelHeader__content, [class*="PanelHeader__content"]'
         );
@@ -494,7 +521,6 @@
             }
         }
 
-        // 4. Проверяем наличие категорий или строки поиска основного мессенджера
         const hasSubnav = document.querySelector('[class*="SubnavigationBar"], .vkuiSubnavigationBar, [class*="ConvoList"]');
         const hasSearch = document.querySelector('input[placeholder*="Поиск"], [class*="Search"] input, .vkuiSearch input');
         const isMessengerTitle = titleEl && titleEl.textContent.trim().toLowerCase() === 'мессенджер';
@@ -607,7 +633,6 @@
     function handleUnreadFilter() {
         const isMainMail = isMainMailListPage();
 
-        // СТРОГОЕ УДАЛЕНИЕ КНОПКИ НА ВСЕХ ОСТАЛЬНЫХ ЭКРАНАХ
         if (!isMainMail) {
             const existingBtn = document.getElementById(UNREAD_TOP_BTN_ID);
             if (existingBtn) {
@@ -616,7 +641,6 @@
             return;
         }
 
-        // 1. Скрываем нижний подвал по селекторам
         const footerSwitches = document.querySelectorAll(
             '.ConvoList__footerSwitch, [class*="ConvoList__footerSwitch"], [class*="footerSwitch"], [class*="footer_switch"], [class*="FooterSwitch"], [class*="unreadSwitch"]'
         );
@@ -630,7 +654,6 @@
             el.style.setProperty('pointer-events', 'none', 'important');
         }
 
-        // 2. Резервный поиск текстового элемента "Только непрочитанные" снизу
         const all = document.querySelectorAll('*');
         for (let i = 0; i < all.length; i++) {
             const el = all[i];
@@ -655,7 +678,6 @@
             }
         }
 
-        // 3. Внедряем кнопку в шапку мессенджера (строго на главной странице)
         injectTopUnreadToggle();
     }
 
@@ -894,7 +916,6 @@
             reader.onload = (event) => {
                 const img = new Image();
                 img.onload = () => {
-                    // Оптимизируем изображение через Canvas
                     const canvas = document.createElement('canvas');
                     let w = img.width;
                     let h = img.height;
@@ -931,8 +952,8 @@
         textCol.style.cssText = 'flex: 1; padding-right: 12px; cursor: pointer;';
 
         const titleEl = document.createElement('div');
-        titleEl.style.cssText = 'font-size: 15px; font-weight: 500; color: var(--vkui--color_text_primary, #ffffff); line-height: 1.3; display: flex; align-items: center; gap: 6px;';
-        titleEl.innerHTML = `<span>🖼️ Фон для диалогов</span>`;
+        titleEl.style.cssText = 'font-size: 15px; font-weight: 500; color: var(--vkui--color_text_primary, #ffffff); line-height: 1.3;';
+        titleEl.textContent = 'Фон для диалогов';
 
         const descEl = document.createElement('div');
         descEl.style.cssText = 'font-size: 12px; color: var(--vkui--color_text_secondary, #999999); margin-top: 3px; line-height: 1.3;';
@@ -951,7 +972,6 @@
         actionsCol.style.cssText = 'display: flex; align-items: center; gap: 8px; flex-shrink: 0;';
 
         if (customChatBg) {
-            // Превью установленного фото
             const thumb = document.createElement('img');
             thumb.src = customChatBg;
             thumb.style.cssText = 'width: 32px; height: 32px; border-radius: 8px; object-fit: cover; border: 1px solid rgba(255,255,255,0.2); cursor: pointer;';
@@ -959,7 +979,6 @@
             thumb.addEventListener('click', () => fileInput.click());
             actionsCol.appendChild(thumb);
 
-            // Кнопка удаления фона (сброс к дефолту)
             const deleteBtn = document.createElement('button');
             deleteBtn.type = 'button';
             deleteBtn.title = 'Удалить фон (вернуть исходный)';
@@ -996,7 +1015,6 @@
             });
             actionsCol.appendChild(deleteBtn);
         } else {
-            // Кнопка выбора фото
             const chooseBtn = document.createElement('button');
             chooseBtn.type = 'button';
             chooseBtn.style.cssText = `
@@ -1087,7 +1105,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.6</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.6.1</span>
         `;
         card.appendChild(header);
 
