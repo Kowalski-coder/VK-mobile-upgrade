@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.5
+// @version      2.5.1
 // @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера и исправление верстки.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -101,6 +101,8 @@
         .ConvoList__footerSwitch,
         [class*="ConvoList__footerSwitch"],
         [class*="footerSwitch"],
+        [class*="footer_switch"],
+        [class*="FooterSwitch"],
         [class*="unreadSwitch"],
         [class*="im-unread-filter"] {
             display: none !important;
@@ -109,6 +111,17 @@
             max-height: 0 !important;
             overflow: hidden !important;
             pointer-events: none !important;
+        }
+
+        /* 4. ЗАПРЕТ ПЕРЕНОСА КНОПОК В ШАПКЕ МЕССЕНДЖЕРА НА НОВУЮ СТРОКУ */
+        .vkmListHeader,
+        [class*="vkmListHeader"],
+        .vkmListHeader__actions,
+        [class*="vkmListHeader__actions"],
+        [class*="PanelHeader__after"],
+        [class*="PanelHeader__right"],
+        [class*="PanelHeader__controls"] {
+            flex-wrap: nowrap !important;
         }
     `;
 
@@ -445,7 +458,7 @@
 
     function getNativeUnreadSwitch() {
         return document.querySelector(
-            '.ConvoList__footerSwitch input, [class*="ConvoList__footerSwitch"] input, [class*="footerSwitch"] input, .ConvoList__footerSwitch [role="switch"], [class*="ConvoList__footerSwitch"] [role="switch"], [class*="footerSwitch"] [role="switch"], .ConvoList__footerSwitch, [class*="ConvoList__footerSwitch"], [class*="footerSwitch"]'
+            '.ConvoList__footerSwitch input, [class*="ConvoList__footerSwitch"] input, [class*="footerSwitch"] input, [class*="footer_switch"] input, [class*="FooterSwitch"] input, .ConvoList__footerSwitch [role="switch"], [class*="ConvoList__footerSwitch"] [role="switch"], [class*="footerSwitch"] [role="switch"], [class*="footer_switch"] [role="switch"], .ConvoList__footerSwitch, [class*="ConvoList__footerSwitch"], [class*="footerSwitch"], [class*="footer_switch"]'
         );
     }
 
@@ -458,52 +471,83 @@
             return;
         }
 
-        // Скрываем подвал с переключателем если он есть в DOM
-        const footerSwitch = document.querySelector('.ConvoList__footerSwitch, [class*="ConvoList__footerSwitch"], [class*="footerSwitch"]');
-        if (footerSwitch) {
-            footerSwitch.style.setProperty('display', 'none', 'important');
-            footerSwitch.style.setProperty('visibility', 'hidden', 'important');
-            footerSwitch.style.setProperty('height', '0', 'important');
-            footerSwitch.style.setProperty('max-height', '0', 'important');
-            footerSwitch.style.setProperty('overflow', 'hidden', 'important');
-            footerSwitch.style.setProperty('pointer-events', 'none', 'important');
+        // 1. Скрываем нижний подвал по селекторам
+        const footerSwitches = document.querySelectorAll(
+            '.ConvoList__footerSwitch, [class*="ConvoList__footerSwitch"], [class*="footerSwitch"], [class*="footer_switch"], [class*="FooterSwitch"], [class*="unreadSwitch"]'
+        );
+        for (let i = 0; i < footerSwitches.length; i++) {
+            const el = footerSwitches[i];
+            el.style.setProperty('display', 'none', 'important');
+            el.style.setProperty('visibility', 'hidden', 'important');
+            el.style.setProperty('height', '0', 'important');
+            el.style.setProperty('max-height', '0', 'important');
+            el.style.setProperty('overflow', 'hidden', 'important');
+            el.style.setProperty('pointer-events', 'none', 'important');
         }
 
-        // Внедряем кнопку в шапку мессенджера
+        // 2. Резервный поиск текстового элемента "Только непрочитанные" снизу
+        const all = document.querySelectorAll('*');
+        for (let i = 0; i < all.length; i++) {
+            const el = all[i];
+            if (el.children.length === 0 && el.textContent && el.textContent.trim().toLowerCase() === 'только непрочитанные') {
+                const row = el.closest('label, [class*="Cell"], [class*="Row"], [class*="Switch"]') || el.parentElement;
+                if (row && row !== document.body && row.id !== 'root' && !row.classList.contains('vkuiPanel')) {
+                    row.style.setProperty('display', 'none', 'important');
+                    row.style.setProperty('visibility', 'hidden', 'important');
+                    row.style.setProperty('height', '0', 'important');
+                    row.style.setProperty('max-height', '0', 'important');
+                    row.style.setProperty('overflow', 'hidden', 'important');
+                    row.style.setProperty('pointer-events', 'none', 'important');
+
+                    // Если обернут в компактный контейнер шторки
+                    const parent = row.parentElement;
+                    if (parent && parent.children.length <= 3 && parent !== document.body && parent.id !== 'root' && !parent.classList.contains('vkuiPanel')) {
+                        parent.style.setProperty('display', 'none', 'important');
+                        parent.style.setProperty('visibility', 'hidden', 'important');
+                        parent.style.setProperty('height', '0', 'important');
+                    }
+                }
+                break;
+            }
+        }
+
+        // 3. Внедряем кнопку в шапку мессенджера
         injectTopUnreadToggle();
     }
 
     function injectTopUnreadToggle() {
         if (document.getElementById(UNREAD_TOP_BTN_ID)) return;
 
-        // Ищем контейнер шапки мессенджера (vkmListHeader__actions, vkmListHeader__title, vkuiPanelHeader__after)
-        const headerActions = document.querySelector(
+        // Ищем правый блок действий с иконками (архив, новый чат)
+        let headerActions = document.querySelector(
             '.vkmListHeader__actions, [class*="vkmListHeader__actions"], [class*="ListHeader__actions"], .vkuiPanelHeader__after, [class*="PanelHeader__after"], .vkuiPanelHeader__controls, [class*="PanelHeader__controls"], .vkuiPanelHeader__right, [class*="PanelHeader__right"]'
         );
 
-        const headerTitle = document.querySelector(
-            '.vkmListHeader__title, [class*="vkmListHeader__title"], [class*="ListHeader__title"], .vkuiPanelHeader__typography, [class*="PanelHeader__typography"], .vkuiPanelHeader__content, [class*="PanelHeader__content"]'
-        );
-
-        const headerRoot = document.querySelector(
-            '.vkmListHeader, [class*="vkmListHeader"], [class*="ListHeader"], .vkuiPanelHeader, [class*="PanelHeader"]'
-        );
-
-        let targetContainer = null;
         let insertBeforeEl = null;
 
         if (headerActions) {
-            targetContainer = headerActions;
             insertBeforeEl = headerActions.firstChild;
-        } else if (headerTitle && headerTitle.parentElement) {
-            targetContainer = headerTitle.parentElement;
-            insertBeforeEl = headerTitle.nextSibling;
-        } else if (headerRoot) {
-            targetContainer = headerRoot;
-            insertBeforeEl = null;
+        } else {
+            // Ищем первую иконку-действие в шапке
+            const firstIcon = document.querySelector(
+                '.vkmListHeader svg, [class*="vkmListHeader"] svg, .vkuiPanelHeader svg'
+            );
+            if (firstIcon) {
+                const iconBtn = firstIcon.closest('a, button, div.vkuiTappable, [class*="Button"], [class*="Action"]') || firstIcon.parentElement;
+                if (iconBtn && iconBtn.parentElement) {
+                    headerActions = iconBtn.parentElement;
+                    insertBeforeEl = iconBtn;
+                }
+            }
         }
 
-        if (!targetContainer) return;
+        if (!headerActions) return;
+
+        // Предотвращаем перенос кнопок в шапке
+        headerActions.style.setProperty('display', 'flex', 'important');
+        headerActions.style.setProperty('flex-direction', 'row', 'important');
+        headerActions.style.setProperty('flex-wrap', 'nowrap', 'important');
+        headerActions.style.setProperty('align-items', 'center', 'important');
 
         const btn = document.createElement('div');
         btn.id = UNREAD_TOP_BTN_ID;
@@ -513,12 +557,12 @@
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            width: 42px !important;
-            height: 42px !important;
+            width: 36px !important;
+            height: 36px !important;
             border-radius: 50% !important;
             cursor: pointer !important;
             user-select: none !important;
-            margin-right: 2px !important;
+            margin: 0 1px !important;
             color: var(--vkui--color_icon_secondary, #828282) !important;
             background: transparent !important;
             transition: background-color 0.2s ease, color 0.2s ease !important;
@@ -528,7 +572,7 @@
         `;
 
         btn.innerHTML = `
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                 <circle cx="12" cy="10" r="2.5" fill="currentColor"></circle>
             </svg>
@@ -573,10 +617,10 @@
                     currentSw.click();
                 }
             } else {
-                const all = document.querySelectorAll('*');
-                for (let i = 0; i < all.length; i++) {
-                    const el = all[i];
-                    if (el.children.length === 0 && el.textContent && el.textContent.trim().toLowerCase().includes('только непрочитанные')) {
+                const allElements = document.querySelectorAll('*');
+                for (let i = 0; i < allElements.length; i++) {
+                    const el = allElements[i];
+                    if (el.children.length === 0 && el.textContent && el.textContent.trim().toLowerCase() === 'только непрочитанные') {
                         const clickTarget = el.closest('label, [class*="Cell"], [class*="Switch"], div') || el;
                         clickTarget.click();
                         break;
@@ -588,10 +632,10 @@
         btn.addEventListener('click', triggerToggle);
         btn.addEventListener('touchend', triggerToggle, { passive: false });
 
-        if (insertBeforeEl && targetContainer.contains(insertBeforeEl)) {
-            targetContainer.insertBefore(btn, insertBeforeEl);
+        if (insertBeforeEl && headerActions.contains(insertBeforeEl)) {
+            headerActions.insertBefore(btn, insertBeforeEl);
         } else {
-            targetContainer.appendChild(btn);
+            headerActions.appendChild(btn);
         }
     }
 
@@ -754,7 +798,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.5</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.5.1</span>
         `;
         card.appendChild(header);
 
