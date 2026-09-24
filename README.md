@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🚀 VK Mobile Upgrade (v2.7.8)
+# 🚀 VK Mobile Upgrade (v2.7.9)
 
 <div style="background: linear-gradient(90deg, #71AAEB, #FF5C5C); padding: 20px; border-radius: 15px; margin: 20px 0; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
   <h2 style="color: white; margin: 0; text-align: center;">

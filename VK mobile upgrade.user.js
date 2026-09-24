@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.7.8
+// @version      2.7.9
 // @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера, скрытие меню действий в списке чатов и исправление верстки.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -136,7 +136,10 @@
             flex-wrap: nowrap !important;
         }
 
-        /* 5. СКРЫТИЕ КНОПКИ ДЕЙСТВИЙ (3 ТОЧКИ) В СПИСКЕ ДИАЛОГОВ */
+        /* 5. СКРЫТИЕ КНОПКИ ДЕЙСТВИЙ (3 ТОЧКИ) В СПИСКЕ ДИАЛОГОВ И СМЕЩЕНИЕ СЧЕТЧИКА ВПРАВО */
+        [class*="ConvoList"] [class*="SimpleCell__after"] > *:not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter),
+        [class*="ConvoItem"] [class*="SimpleCell__after"] > *:not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter),
+        [class*="im-dialog"] [class*="SimpleCell__after"] > *:not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter),
         [class*="ConvoList"] [class*="SimpleCell__after"] button,
         [class*="ConvoList"] [class*="SimpleCell__after"] [class*="IconButton"],
         [class*="ConvoItem"] [class*="SimpleCell__after"] button,
@@ -155,11 +158,21 @@
             width: 0 !important;
             height: 0 !important;
             min-width: 0 !important;
+            max-width: 0 !important;
             padding: 0 !important;
             margin: 0 !important;
+            border: none !important;
             overflow: hidden !important;
+            opacity: 0 !important;
         }
 
+        /* Счетчик сообщений встает на место удаленной кнопки 3 точек (к правому краю) */
+        [class*="ConvoItem"] [class*="SimpleCell__after"] [class*="Counter"],
+        [class*="ConvoItem"] [class*="SimpleCell__after"] [class*="Badge"],
+        [class*="ConvoItem"] [class*="SimpleCell__after"] .vkuiCounter,
+        [class*="ConvoList"] [class*="SimpleCell__after"] [class*="Counter"],
+        [class*="ConvoList"] [class*="SimpleCell__after"] [class*="Badge"],
+        [class*="ConvoList"] [class*="SimpleCell__after"] .vkuiCounter,
         [class*="SimpleCell__after"] [class*="Counter"],
         [class*="SimpleCell__after"] [class*="Badge"],
         [class*="SimpleCell__after"] .vkuiCounter,
@@ -167,6 +180,8 @@
             display: inline-flex !important;
             visibility: visible !important;
             pointer-events: auto !important;
+            margin-left: auto !important;
+            margin-right: 0 !important;
         }
     `;
 
@@ -831,7 +846,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.7.8</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.7.9</span>
         `;
         card.appendChild(header);
 
