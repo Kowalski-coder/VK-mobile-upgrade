@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.3
+// @version      2.4
 // @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера и исправление верстки.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -425,50 +425,75 @@
     const UNREAD_TOP_BTN_ID = 'vmu-top-unread-btn';
 
     function handleUnreadFilter() {
-        const allEls = document.querySelectorAll('label, div, span, p, [class*="Cell"], [class*="Row"]');
-        let unreadRow = null;
-        let nativeSwitch = null;
+        // 1. Ищем листовой элемент с точным текстом "Только непрочитанные"
+        const allEls = document.querySelectorAll('*');
+        let textLeaf = null;
 
         for (let i = 0; i < allEls.length; i++) {
             const el = allEls[i];
-            if (el.children.length <= 4 && el.textContent && el.textContent.trim().toLowerCase().includes('только непрочитанные')) {
-                unreadRow = el;
+            if (el.children.length === 0 && el.textContent && el.textContent.trim().toLowerCase() === 'только непрочитанные') {
+                textLeaf = el;
                 break;
             }
         }
 
-        if (unreadRow) {
-            nativeSwitch = unreadRow.querySelector('input[type="checkbox"], [role="switch"], [class*="Switch"], [class*="switch"]') ||
-                           unreadRow.parentElement?.querySelector('input[type="checkbox"], [role="switch"]');
+        if (!textLeaf) {
+            for (let i = 0; i < allEls.length; i++) {
+                const el = allEls[i];
+                if (el.childNodes.length === 1 && el.childNodes[0].nodeType === 3 && el.textContent.trim().toLowerCase() === 'только непрочитанные') {
+                    textLeaf = el;
+                    break;
+                }
+            }
+        }
 
-            let container = unreadRow;
+        if (textLeaf) {
+            const row = textLeaf.closest('[class*="Cell"], [class*="Row"], label, div') || textLeaf.parentElement;
+            const nativeSwitch = row ? row.querySelector('input[type="checkbox"], [role="switch"], [class*="Switch"], [class*="switch"]') : null;
+
+            // Находим компактный плавающий контейнер (не затрагивая корень и экранные панели)
+            let container = textLeaf;
+            let bestContainerToHide = null;
+
             while (container && container !== document.body && container.id !== 'root') {
+                const tag = container.tagName.toLowerCase();
+                const cls = typeof container.className === 'string' ? container.className : '';
+
+                if (tag === 'body' || tag === 'html' || tag === 'main' || 
+                    container.id === 'root' || container.id === 'vk_wrap' ||
+                    cls.includes('vkuiPanel') || cls.includes('vkuiView') || 
+                    cls.includes('vkuiSplitLayout') || cls.includes('vkuiAppRoot') ||
+                    cls.includes('im-page--history') || cls.includes('im-dialogs')) {
+                    break;
+                }
+
+                if (container.querySelectorAll('*').length > 15) {
+                    break;
+                }
+
                 const style = window.getComputedStyle(container);
                 const isFixed = style.position === 'fixed' || style.position === 'sticky' || style.position === 'absolute';
-                const isVkuiWrapper = container.classList.contains('vkuiFixedLayout') || 
-                                      container.classList.contains('vkuiCard') || 
-                                      container.classList.contains('vkuiCell') ||
-                                      container.classList.contains('vkuiSimpleCell') ||
-                                      (container.className && typeof container.className === 'string' && container.className.includes('FixedLayout'));
+                const isCardOrCell = cls.includes('FixedLayout') || cls.includes('Card') || cls.includes('Cell') || cls.includes('Banner');
 
-                const hasTabbar = container.querySelector('[class*="Tabbar"], [class*="TabBar"], .vkuiTabbar');
-                const hasHeader = container.querySelector('[class*="PanelHeader"], .vkuiPanelHeader');
+                if (isFixed || isCardOrCell) {
+                    bestContainerToHide = container;
+                    if (isFixed) break;
+                }
 
-                if ((isFixed || isVkuiWrapper) && !hasTabbar && !hasHeader) {
-                    container.style.setProperty('display', 'none', 'important');
-                    container.style.setProperty('visibility', 'hidden', 'important');
-                    container.style.setProperty('height', '0', 'important');
-                    container.style.setProperty('overflow', 'hidden', 'important');
-                    break;
-                }
-                if (container.parentElement === document.body || container.parentElement?.id === 'root') {
-                    unreadRow.style.setProperty('display', 'none', 'important');
-                    break;
-                }
                 container = container.parentElement;
             }
 
-            injectTopUnreadToggle(nativeSwitch, unreadRow);
+            const targetToHide = bestContainerToHide || row || textLeaf;
+            if (targetToHide && targetToHide !== document.body && targetToHide.id !== 'root') {
+                targetToHide.style.setProperty('display', 'none', 'important');
+                targetToHide.style.setProperty('visibility', 'hidden', 'important');
+                targetToHide.style.setProperty('height', '0', 'important');
+                targetToHide.style.setProperty('max-height', '0', 'important');
+                targetToHide.style.setProperty('overflow', 'hidden', 'important');
+                targetToHide.style.setProperty('pointer-events', 'none', 'important');
+            }
+
+            injectTopUnreadToggle(nativeSwitch, row || textLeaf);
         } else {
             if (!isMailOrMessengerPage()) {
                 const btn = document.getElementById(UNREAD_TOP_BTN_ID);
@@ -477,7 +502,7 @@
         }
     }
 
-    function injectTopUnreadToggle(nativeSwitch, unreadRow) {
+    function injectTopUnreadToggle(nativeSwitch, clickTarget) {
         if (document.getElementById(UNREAD_TOP_BTN_ID)) return;
 
         const headerRight = document.querySelector(
@@ -545,19 +570,9 @@
 
             if (nativeSwitch && typeof nativeSwitch.click === 'function') {
                 nativeSwitch.click();
-            } else if (unreadRow) {
-                const clickable = unreadRow.querySelector('label, [class*="Switch"], [role="switch"], input') || unreadRow;
+            } else if (clickTarget) {
+                const clickable = clickTarget.querySelector('label, [class*="Switch"], [role="switch"], input') || clickTarget;
                 clickable.click();
-            } else {
-                const candidates = document.querySelectorAll('label, div, span, input');
-                for (let i = 0; i < candidates.length; i++) {
-                    const c = candidates[i];
-                    if (c.textContent && c.textContent.trim().toLowerCase().includes('только непрочитанные')) {
-                        const clickTarget = c.closest('label, [class*="Cell"], div') || c;
-                        clickTarget.click();
-                        break;
-                    }
-                }
             }
         }
 
@@ -730,7 +745,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.3</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.4</span>
         `;
         card.appendChild(header);
 
