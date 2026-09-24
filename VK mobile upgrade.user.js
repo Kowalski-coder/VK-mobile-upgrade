@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      1.6
-// @description  Улучшение и кастомизация интерфейса мобильной версии VK (m.vk.ru / vk.ru). Опциональная смена акцентных цветов (#71AAEB ⇄ #FF5C5C) и бесшовное скрытие подписей в нижней панели без мерцаний (0ms flicker).
+// @version      1.7
+// @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики сообщений и исправление перекрытия чатов.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -51,6 +51,72 @@
 
     let isColorSwapEnabled = getSetting(STORAGE_KEYS.COLOR_SWAP, true);
     let isHideLabelsEnabled = getSetting(STORAGE_KEYS.HIDE_TAB_LABELS, false);
+
+    // ==========================================
+    //     БАЗОВЫЕ ИСПРАВЛЕНИЯ UI (ВСЕГДА АКТИВНЫ)
+    // ==========================================
+    const FIXES_CSS = `
+        /* 1. ИСПРАВЛЕНИЕ ОВАЛЬНЫХ СЧЕТЧИКОВ СООБЩЕНИЙ/УВЕДОМЛЕНИЙ -> АККУРАТНЫЕ КРУГЛЫЕ */
+        [class*="Counter"],
+        .vkuiCounter,
+        .im_peer_counter,
+        [class*="Badge"] {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+            min-width: 20px !important;
+            height: 20px !important;
+            line-height: 20px !important;
+            padding: 0 5px !important;
+            box-sizing: border-box !important;
+            border-radius: 10px !important;
+            flex-shrink: 0 !important;
+        }
+
+        [class*="Counter__in"],
+        [class*="Counter__children"],
+        .vkuiCounter__in,
+        .vkuiCounter__children {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            line-height: 1 !important;
+            height: 100% !important;
+            font-weight: 600 !important;
+        }
+
+        /* 2. ИСПРАВЛЕНИЕ ПЕРЕКРЫТИЯ ПЕРВОГО ЧАТА ("ИЗБРАННОЕ") ШТОРКОЙ КАТЕГОРИЙ */
+        [class*="SubnavigationBar"],
+        [class*="DialogsFilters"],
+        [class*="im-page--filters"],
+        [class*="HorizontalScroll"][class*="SubnavigationBar"] {
+            margin-bottom: 8px !important;
+            padding-bottom: 4px !important;
+        }
+
+        [class*="im-page--dialogs"],
+        [class*="DialogsList"],
+        [class*="ConversationsList"],
+        [class*="im-page--history"],
+        [class*="im-page--chat-body"],
+        [class*="im-page--content"] {
+            margin-top: 6px !important;
+            padding-top: 4px !important;
+        }
+
+        [class*="im-page--dialogs"] [class*="SimpleCell"]:first-child,
+        [class*="DialogsList"] [class*="SimpleCell"]:first-child,
+        [class*="DialogsList"] > div:first-child,
+        [class*="im-page--dialogs"] > div:first-child,
+        [class*="ConversationsList"] > div:first-child,
+        [class*="im-page--history"] > div:first-child {
+            margin-top: 6px !important;
+        }
+    `;
 
     // ==========================================
     //         ЦВЕТА И СТИЛИ ПОДМЕНЫ
@@ -244,8 +310,8 @@
         [class*="bottom_nav"] a span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
         [class*="TabbarItem"] span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
         [class*="TabBarItem"] span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
-        [class*="TabbarItem__in"] > span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
-        [class*="TabBarItem__in"] > span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]) {
+        [class*="TabbarItem__in"] > span:not([class*="Counter"]):not([class*="Badge"]),
+        [class*="TabBarItem__in"] > span:not([class*="Counter"]):not([class*="Badge"]) {
             display: none !important;
             visibility: hidden !important;
             opacity: 0 !important;
@@ -372,6 +438,7 @@
     }
 
     function applyStyles() {
+        setOrRemoveStyle('vmu-base-fixes-styles', FIXES_CSS, true);
         setOrRemoveStyle('vmu-color-swap-styles', COLOR_SWAP_CSS, isColorSwapEnabled);
         setOrRemoveStyle('vmu-hide-labels-styles', HIDE_LABELS_CSS, isHideLabelsEnabled);
         if (isHideLabelsEnabled) {
@@ -539,7 +606,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v1.6</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v1.7</span>
         `;
         card.appendChild(header);
 
