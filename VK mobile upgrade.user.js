@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      1.2
-// @description  Улучшение и кастомизация интерфейса мобильной версии VK (m.vk.ru / vk.ru). Опциональная смена акцентных цветов (#71AAEB ⇄ #FF5C5C) и скрытие подписей в нижней панели с надежными переключателями в «Внешний вид».
+// @version      1.3
+// @description  Улучшение и кастомизация интерфейса мобильной версии VK (m.vk.ru / vk.ru). Опциональная смена акцентных цветов (#71AAEB ⇄ #FF5C5C) и скрытие подписей в нижней панели. Легковесный, без зависаний.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -148,6 +148,7 @@
         .vkuiLink,
         [class*="Link--accent"],
         [class*="TabBarItem--selected"],
+        [class*="TabbarItem--selected"],
         [class*="BottomNavigationItem--selected"],
         [class*="Tab--selected"],
         [class*="Tab--active"] {
@@ -270,8 +271,6 @@
             style.id = id;
             style.type = 'text/css';
             parent.appendChild(style);
-        } else if (style.parentElement !== parent) {
-            parent.appendChild(style);
         }
 
         if (style.textContent !== css) {
@@ -279,89 +278,13 @@
         }
     }
 
-    function applyCurrentStyles() {
+    function applyStyles() {
         setOrRemoveStyle('vmu-color-swap-styles', COLOR_SWAP_CSS, isColorSwapEnabled);
         setOrRemoveStyle('vmu-hide-labels-styles', HIDE_LABELS_CSS, isHideLabelsEnabled);
     }
 
-    // ==========================================
-    //   ДИНАМИЧЕСКИЙ АНАЛИЗ И ЗАМЕНА В DOM
-    // ==========================================
-    function isBlueRgb(r, g, b) {
-        return (r >= 100 && r <= 125) && (g >= 155 && g <= 185) && (b >= 220 && b <= 250);
-    }
-
-    function isRedRgb(r, g, b) {
-        return (r >= 240 && r <= 255) && (g >= 75 && g <= 110) && (b >= 75 && b <= 110);
-    }
-
-    function parseRgb(str) {
-        if (!str || typeof str !== 'string') return null;
-        const m = str.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
-        if (m) {
-            return { r: parseInt(m[1], 10), g: parseInt(m[2], 10), b: parseInt(m[3], 10) };
-        }
-        return null;
-    }
-
-    function swapColorString(str) {
-        if (!str || typeof str !== 'string') return str;
-        // Hex
-        let res = str.replace(/#(71aaeb|ff5c5c)([0-9a-fA-F]{2})?\b/gi, (match, hex, alpha) => {
-            const isBlue = hex.toLowerCase() === '71aaeb';
-            return (isBlue ? COLOR_ACCENT_SWAPPED : COLOR_NEGATIVE_SWAPPED) + (alpha || '');
-        });
-        // RGB
-        res = res.replace(/rgba?\(\s*(?:(113\s*,\s*170\s*,\s*235)|(255\s*,\s*92\s*,\s*92))(\s*[,/]\s*[^)]+)?\s*\)/gi, (match, rgbA, rgbB, alphaPart) => {
-            const target = rgbA ? '255, 92, 92' : '113, 170, 235';
-            const func = alphaPart ? 'rgba' : 'rgb';
-            return `${func}(${target}${alphaPart || ''})`;
-        });
-        return res;
-    }
-
-    function processElement(el) {
-        if (!isColorSwapEnabled || !el || el.nodeType !== 1) return;
-
-        // 1. Атрибуты SVG Fill / Stroke
-        const fill = el.getAttribute('fill');
-        if (fill && fill !== 'none' && fill !== 'currentColor') {
-            const rgb = parseRgb(fill);
-            if (fill.toLowerCase().includes('71aaeb') || (rgb && isBlueRgb(rgb.r, rgb.g, rgb.b))) {
-                el.setAttribute('fill', COLOR_ACCENT_SWAPPED);
-            } else if (fill.toLowerCase().includes('ff5c5c') || (rgb && isRedRgb(rgb.r, rgb.g, rgb.b))) {
-                el.setAttribute('fill', COLOR_NEGATIVE_SWAPPED);
-            }
-        }
-
-        const stroke = el.getAttribute('stroke');
-        if (stroke && stroke !== 'none' && stroke !== 'currentColor') {
-            const rgb = parseRgb(stroke);
-            if (stroke.toLowerCase().includes('71aaeb') || (rgb && isBlueRgb(rgb.r, rgb.g, rgb.b))) {
-                el.setAttribute('stroke', COLOR_ACCENT_SWAPPED);
-            } else if (stroke.toLowerCase().includes('ff5c5c') || (rgb && isRedRgb(rgb.r, rgb.g, rgb.b))) {
-                el.setAttribute('stroke', COLOR_NEGATIVE_SWAPPED);
-            }
-        }
-
-        // 2. Инлайн стили
-        const style = el.getAttribute('style');
-        if (style && (style.includes('71aaeb') || style.includes('ff5c5c') || style.includes('113, 170, 235') || style.includes('255, 92, 92'))) {
-            const swapped = swapColorString(style);
-            if (swapped !== style) {
-                el.setAttribute('style', swapped);
-            }
-        }
-    }
-
-    function processTree(root) {
-        if (!isColorSwapEnabled || !root || root.nodeType !== 1) return;
-        processElement(root);
-        const children = root.querySelectorAll('*');
-        for (let i = 0; i < children.length; i++) {
-            processElement(children[i]);
-        }
-    }
+    // Применяем стили мгновенно на этапе загрузки страницы (0ms overhead)
+    applyStyles();
 
     // ==========================================
     //    ИНТЕРФЕЙС НАСТРОЕК В m.vk.ru/settings
@@ -369,8 +292,9 @@
     const SETTINGS_UI_ID = 'vk-mobile-upgrade-settings-card';
 
     function isAppearancePage() {
-        const url = window.location.href;
-        return url.includes('act=appearance') || url.includes('/settings/appearance') || (url.includes('/settings') && url.includes('appearance'));
+        const path = window.location.pathname;
+        const search = window.location.search;
+        return search.includes('act=appearance') || path.includes('/settings/appearance') || (path.startsWith('/settings') && search.includes('appearance'));
     }
 
     function createSwitchRow(title, desc, initialChecked, onToggle) {
@@ -447,9 +371,7 @@
         }
 
         row.addEventListener('click', handleToggle, true);
-        row.addEventListener('touchend', (e) => {
-            handleToggle(e);
-        }, { passive: false });
+        row.addEventListener('touchend', handleToggle, { passive: false });
 
         row.appendChild(textCol);
         row.appendChild(switchBtn);
@@ -457,24 +379,19 @@
         return row;
     }
 
-    function injectSettingsUI() {
+    function tryInjectSettings() {
         if (!isAppearancePage()) return;
         if (document.getElementById(SETTINGS_UI_ID)) return;
 
-        // Ищем существующие группы настроек внешнего вида (тема, тема системы и т.д.)
-        const groups = document.querySelectorAll('.vkuiGroup, [class*="Group--mode-card"], [class*="Group--mode-plain"], [class*="Group"]');
-        let target = null;
-        let insertMethod = 'afterend';
+        // Ищем контейнер страницы внешнего вида
+        const targetContainer = document.querySelector(
+            '[class*="AppearanceSettings"], [class*="settings_appearance"], [class*="SettingsAppearance"], .vkuiPanel__in, .Panel__in, main, #content'
+        );
+        if (!targetContainer) return;
 
-        if (groups.length > 0) {
-            target = groups[groups.length - 1];
-            insertMethod = 'afterend';
-        } else {
-            target = document.querySelector('.vkuiPanel__in, [class*="Panel__in"], main');
-            insertMethod = 'append';
-        }
-
-        if (!target) return;
+        // Ищем существующие группы темы (Светлая/Темная/Системная)
+        const groups = targetContainer.querySelectorAll('.vkuiGroup, [class*="Group"]');
+        const insertAfterElement = groups.length > 0 ? groups[groups.length - 1] : null;
 
         const card = document.createElement('div');
         card.id = SETTINGS_UI_ID;
@@ -489,7 +406,6 @@
             font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", sans-serif);
         `;
 
-        // Заголовок карточки
         const header = document.createElement('div');
         header.style.cssText = `
             padding: 14px 16px 8px;
@@ -505,7 +421,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v1.2</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v1.3</span>
         `;
         card.appendChild(header);
 
@@ -517,10 +433,7 @@
             (checked) => {
                 isColorSwapEnabled = checked;
                 setSetting(STORAGE_KEYS.COLOR_SWAP, isColorSwapEnabled);
-                applyCurrentStyles();
-                if (isColorSwapEnabled) {
-                    processTree(document.documentElement);
-                }
+                applyStyles();
             }
         );
         card.appendChild(row1);
@@ -533,75 +446,69 @@
             (checked) => {
                 isHideLabelsEnabled = checked;
                 setSetting(STORAGE_KEYS.HIDE_TAB_LABELS, isHideLabelsEnabled);
-                applyCurrentStyles();
+                applyStyles();
             }
         );
         row2.style.borderBottom = 'none';
         card.appendChild(row2);
 
-        if (insertMethod === 'afterend') {
-            target.insertAdjacentElement('afterend', card);
+        if (insertAfterElement) {
+            insertAfterElement.insertAdjacentElement('afterend', card);
         } else {
-            target.appendChild(card);
+            targetContainer.appendChild(card);
         }
     }
 
     // ==========================================
-    //               НАБЛЮДАТЕЛЬ
+    //       ОПТИМИЗИРОВАННЫЙ НАБЛЮДАТЕЛЬ
     // ==========================================
-    const observer = new MutationObserver((mutations) => {
-        applyCurrentStyles();
-        injectSettingsUI();
+    let debounceTimer = null;
+    const observer = new MutationObserver(() => {
+        if (!isAppearancePage()) return;
+        if (debounceTimer) return;
 
-        if (isColorSwapEnabled) {
-            for (let i = 0; i < mutations.length; i++) {
-                const m = mutations[i];
-                if (m.type === 'childList') {
-                    for (let j = 0; j < m.addedNodes.length; j++) {
-                        const node = m.addedNodes[j];
-                        if (node.nodeType === 1) {
-                            processTree(node);
-                        }
-                    }
-                } else if (m.type === 'attributes') {
-                    processElement(m.target);
-                }
-            }
-        }
+        debounceTimer = setTimeout(() => {
+            debounceTimer = null;
+            tryInjectSettings();
+        }, 200);
     });
 
-    function start() {
-        applyCurrentStyles();
+    function init() {
+        applyStyles();
         if (document.documentElement) {
-            if (isColorSwapEnabled) {
-                processTree(document.documentElement);
-            }
             observer.observe(document.documentElement, {
                 childList: true,
-                subtree: true,
-                attributes: true,
-                attributeFilter: ['style', 'fill', 'stroke']
+                subtree: true
             });
         }
-        injectSettingsUI();
+        tryInjectSettings();
     }
-
-    // Запуск на раннем этапе
-    applyCurrentStyles();
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', start);
+        document.addEventListener('DOMContentLoaded', init);
     } else {
-        start();
+        init();
     }
 
-    window.addEventListener('load', () => {
-        applyCurrentStyles();
-        injectSettingsUI();
-    });
+    // SPA навигация
+    function onNavigate() {
+        applyStyles();
+        setTimeout(tryInjectSettings, 100);
+        setTimeout(tryInjectSettings, 400);
+    }
 
-    window.addEventListener('popstate', () => {
-        applyCurrentStyles();
-        injectSettingsUI();
-    });
+    window.addEventListener('load', onNavigate);
+    window.addEventListener('popstate', onNavigate);
+
+    const origPushState = history.pushState;
+    history.pushState = function() {
+        origPushState.apply(this, arguments);
+        onNavigate();
+    };
+
+    const origReplaceState = history.replaceState;
+    history.replaceState = function() {
+        origReplaceState.apply(this, arguments);
+        onNavigate();
+    };
 })();
