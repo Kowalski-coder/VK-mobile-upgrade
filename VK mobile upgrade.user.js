@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.7.9
+// @version      2.8.0
 // @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера, скрытие меню действий в списке чатов и исправление верстки.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -137,6 +137,20 @@
         }
 
         /* 5. СКРЫТИЕ КНОПКИ ДЕЙСТВИЙ (3 ТОЧКИ) В СПИСКЕ ДИАЛОГОВ И СМЕЩЕНИЕ СЧЕТЧИКА ВПРАВО */
+        body.vmu-page-mail [class*="SimpleCell__after"] > *:not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter),
+        body.vmu-page-mail [class*="Cell__after"] > *:not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter),
+        body.vmu-page-mail [class*="SimpleCell__after"] button,
+        body.vmu-page-mail [class*="SimpleCell__after"] [class*="IconButton"],
+        body.vmu-page-mail [class*="SimpleCell__after"] [class*="Tappable"]:not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter),
+        body.vmu-page-mail [class*="Cell__after"] button,
+        body.vmu-page-mail [class*="Cell__after"] [class*="IconButton"],
+        body.vmu-page-mail [class*="Cell__after"] [class*="Tappable"]:not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter),
+        body.vmu-page-mail [class*="Icon--more_vertical"],
+        body.vmu-page-mail [class*="Icon--more_horizontal"],
+        body.vmu-page-mail [class*="Icon--more"],
+        body.vmu-page-mail [class*="ConvoItem__actions"],
+        body.vmu-page-mail [class*="im-dialog--actions"],
+        body.vmu-page-mail [class*="ConvoItem__more"],
         [class*="ConvoList"] [class*="SimpleCell__after"] > *:not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter),
         [class*="ConvoItem"] [class*="SimpleCell__after"] > *:not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter),
         [class*="im-dialog"] [class*="SimpleCell__after"] > *:not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter),
@@ -148,10 +162,7 @@
         [class*="im-dialog"] [class*="SimpleCell__after"] [class*="IconButton"],
         [class*="ConvoList"] [class*="Icon--more_vertical"],
         [class*="ConvoItem"] [class*="Icon--more_vertical"],
-        [class*="im-dialog"] [class*="Icon--more_vertical"],
-        [class*="ConvoItem__actions"],
-        [class*="im-dialog--actions"],
-        [class*="ConvoItem__more"] {
+        [class*="im-dialog"] [class*="Icon--more_vertical"] {
             display: none !important;
             visibility: hidden !important;
             pointer-events: none !important;
@@ -166,7 +177,21 @@
             opacity: 0 !important;
         }
 
-        /* Счетчик сообщений встает на место удаленной кнопки 3 точек (к правому краю) */
+        /* Контейнер окончания ячейки и перенос счетчика к правому краю */
+        body.vmu-page-mail [class*="SimpleCell__after"],
+        body.vmu-page-mail [class*="Cell__after"] {
+            margin-right: 0 !important;
+            padding-right: 0 !important;
+        }
+
+        body.vmu-page-mail [class*="SimpleCell__after"] [class*="Counter"],
+        body.vmu-page-mail [class*="SimpleCell__after"] [class*="Badge"],
+        body.vmu-page-mail [class*="SimpleCell__after"] .vkuiCounter,
+        body.vmu-page-mail [class*="SimpleCell__after"] .im_peer_counter,
+        body.vmu-page-mail [class*="Cell__after"] [class*="Counter"],
+        body.vmu-page-mail [class*="Cell__after"] [class*="Badge"],
+        body.vmu-page-mail [class*="Cell__after"] .vkuiCounter,
+        body.vmu-page-mail [class*="Cell__after"] .im_peer_counter,
         [class*="ConvoItem"] [class*="SimpleCell__after"] [class*="Counter"],
         [class*="ConvoItem"] [class*="SimpleCell__after"] [class*="Badge"],
         [class*="ConvoItem"] [class*="SimpleCell__after"] .vkuiCounter,
@@ -846,7 +871,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.7.9</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.8.0</span>
         `;
         card.appendChild(header);
 
@@ -881,6 +906,44 @@
             target.insertAdjacentElement('afterend', card);
         }
     }
+
+    // ==========================================
+    //    БЛОКИРОВКА КОНТЕКСТНОГО МЕНЮ В ЧАТАХ
+    // ==========================================
+    function interceptChatMoreActions(e) {
+        if (!isMainMailListPage()) return;
+        const target = e.target;
+        if (!target || !target.closest) return;
+
+        const moreBtn = target.closest(
+            '[class*="Icon--more_vertical"], [class*="Icon--more_horizontal"], [class*="Icon--more"], [class*="ConvoItem__actions"], [class*="im-dialog--actions"], [class*="ConvoItem__more"], [aria-label*="действи" i], [aria-label*="меню" i], [data-testid*="more" i], [data-testid*="action" i]'
+        );
+
+        if (moreBtn && !moreBtn.closest('.vkuiPanelHeader, [class*="PanelHeader"], .vkmListHeader, [class*="vkmListHeader"], #vmu-top-unread-btn')) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            const cell = moreBtn.closest('[class*="SimpleCell"], [class*="Cell"], [class*="ConvoItem"], [class*="im-dialog"], [role="link"], a');
+            if (cell && cell !== moreBtn) {
+                cell.click();
+            }
+        }
+    }
+
+    document.addEventListener('click', interceptChatMoreActions, true);
+    document.addEventListener('pointerdown', (e) => {
+        if (!isMainMailListPage()) return;
+        const target = e.target;
+        if (!target || !target.closest) return;
+        const moreBtn = target.closest(
+            '[class*="Icon--more_vertical"], [class*="Icon--more_horizontal"], [class*="Icon--more"], [class*="ConvoItem__actions"], [class*="im-dialog--actions"], [class*="ConvoItem__more"], [aria-label*="действи" i], [aria-label*="меню" i], [data-testid*="more" i], [data-testid*="action" i]'
+        );
+        if (moreBtn && !moreBtn.closest('.vkuiPanelHeader, [class*="PanelHeader"], .vkmListHeader, [class*="vkmListHeader"], #vmu-top-unread-btn')) {
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+        }
+    }, true);
 
     // ==========================================
     //       ИНИЦИАЛИЗАЦИЯ И MUTATION OBSERVER
