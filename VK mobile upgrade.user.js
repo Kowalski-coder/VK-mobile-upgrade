@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      1.1
-// @description  Улучшение и кастомизация интерфейса мобильной версии VK (m.vk.ru / vk.ru). Опциональная смена акцентных цветов (#71AAEB ⇄ #FF5C5C) и скрытие подписей в нижней панели с настройками в «Внешний вид».
+// @version      1.2
+// @description  Улучшение и кастомизация интерфейса мобильной версии VK (m.vk.ru / vk.ru). Опциональная смена акцентных цветов (#71AAEB ⇄ #FF5C5C) и скрытие подписей в нижней панели с надежными переключателями в «Внешний вид».
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -197,35 +197,55 @@
 
     const HIDE_LABELS_CSS = `
         /* Скрытие подписей под иконками в нижней панели */
-        [class*="TabBarItem__text"],
+        .vkuiTabbarItem__label,
+        .TabbarItem__label,
+        .TabbarItem__text,
+        [class*="TabbarItem__label"],
+        [class*="TabbarItem__text"],
         [class*="TabBarItem__label"],
-        [class*="TabBarItem__in"] > [class*="Typography"],
-        [class*="BottomNavigationItem__text"],
+        [class*="TabBarItem__text"],
         [class*="BottomNavigationItem__label"],
-        [class*="TabBarItem"] > span[class*="Typography"],
-        [class*="TabBarItem"] [class*="Caption"],
-        [class*="TabBarItem"] [class*="Footnote"],
-        [class*="TabBarItem"] [class*="Subhead"],
-        .TabBarItem__text,
-        .TabBarItem__label,
-        .BottomNavigationItem__label {
+        [class*="BottomNavigationItem__text"],
+        nav[class*="Tabbar"] span[class*="Typography"],
+        nav[class*="TabBar"] span[class*="Typography"],
+        nav[class*="Tabbar"] [class*="Caption"],
+        nav[class*="TabBar"] [class*="Caption"],
+        nav[class*="Tabbar"] [class*="Subhead"],
+        nav[class*="TabBar"] [class*="Subhead"],
+        nav[class*="Tabbar"] [class*="Footnote"],
+        nav[class*="TabBar"] [class*="Footnote"] {
             display: none !important;
         }
 
         /* Вертикальное центрирование иконок */
-        [class*="TabBarItem__in"],
+        .vkuiTabbarItem,
+        .TabbarItem,
+        [class*="TabbarItem"],
         [class*="TabBarItem"],
         [class*="BottomNavigationItem"] {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            padding-top: 0 !important;
-            padding-bottom: 0 !important;
+            padding: 0 !important;
         }
 
-        [class*="TabBarItem__icon"],
-        [class*="BottomNavigationItem__icon"] {
+        .vkuiTabbarItem__in,
+        .TabbarItem__in,
+        [class*="TabbarItem__in"],
+        [class*="TabBarItem__in"] {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 0 !important;
+            height: 100% !important;
+        }
+
+        .vkuiTabbarItem__icon,
+        .TabbarItem__icon,
+        [class*="TabbarItem__icon"],
+        [class*="TabBarItem__icon"] {
             margin: 0 !important;
+            padding: 0 !important;
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -353,21 +373,114 @@
         return url.includes('act=appearance') || url.includes('/settings/appearance') || (url.includes('/settings') && url.includes('appearance'));
     }
 
+    function createSwitchRow(title, desc, initialChecked, onToggle) {
+        const row = document.createElement('div');
+        row.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            border-bottom: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08));
+        `;
+
+        const textCol = document.createElement('div');
+        textCol.style.cssText = 'flex: 1; padding-right: 14px; pointer-events: none;';
+
+        const titleEl = document.createElement('div');
+        titleEl.style.cssText = 'font-size: 15px; font-weight: 500; color: var(--vkui--color_text_primary, #ffffff); line-height: 1.3;';
+        titleEl.textContent = title;
+
+        const descEl = document.createElement('div');
+        descEl.style.cssText = 'font-size: 12px; color: var(--vkui--color_text_secondary, #999999); margin-top: 3px; line-height: 1.3;';
+        descEl.textContent = desc;
+
+        textCol.appendChild(titleEl);
+        textCol.appendChild(descEl);
+
+        const switchBtn = document.createElement('div');
+        switchBtn.role = 'switch';
+        switchBtn.setAttribute('aria-checked', initialChecked ? 'true' : 'false');
+        switchBtn.style.cssText = `
+            position: relative;
+            width: 48px;
+            height: 28px;
+            border-radius: 28px;
+            background-color: ${initialChecked ? 'var(--vkui--color_background_accent, #2787F5)' : 'var(--vkui--color_track_background, rgba(255, 255, 255, 0.2))'};
+            transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            flex-shrink: 0;
+            cursor: pointer;
+        `;
+
+        const slider = document.createElement('div');
+        slider.style.cssText = `
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background-color: #ffffff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: ${initialChecked ? 'translateX(20px)' : 'translateX(0)'};
+            pointer-events: none;
+        `;
+        switchBtn.appendChild(slider);
+
+        let isChecked = initialChecked;
+
+        function handleToggle(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            isChecked = !isChecked;
+            switchBtn.setAttribute('aria-checked', isChecked ? 'true' : 'false');
+            switchBtn.style.backgroundColor = isChecked
+                ? 'var(--vkui--color_background_accent, #2787F5)'
+                : 'var(--vkui--color_track_background, rgba(255, 255, 255, 0.2))';
+            slider.style.transform = isChecked ? 'translateX(20px)' : 'translateX(0)';
+            onToggle(isChecked);
+        }
+
+        row.addEventListener('click', handleToggle, true);
+        row.addEventListener('touchend', (e) => {
+            handleToggle(e);
+        }, { passive: false });
+
+        row.appendChild(textCol);
+        row.appendChild(switchBtn);
+
+        return row;
+    }
+
     function injectSettingsUI() {
         if (!isAppearancePage()) return;
         if (document.getElementById(SETTINGS_UI_ID)) return;
 
-        // Ищем подходящий контейнер настроек
-        const container = document.querySelector(
-            '[class*="AppearanceSettings"], [class*="settings_appearance"], [class*="SettingsAppearance"], .vkuiPanel__in, .Panel__in, main, [class*="Panel"]'
-        );
-        if (!container) return;
+        // Ищем существующие группы настроек внешнего вида (тема, тема системы и т.д.)
+        const groups = document.querySelectorAll('.vkuiGroup, [class*="Group--mode-card"], [class*="Group--mode-plain"], [class*="Group"]');
+        let target = null;
+        let insertMethod = 'afterend';
 
-        // Создаем блок настроек
+        if (groups.length > 0) {
+            target = groups[groups.length - 1];
+            insertMethod = 'afterend';
+        } else {
+            target = document.querySelector('.vkuiPanel__in, [class*="Panel__in"], main');
+            insertMethod = 'append';
+        }
+
+        if (!target) return;
+
         const card = document.createElement('div');
         card.id = SETTINGS_UI_ID;
+        card.className = 'vkuiGroup vkuiGroup--mode-card';
         card.style.cssText = `
-            margin: 16px 12px;
+            margin: 16px 12px 24px;
             background: var(--vkui--color_background_content, var(--background_content, #222222));
             border-radius: 14px;
             overflow: hidden;
@@ -376,99 +489,60 @@
             font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", sans-serif);
         `;
 
-        card.innerHTML = `
-            <style>
-                .vmu-switch-wrapper {
-                    position: relative;
-                    display: inline-block;
-                    width: 46px;
-                    height: 26px;
-                    flex-shrink: 0;
-                }
-                .vmu-switch-wrapper input {
-                    opacity: 0;
-                    width: 0;
-                    height: 0;
-                }
-                .vmu-switch-slider {
-                    position: absolute;
-                    cursor: pointer;
-                    top: 0; left: 0; right: 0; bottom: 0;
-                    background-color: var(--vkui--color_track_background, rgba(255, 255, 255, 0.2));
-                    transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-                    border-radius: 26px;
-                }
-                .vmu-switch-slider:before {
-                    position: absolute;
-                    content: "";
-                    height: 20px;
-                    width: 20px;
-                    left: 3px;
-                    bottom: 3px;
-                    background-color: #ffffff;
-                    transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-                    border-radius: 50%;
-                    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-                }
-                .vmu-switch-wrapper input:checked + .vmu-switch-slider {
-                    background-color: var(--vkui--color_background_accent, #2787F5);
-                }
-                .vmu-switch-wrapper input:checked + .vmu-switch-slider:before {
-                    transform: translateX(20px);
-                }
-            </style>
-            <div style="padding: 14px 16px 8px; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--vkui--color_text_subhead, #888888); display: flex; align-items: center; justify-content: space-between;">
-                <span>🚀 VK Mobile Upgrade</span>
-                <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v1.1</span>
-            </div>
-
-            <!-- Тумблер 1: Подмена цветов -->
-            <label style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08)); user-select: none;">
-                <div style="flex: 1; padding-right: 14px;">
-                    <div style="font-size: 15px; font-weight: 500; color: var(--vkui--color_text_primary, #ffffff); line-height: 1.3;">Подмена цветов темы</div>
-                    <div style="font-size: 12px; color: var(--vkui--color_text_secondary, #999999); margin-top: 3px; line-height: 1.3;">Меняет местами #71AAEB (акценты/имена) и #FF5C5C (лайки/ошибки)</div>
-                </div>
-                <div class="vmu-switch-wrapper">
-                    <input type="checkbox" id="vmu-toggle-color-swap" ${isColorSwapEnabled ? 'checked' : ''}>
-                    <span class="vmu-switch-slider"></span>
-                </div>
-            </label>
-
-            <!-- Тумблер 2: Скрыть подписи на панели -->
-            <label style="display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; user-select: none;">
-                <div style="flex: 1; padding-right: 14px;">
-                    <div style="font-size: 15px; font-weight: 500; color: var(--vkui--color_text_primary, #ffffff); line-height: 1.3;">Скрыть подписи на нижней панели</div>
-                    <div style="font-size: 12px; color: var(--vkui--color_text_secondary, #999999); margin-top: 3px; line-height: 1.3;">Оставлять только иконки (Главная, Поиск, Мессенджер, Клипы, Ещё)</div>
-                </div>
-                <div class="vmu-switch-wrapper">
-                    <input type="checkbox" id="vmu-toggle-hide-labels" ${isHideLabelsEnabled ? 'checked' : ''}>
-                    <span class="vmu-switch-slider"></span>
-                </div>
-            </label>
+        // Заголовок карточки
+        const header = document.createElement('div');
+        header.style.cssText = `
+            padding: 14px 16px 8px;
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--vkui--color_text_subhead, #888888);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08));
         `;
+        header.innerHTML = `
+            <span>🚀 VK Mobile Upgrade</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v1.2</span>
+        `;
+        card.appendChild(header);
 
-        container.appendChild(card);
-
-        // Обработчики переключения
-        const colorCheckbox = card.querySelector('#vmu-toggle-color-swap');
-        if (colorCheckbox) {
-            colorCheckbox.addEventListener('change', (e) => {
-                isColorSwapEnabled = e.target.checked;
+        // Тумблер 1: Подмена цветов
+        const row1 = createSwitchRow(
+            'Подмена цветов темы',
+            'Меняет местами #71AAEB (акценты/имена) и #FF5C5C (лайки/ошибки)',
+            isColorSwapEnabled,
+            (checked) => {
+                isColorSwapEnabled = checked;
                 setSetting(STORAGE_KEYS.COLOR_SWAP, isColorSwapEnabled);
                 applyCurrentStyles();
                 if (isColorSwapEnabled) {
                     processTree(document.documentElement);
                 }
-            });
-        }
+            }
+        );
+        card.appendChild(row1);
 
-        const labelsCheckbox = card.querySelector('#vmu-toggle-hide-labels');
-        if (labelsCheckbox) {
-            labelsCheckbox.addEventListener('change', (e) => {
-                isHideLabelsEnabled = e.target.checked;
+        // Тумблер 2: Скрыть подписи на нижней панели
+        const row2 = createSwitchRow(
+            'Скрыть подписи на нижней панели',
+            'Оставлять только иконки (Главная, Поиск, Мессенджер, Клипы, Ещё)',
+            isHideLabelsEnabled,
+            (checked) => {
+                isHideLabelsEnabled = checked;
                 setSetting(STORAGE_KEYS.HIDE_TAB_LABELS, isHideLabelsEnabled);
                 applyCurrentStyles();
-            });
+            }
+        );
+        row2.style.borderBottom = 'none';
+        card.appendChild(row2);
+
+        if (insertMethod === 'afterend') {
+            target.insertAdjacentElement('afterend', card);
+        } else {
+            target.appendChild(card);
         }
     }
 
