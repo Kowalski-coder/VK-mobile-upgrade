@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      1.4
-// @description  Улучшение и кастомизация интерфейса мобильной версии VK (m.vk.ru / vk.ru). Опциональная смена акцентных цветов (#71AAEB ⇄ #FF5C5C) и скрытие подписей в нижней панели. Надежное отображение меню настроек.
+// @version      1.5
+// @description  Улучшение и кастомизация интерфейса мобильной версии VK (m.vk.ru / vk.ru). Опциональная смена акцентных цветов (#71AAEB ⇄ #FF5C5C) и надежное скрытие подписей в нижней панели.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -197,43 +197,58 @@
     `;
 
     const HIDE_LABELS_CSS = `
-        /* Скрытие подписей под иконками в нижней панели */
-        .vkuiTabbarItem__label,
-        .TabbarItem__label,
-        .TabbarItem__text,
+        /* Полное скрытие текстовых подписей нижней панели через CSS */
         [class*="TabbarItem__label"],
         [class*="TabbarItem__text"],
         [class*="TabBarItem__label"],
         [class*="TabBarItem__text"],
-        [class*="BottomNavigationItem__label"],
-        [class*="BottomNavigationItem__text"],
-        nav[class*="Tabbar"] span[class*="Typography"],
-        nav[class*="TabBar"] span[class*="Typography"],
+        [class*="bottom_nav__label"],
+        [class*="bottom_nav__text"],
+        [class*="BottomNav__label"],
+        [class*="BottomNav__text"],
+        .vkuiTabbarItem__label,
+        .vkuiTabbarItem__text,
+        .TabbarItem__label,
+        .TabbarItem__text,
+        .TabBarItem__label,
+        .TabBarItem__text,
+        .bottom_nav__label,
+        .bottom_nav__text,
+        nav[class*="Tabbar"] [class*="Typography"]:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
+        nav[class*="TabBar"] [class*="Typography"]:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
         nav[class*="Tabbar"] [class*="Caption"],
         nav[class*="TabBar"] [class*="Caption"],
         nav[class*="Tabbar"] [class*="Subhead"],
         nav[class*="TabBar"] [class*="Subhead"],
         nav[class*="Tabbar"] [class*="Footnote"],
-        nav[class*="TabBar"] [class*="Footnote"] {
+        nav[class*="TabBar"] [class*="Footnote"],
+        nav[class*="Tabbar"] a > span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
+        nav[class*="TabBar"] a > span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
+        [id*="bottom_nav"] a > span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]),
+        [class*="bottom_nav"] a > span:not([class*="Counter"]):not([class*="Badge"]):not([class*="counter"]):not([class*="badge"]) {
             display: none !important;
         }
 
-        /* Вертикальное центрирование иконок */
-        .vkuiTabbarItem,
-        .TabbarItem,
+        /* Центрирование иконок по вертикали */
         [class*="TabbarItem"],
         [class*="TabBarItem"],
-        [class*="BottomNavigationItem"] {
+        [class*="bottom_nav__item"],
+        .vkuiTabbarItem,
+        .TabbarItem,
+        .TabBarItem {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
-            padding: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
         }
 
+        [class*="TabbarItem__in"],
+        [class*="TabBarItem__in"],
+        [class*="bottom_nav__in"],
         .vkuiTabbarItem__in,
         .TabbarItem__in,
-        [class*="TabbarItem__in"],
-        [class*="TabBarItem__in"] {
+        .TabBarItem__in {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -241,10 +256,12 @@
             height: 100% !important;
         }
 
+        [class*="TabbarItem__icon"],
+        [class*="TabBarItem__icon"],
+        [class*="bottom_nav__icon"],
         .vkuiTabbarItem__icon,
         .TabbarItem__icon,
-        [class*="TabbarItem__icon"],
-        [class*="TabBarItem__icon"] {
+        .TabBarItem__icon {
             margin: 0 !important;
             padding: 0 !important;
             display: flex !important;
@@ -278,12 +295,47 @@
         }
     }
 
+    function updateBottomBarLabels() {
+        // Находим все возможные контейнеры нижней навигации
+        const navs = document.querySelectorAll(
+            'nav, [class*="Tabbar"], [class*="TabBar"], [class*="bottom_nav"], [id*="bottom_nav"], [class*="FixedLayout--bottom"], [class*="FixedLayout"]'
+        );
+
+        for (let i = 0; i < navs.length; i++) {
+            const nav = navs[i];
+            const items = nav.querySelectorAll('a, [class*="TabbarItem"], [class*="TabBarItem"], [class*="bottom_nav__item"]');
+            for (let j = 0; j < items.length; j++) {
+                const item = items[j];
+                const allElements = item.querySelectorAll('*');
+                for (let k = 0; k < allElements.length; k++) {
+                    const el = allElements[k];
+                    // Пропускаем SVG, иконки и счетчики уведомлений
+                    if (el.tagName === 'SVG' || el.tagName === 'PATH' || el.closest('svg')) continue;
+                    if (el.querySelector('svg')) continue;
+                    const className = String(el.className || '');
+                    if (className.includes('Counter') || className.includes('counter') || className.includes('Badge') || className.includes('badge')) continue;
+                    if (el.closest('[class*="Counter"], [class*="counter"], [class*="Badge"], [class*="badge"]')) continue;
+
+                    const text = el.textContent ? el.textContent.trim() : '';
+                    if (text && !/^\d+$/.test(text)) {
+                        if (isHideLabelsEnabled) {
+                            el.style.setProperty('display', 'none', 'important');
+                        } else {
+                            el.style.removeProperty('display');
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     function applyStyles() {
         setOrRemoveStyle('vmu-color-swap-styles', COLOR_SWAP_CSS, isColorSwapEnabled);
         setOrRemoveStyle('vmu-hide-labels-styles', HIDE_LABELS_CSS, isHideLabelsEnabled);
+        updateBottomBarLabels();
     }
 
-    // Применяем стили мгновенно на этапе загрузки страницы
+    // Применяем стили мгновенно
     applyStyles();
 
     // ==========================================
@@ -296,7 +348,6 @@
         if (href.includes('appearance') || href.includes('act=appearance')) {
             return true;
         }
-        // Также проверяем наличие радиокнопок тем на странице
         if (document.querySelector('input[type="radio"], .vkuiRadio, [class*="Radio"], [class*="AppearanceSettings"]')) {
             if (href.includes('settings') || href.includes('setting')) {
                 return true;
@@ -445,7 +496,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v1.4</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v1.5</span>
         `;
         card.appendChild(header);
 
@@ -497,10 +548,13 @@
         init();
     }
 
-    // Периодическая проверка наличия карточки при открытии страницы настроек
+    // Периодическая проверка настроек и состояния нижней панели
     setInterval(() => {
         if (isAppearancePage() && !document.getElementById(SETTINGS_UI_ID)) {
             tryInjectSettings();
+        }
+        if (isHideLabelsEnabled) {
+            updateBottomBarLabels();
         }
     }, 400);
 
