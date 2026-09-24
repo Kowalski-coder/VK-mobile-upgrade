@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.8.4
+// @version      2.8.5
 // @description  Улучшение интерфейса m.vk.ru: тема Snow Black, скрытие стандартного блока темы, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера, скрытие меню действий в списке чатов, скрытие панели папок и исправление верстки.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -388,7 +388,7 @@
     `;
 
     const HIDE_LABELS_CSS = `
-        /* СКРЫТИЕ ПОДПИСЕЙ В НИЖНЕЙ НАВИГАЦИОННОЙ ПАНЕЛИ */
+        /* СКРЫТИЕ ПОДПИСЕЙ В НИЖНЕЙ НАВИГАЦИОННОЙ ПАНЕЛИ (БЕЗ УЩЕРБА ДЛЯ СЧЕТЧИКОВ/ИНДИКАТОРОВ) */
         [class*="TabbarItem__label"],
         [class*="TabBarItem__label"],
         [class*="TabbarItem__text"],
@@ -401,9 +401,9 @@
         #bottom_nav [class*="text"],
         .bottom_nav [class*="label"],
         .bottom_nav [class*="text"],
-        [class*="TabbarItem"] > [class*="TabbarItem__in"] > span:last-child:not([class*="Counter"]):not([class*="Badge"]),
-        [class*="TabBarItem"] > [class*="TabBarItem__in"] > span:last-child:not([class*="Counter"]):not([class*="Badge"]),
-        .vkuiTabbarItem > .vkuiTabbarItem__in > span:last-child:not([class*="Counter"]):not([class*="Badge"]) {
+        [class*="TabbarItem"] > [class*="TabbarItem__in"] > span:last-child:not([class*="Counter"]):not([class*="Badge"]):not([class*="indicator"]):not([class*="Indicator"]):not([class*="icon"]):not([class*="Icon"]):not(.vkuiCounter):not(.vkuiBadge):not(.vkuiIndicator):not(.vkuiTabbarItem__indicator):not(.vkuiTabbarItem__icon):not(svg):not(img):not([role="img"]),
+        [class*="TabBarItem"] > [class*="TabBarItem__in"] > span:last-child:not([class*="Counter"]):not([class*="Badge"]):not([class*="indicator"]):not([class*="Indicator"]):not([class*="icon"]):not([class*="Icon"]):not(.vkuiCounter):not(.vkuiBadge):not(.vkuiIndicator):not(.vkuiTabbarItem__indicator):not(.vkuiTabbarItem__icon):not(svg):not(img):not([role="img"]),
+        .vkuiTabbarItem > .vkuiTabbarItem__in > span:last-child:not([class*="Counter"]):not([class*="Badge"]):not([class*="indicator"]):not([class*="Indicator"]):not([class*="icon"]):not([class*="Icon"]):not(.vkuiCounter):not(.vkuiBadge):not(.vkuiIndicator):not(.vkuiTabbarItem__indicator):not(.vkuiTabbarItem__icon):not(svg):not(img):not([role="img"]) {
             display: none !important;
             visibility: hidden !important;
             opacity: 0 !important;
@@ -416,7 +416,7 @@
             pointer-events: none !important;
         }
 
-        /* Центрирование иконок в таб-баре */
+        /* Позиционирование и центрирование иконок */
         [class*="TabbarItem"],
         [class*="TabBarItem"],
         .vkuiTabbarItem,
@@ -426,6 +426,7 @@
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
+            position: relative !important;
             padding: 0 !important;
             margin: 0 !important;
         }
@@ -433,13 +434,39 @@
         [class*="TabbarItem__in"],
         [class*="TabBarItem__in"],
         .vkuiTabbarItem__in,
-        .bottom_nav__in {
+        .bottom_nav__in,
+        [class*="TabbarItem__icon"],
+        [class*="TabBarItem__icon"],
+        .vkuiTabbarItem__icon {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
+            position: relative !important;
             padding: 0 !important;
             margin: 0 !important;
             height: 100% !important;
+        }
+
+        /* Индикатор / бейдж / счетчик сообщений в таб-баре всегда видим */
+        [class*="TabbarItem"] [class*="indicator"],
+        [class*="TabbarItem"] [class*="Indicator"],
+        [class*="TabBarItem"] [class*="indicator"],
+        [class*="TabBarItem"] [class*="Indicator"],
+        .vkuiTabbarItem__indicator,
+        .vkuiTabbarItem__badge,
+        .vkuiIndicator,
+        [class*="TabbarItem"] [class*="Counter"],
+        [class*="TabbarItem"] [class*="Badge"],
+        [class*="TabBarItem"] [class*="Counter"],
+        [class*="TabBarItem"] [class*="Badge"],
+        .bottom_nav [class*="counter"],
+        .bottom_nav [class*="badge"],
+        .bottom_nav [class*="indicator"] {
+            display: inline-flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+            z-index: 10 !important;
         }
     `;
 
@@ -988,7 +1015,7 @@
         card.id = SETTINGS_UI_ID;
         card.className = 'vkuiGroup vkuiGroup--mode-card';
         card.style.cssText = `
-            margin: 16px 12px 32px !important;
+            margin: 28px 12px 32px !important;
             background: var(--vkui--color_background_content, var(--background_content, #222222)) !important;
             border-radius: 14px !important;
             overflow: hidden !important;
@@ -1015,7 +1042,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.8.4</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.8.5</span>
         `;
         card.appendChild(header);
 
