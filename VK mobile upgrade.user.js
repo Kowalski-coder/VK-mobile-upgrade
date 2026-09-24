@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.7.2
+// @version      2.7.3
 // @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера, скрытие меню действий в списке чатов, установка картинки из галереи в качестве фона диалогов.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -144,29 +144,29 @@
             flex-wrap: nowrap !important;
         }
 
-        /* 5. СКРЫТИЕ КНОПКИ ТРЕХ ТОЧЕК (ДЕЙСТВИЙ) В СПИСКЕ ДИАЛОГОВ */
-        body.vmu-page-mail [class*="SimpleCell__after"] button,
-        body.vmu-page-mail [class*="SimpleCell__after"] [role="button"],
+        /* 5. СКРЫТИЕ КНОПКИ ТРЕХ ТОЧЕК В СПИСКЕ ДИАЛОГОВ */
+        body.vmu-page-mail [class*="SimpleCell__after"] [class*="Icon--more_vertical"],
+        body.vmu-page-mail [class*="SimpleCell__after"] [class*="Icon--more_vertical_24"],
+        body.vmu-page-mail [class*="SimpleCell__after"] [class*="Icon--more_vertical_28"],
+        body.vmu-page-mail [class*="SimpleCell__after"] [aria-label*="действи" i],
+        body.vmu-page-mail [class*="SimpleCell__after"] [aria-label*="меню" i],
+        body.vmu-page-mail [class*="SimpleCell__after"] button:has([class*="Icon--more_vertical"]),
+        body.vmu-page-mail [class*="SimpleCell__after"] [role="button"]:has([class*="Icon--more_vertical"]),
         body.vmu-page-mail [class*="ConvoItem__actions"],
         body.vmu-page-mail [class*="convo-actions"],
         body.vmu-page-mail [class*="im-dialog--actions"],
-        body.vmu-page-mail [class*="im-dialog__actions"],
-        body.vmu-page-mail [aria-label="Действия"],
-        body.vmu-page-mail [aria-label="Действия с чатом"],
-        body.vmu-page-mail [aria-label="Меню чата"],
-        body.vmu-page-mail [class*="Icon--more_vertical"],
-        body.vmu-page-mail [class*="Icon--more_vertical_24"],
-        body.vmu-page-mail [class*="Icon--more_vertical_28"] {
+        body.vmu-page-mail [class*="im-dialog__actions"] {
             display: none !important;
             visibility: hidden !important;
+            opacity: 0 !important;
             width: 0 !important;
             height: 0 !important;
             max-width: 0 !important;
             max-height: 0 !important;
-            overflow: hidden !important;
             pointer-events: none !important;
             margin: 0 !important;
             padding: 0 !important;
+            overflow: hidden !important;
         }
     `;
 
@@ -445,14 +445,12 @@
                 --background: transparent !important;
             }
 
-            body.vmu-inside-chat,
-            body.vmu-inside-chat .vkuiPanel,
-            body.vmu-inside-chat .vkuiPanel__in,
-            body.vmu-inside-chat [class*="Panel__in"],
             body.vmu-inside-chat [class*="im-page--history"],
             body.vmu-inside-chat [class*="ChatHistory"],
             body.vmu-inside-chat [class*="ConvoHistory"],
-            body.vmu-inside-chat [class*="HistoryMessages"] {
+            body.vmu-inside-chat [class*="HistoryMessages"],
+            body.vmu-inside-chat .vkuiPanel--active,
+            body.vmu-inside-chat [class*="Panel--active"] {
                 background-image: url("${customChatBg}") !important;
                 background-size: cover !important;
                 background-position: center center !important;
@@ -461,15 +459,10 @@
             }
 
             /* Полная прозрачность внутренних контейнеров диалога */
-            body.vmu-inside-chat #root,
-            body.vmu-inside-chat .vk__page,
-            body.vmu-inside-chat .layout,
-            body.vmu-inside-chat .vkuiSplitLayout,
-            body.vmu-inside-chat .vkuiSplitCol,
-            body.vmu-inside-chat .vkuiView,
-            body.vmu-inside-chat .vkuiView__panels,
-            body.vmu-inside-chat .vkuiGroup,
-            body.vmu-inside-chat [class*="Group"],
+            body.vmu-inside-chat .vkuiPanel--active .vkuiPanel__in,
+            body.vmu-inside-chat .vkuiPanel--active [class*="Panel__in"],
+            body.vmu-inside-chat .vkuiPanel--active .vkuiGroup,
+            body.vmu-inside-chat .vkuiPanel--active [class*="Group"],
             body.vmu-inside-chat [class*="im-page"],
             body.vmu-inside-chat [class*="im-page--chat-body"],
             body.vmu-inside-chat [class*="im-dialog--messages"],
@@ -521,25 +514,33 @@
         const search = window.location.search.toLowerCase();
         const hash = window.location.hash.toLowerCase();
 
-        // 1. СТРОГО: путь должен быть связан с мессенджером/чатами
-        const isMailRoute = path.startsWith('/mail') || path.startsWith('/im') || path.startsWith('/write') || path.startsWith('/convo');
-        if (!isMailRoute && !search.includes('peer=') && !search.includes('sel=')) {
+        // 1. СТРОГО: исключаем все разделы, не относящиеся к диалогам
+        if (path.startsWith('/settings') || path.startsWith('/menu') || path.startsWith('/feed') ||
+            path.startsWith('/clips') || path.startsWith('/video') || path.startsWith('/music') ||
+            path.startsWith('/id') || path.startsWith('/wall') || path.startsWith('/friends') ||
+            path.startsWith('/groups') || path.startsWith('/photos') || path.startsWith('/docs') ||
+            path.startsWith('/bookmarks') || path.startsWith('/call') || search.includes('act=appearance')) {
             return false;
         }
 
-        // 2. Прямые параметры диалога в URL
+        // 2. Параметры конкретного диалога в URL
         if (search.includes('peer=') || search.includes('sel=') || search.includes('act=show') ||
-            hash.includes('peer=') || hash.includes('sel=') || path.startsWith('/write') || path.startsWith('/convo') ||
-            path.includes('/im/convo') || path.includes('/im/chat')) {
+            hash.includes('peer=') || hash.includes('sel=') || path.startsWith('/write') ||
+            path.startsWith('/convo') || path.includes('/im/convo') || path.includes('/im/chat')) {
             return true;
         }
 
-        // 3. Строка ввода сообщений в DOM (существует ТОЛЬКО внутри открытого диалога)
-        const hasWriteBar = document.querySelector(
-            '[class*="WriteBar"], [class*="writeBar"], [class*="Writebar"], [class*="write_bar"], [class*="im-chat-input"], [class*="writebox"], [class*="ChatInput"], textarea[placeholder*="сообщени" i], input[placeholder*="сообщени" i]'
-        );
-        if (hasWriteBar) {
-            return true;
+        // 3. Только внутри /mail или /im: проверяем наличие видимой строки ввода
+        if (path.startsWith('/mail') || path.startsWith('/im')) {
+            const writeBars = document.querySelectorAll(
+                '[class*="WriteBar"], [class*="writeBar"], [class*="Writebar"], [class*="im-chat-input"], [class*="writebox"]'
+            );
+            for (let i = 0; i < writeBars.length; i++) {
+                const wb = writeBars[i];
+                if (wb.offsetWidth > 0 && wb.offsetHeight > 0 && wb.offsetParent !== null) {
+                    return true;
+                }
+            }
         }
 
         return false;
@@ -1154,7 +1155,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.7.2</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.7.3</span>
         `;
         card.appendChild(header);
 
@@ -1213,53 +1214,38 @@
     }
 
     // ==========================================
-    //    СКРЫТИЕ КНОПКИ ТРЕХ ТОЧЕК В СПИСКЕ ЧАТОВ
+    //       ИНИЦИАЛИЗАЦИЯ И MUTATION OBSERVER
     // ==========================================
-    function hideChatListMoreButtons() {
-        if (!isMainMailListPage()) return;
+    let isRunningFixes = false;
+    let fixesScheduled = false;
 
-        const moreElements = document.querySelectorAll(
-            'body.vmu-page-mail [class*="SimpleCell__after"] [class*="Icon--more_vertical"], ' +
-            'body.vmu-page-mail [class*="SimpleCell__after"] [class*="Icon--more_vertical_24"], ' +
-            'body.vmu-page-mail [class*="SimpleCell__after"] [class*="Icon--more_vertical_28"], ' +
-            'body.vmu-page-mail [class*="SimpleCell__after"] [aria-label="Действия"], ' +
-            'body.vmu-page-mail [class*="SimpleCell__after"] [aria-label="Действия с чатом"], ' +
-            'body.vmu-page-mail [class*="SimpleCell__after"] [aria-label="Меню чата"], ' +
-            'body.vmu-page-mail [class*="SimpleCell__after"] [aria-label*="действи" i], ' +
-            'body.vmu-page-mail [class*="ConvoItem__actions"]'
-        );
-
-        for (let i = 0; i < moreElements.length; i++) {
-            const el = moreElements[i];
-            if (el.closest('[class*="Counter"], [class*="Badge"]')) continue;
-            if (el.closest('.vkuiPanelHeader, [class*="PanelHeader"], .vkmListHeader, [class*="vkmListHeader"], [class*="SubnavigationBar"], #vmu-top-unread-btn')) continue;
-
-            const btn = el.closest('button, [role="button"]') || el;
-            try {
-                btn.remove();
-            } catch (e) {
-                btn.style.setProperty('display', 'none', 'important');
-                btn.style.setProperty('pointer-events', 'none', 'important');
-            }
+    function runAllFixes() {
+        if (isRunningFixes) return;
+        isRunningFixes = true;
+        try {
+            updatePageBodyClasses();
+            applyStyles();
+            updateSettingsVisibility();
+            handleUnreadFilter();
+        } finally {
+            isRunningFixes = false;
         }
     }
 
-    // ==========================================
-    //       ИНИЦИАЛИЗАЦИЯ И MUTATION OBSERVER
-    // ==========================================
-    function runAllFixes() {
-        updatePageBodyClasses();
-        applyStyles();
-        updateSettingsVisibility();
-        handleUnreadFilter();
-        hideChatListMoreButtons();
+    function scheduleFixes() {
+        if (fixesScheduled) return;
+        fixesScheduled = true;
+        requestAnimationFrame(() => {
+            fixesScheduled = false;
+            runAllFixes();
+        });
     }
 
     let observer = null;
     function startObserver() {
         if (observer) return;
         observer = new MutationObserver(() => {
-            runAllFixes();
+            scheduleFixes();
         });
         observer.observe(document.documentElement, {
             childList: true,
@@ -1277,21 +1263,21 @@
         startObserver();
     }
 
-    setInterval(runAllFixes, 200);
+    setInterval(scheduleFixes, 250);
 
-    window.addEventListener('load', runAllFixes);
-    window.addEventListener('popstate', runAllFixes);
-    window.addEventListener('hashchange', runAllFixes);
+    window.addEventListener('load', scheduleFixes);
+    window.addEventListener('popstate', scheduleFixes);
+    window.addEventListener('hashchange', scheduleFixes);
 
     const origPushState = history.pushState;
     history.pushState = function() {
         origPushState.apply(this, arguments);
-        runAllFixes();
+        scheduleFixes();
     };
 
     const origReplaceState = history.replaceState;
     history.replaceState = function() {
         origReplaceState.apply(this, arguments);
-        runAllFixes();
+        scheduleFixes();
     };
 })();
