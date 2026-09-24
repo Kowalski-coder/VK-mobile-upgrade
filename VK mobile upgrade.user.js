@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.5.1
+// @version      2.5.2
 // @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера и исправление верстки.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -391,23 +391,43 @@
     // ==========================================
     //    ОПРЕДЕЛЕНИЕ ТЕКУЩЕЙ СТРАНИЦЫ
     // ==========================================
-    function isMailOrMessengerPage() {
-        const path = (window.location.pathname + window.location.hash + window.location.search).toLowerCase();
-        if (path.includes('/mail') || path.includes('/im') || path.includes('act=mail') || path.includes('sel=') || path.includes('al_im') || path.includes('chats') || path.includes('dialogs')) {
-            return true;
+    function isMainMailListPage() {
+        const search = window.location.search.toLowerCase();
+        const hash = window.location.hash.toLowerCase();
+        const path = window.location.pathname.toLowerCase();
+
+        // 1. Если есть параметры перехода в конкретный чат/архив/папки/настройки
+        if (search.includes('peer=') || search.includes('sel=') || search.includes('act=show') ||
+            search.includes('act=archive') || search.includes('act=folders') || search.includes('act=settings') ||
+            search.includes('act=write') || hash.includes('peer=') || hash.includes('sel=')) {
+            return false;
         }
 
-        if (document.querySelector('.vkmListHeader, [class*="vkmListHeader"], .ConvoList, [class*="ConvoList"], [class*="ConvoList__footerSwitch"], [class*="footerSwitch"]')) {
-            return true;
+        // 2. Если в шапке есть кнопка "Назад" (стрелочка) или "Закрыть" (крестик) -> это экран внутри чата/архива/папок
+        const beforeBtn = document.querySelector(
+            '.vkuiPanelHeader__before, [class*="PanelHeader__before"], .vkmListHeader__before, [class*="vkmListHeader__before"], [aria-label="Назад"], [aria-label="Закрыть"], [data-testid="header-back"]'
+        );
+        if (beforeBtn && beforeBtn.querySelector('svg, [class*="Icon"]')) {
+            return false;
         }
 
-        const headerTitle = document.querySelector('.vkmListHeader__title, [class*="vkmListHeader__title"], .vkuiPanelHeader__typography, [class*="PanelHeader__typography"], .vkuiPanelHeader__content, [class*="PanelHeader__content"], h1, h2');
-        if (headerTitle && headerTitle.textContent && headerTitle.textContent.trim().toLowerCase() === 'мессенджер') {
-            return true;
+        // 3. Заголовок шапки
+        const titleEl = document.querySelector(
+            '.vkmListHeader__title, [class*="vkmListHeader__title"], .vkuiPanelHeader__typography, [class*="PanelHeader__typography"], .vkuiPanelHeader__content, [class*="PanelHeader__content"]'
+        );
+        if (titleEl && titleEl.textContent) {
+            const titleText = titleEl.textContent.trim().toLowerCase();
+            if (titleText === 'архив' || titleText === 'папки с чатами' || titleText.includes('участник') || titleText.includes('онлайн')) {
+                return false;
+            }
         }
 
-        const tabs = document.querySelector('[class*="SubnavigationBar"], .vkuiSubnavigationBar');
-        if (tabs && tabs.textContent.includes('Каналы') && tabs.textContent.includes('Чаты')) {
+        // 4. Проверяем наличие категорий или строки поиска основного мессенджера
+        const hasSubnav = document.querySelector('[class*="SubnavigationBar"], .vkuiSubnavigationBar, [class*="ConvoList"]');
+        const hasSearch = document.querySelector('input[placeholder*="Поиск"], [class*="Search"] input, .vkuiSearch input');
+        const isMessengerTitle = titleEl && titleEl.textContent.trim().toLowerCase() === 'мессенджер';
+
+        if (path.includes('/mail') || path.includes('/im') || isMessengerTitle || hasSubnav || hasSearch) {
             return true;
         }
 
@@ -439,7 +459,7 @@
 
     function updatePageBodyClasses() {
         if (!document.body) return;
-        const isMail = isMailOrMessengerPage();
+        const isMail = isMainMailListPage();
         if (isMail) {
             if (!document.body.classList.contains('vmu-page-mail')) {
                 document.body.classList.add('vmu-page-mail');
@@ -462,12 +482,56 @@
         );
     }
 
-    function handleUnreadFilter() {
-        const isMail = isMailOrMessengerPage();
+    function findHeaderActionsSlot() {
+        // 1. Ищем контейнер действий справа
+        const actionContainers = document.querySelectorAll(
+            '.vkmListHeader__actions, [class*="vkmListHeader__actions"], [class*="ListHeader__actions"], .vkuiPanelHeader__after, [class*="PanelHeader__after"], .vkuiPanelHeader__controls, [class*="PanelHeader__controls"], .vkuiPanelHeader__right, [class*="PanelHeader__right"]'
+        );
+        for (let i = 0; i < actionContainers.length; i++) {
+            const c = actionContainers[i];
+            if (c.querySelector('svg, button, a') && !c.classList.contains('vkuiPanelHeader__before') && !c.className.includes('before')) {
+                return { container: c, insertBefore: c.firstChild };
+            }
+        }
 
-        if (!isMail) {
-            const btn = document.getElementById(UNREAD_TOP_BTN_ID);
-            if (btn) btn.remove();
+        // 2. Ищем кнопку Архива или создания чата в шапке
+        const candidateBtns = document.querySelectorAll(
+            'a[href*="archive"], [aria-label*="Архив"], [aria-label*="Написать"], [aria-label*="Новое сообщение"], a[href*="act=write"], a[href*="new_chat"]'
+        );
+        for (let i = 0; i < candidateBtns.length; i++) {
+            const btn = candidateBtns[i];
+            const header = btn.closest('.vkmListHeader, [class*="vkmListHeader"], .vkuiPanelHeader, [class*="PanelHeader"]');
+            if (header && btn.parentElement) {
+                return { container: btn.parentElement, insertBefore: btn.parentElement.firstChild };
+            }
+        }
+
+        // 3. Ищем кнопки в правой половине шапки
+        const header = document.querySelector('.vkmListHeader, [class*="vkmListHeader"], .vkuiPanelHeader, [class*="PanelHeader"]');
+        if (header) {
+            const allBtns = header.querySelectorAll('a, button, [role="button"], .vkuiPanelHeaderButton, .vkuiTappable');
+            for (let i = 0; i < allBtns.length; i++) {
+                const b = allBtns[i];
+                if (b.id === UNREAD_TOP_BTN_ID) continue;
+                const rect = b.getBoundingClientRect();
+                if (rect.left > (window.innerWidth / 2) && b.parentElement) {
+                    return { container: b.parentElement, insertBefore: b };
+                }
+            }
+        }
+
+        return null;
+    }
+
+    function handleUnreadFilter() {
+        const isMainMail = isMainMailListPage();
+
+        // СТРОГОЕ УДАЛЕНИЕ КНОПКИ НА ВСЕХ ОСТАЛЬНЫХ ЭКРАНАХ
+        if (!isMainMail) {
+            const existingBtn = document.getElementById(UNREAD_TOP_BTN_ID);
+            if (existingBtn) {
+                existingBtn.remove();
+            }
             return;
         }
 
@@ -499,7 +563,6 @@
                     row.style.setProperty('overflow', 'hidden', 'important');
                     row.style.setProperty('pointer-events', 'none', 'important');
 
-                    // Если обернут в компактный контейнер шторки
                     const parent = row.parentElement;
                     if (parent && parent.children.length <= 3 && parent !== document.body && parent.id !== 'root' && !parent.classList.contains('vkuiPanel')) {
                         parent.style.setProperty('display', 'none', 'important');
@@ -511,37 +574,28 @@
             }
         }
 
-        // 3. Внедряем кнопку в шапку мессенджера
+        // 3. Внедряем кнопку в шапку мессенджера (строго на главной странице)
         injectTopUnreadToggle();
     }
 
     function injectTopUnreadToggle() {
-        if (document.getElementById(UNREAD_TOP_BTN_ID)) return;
+        const slot = findHeaderActionsSlot();
+        if (!slot) return;
 
-        // Ищем правый блок действий с иконками (архив, новый чат)
-        let headerActions = document.querySelector(
-            '.vkmListHeader__actions, [class*="vkmListHeader__actions"], [class*="ListHeader__actions"], .vkuiPanelHeader__after, [class*="PanelHeader__after"], .vkuiPanelHeader__controls, [class*="PanelHeader__controls"], .vkuiPanelHeader__right, [class*="PanelHeader__right"]'
-        );
+        const headerActions = slot.container;
+        const insertBeforeEl = slot.insertBefore;
 
-        let insertBeforeEl = null;
+        const existingBtn = document.getElementById(UNREAD_TOP_BTN_ID);
 
-        if (headerActions) {
-            insertBeforeEl = headerActions.firstChild;
-        } else {
-            // Ищем первую иконку-действие в шапке
-            const firstIcon = document.querySelector(
-                '.vkmListHeader svg, [class*="vkmListHeader"] svg, .vkuiPanelHeader svg'
-            );
-            if (firstIcon) {
-                const iconBtn = firstIcon.closest('a, button, div.vkuiTappable, [class*="Button"], [class*="Action"]') || firstIcon.parentElement;
-                if (iconBtn && iconBtn.parentElement) {
-                    headerActions = iconBtn.parentElement;
-                    insertBeforeEl = iconBtn;
-                }
-            }
+        // Если кнопка уже вставлена в правильное место, ничего не делаем
+        if (existingBtn && existingBtn.parentElement === headerActions) {
+            return;
         }
 
-        if (!headerActions) return;
+        // Если кнопка была вставлена в неправильный контейнер (например, слева от аватарки) — перемещаем
+        if (existingBtn) {
+            existingBtn.remove();
+        }
 
         // Предотвращаем перенос кнопок в шапке
         headerActions.style.setProperty('display', 'flex', 'important');
@@ -798,7 +852,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.5.1</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.5.2</span>
         `;
         card.appendChild(header);
 
