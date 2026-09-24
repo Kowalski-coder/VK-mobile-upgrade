@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      1.7
-// @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики сообщений и исправление перекрытия чатов.
+// @version      1.8
+// @description  Улучшение интерфейса m.vk.ru: смена акцентных цветов, скрытие подписей в нижней панели, круглые счетчики сообщений и строго изолированное меню настроек.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -455,15 +455,27 @@
     const SETTINGS_UI_ID = 'vk-mobile-upgrade-settings-card';
 
     function isAppearancePage() {
-        const href = window.location.href.toLowerCase();
-        if (href.includes('appearance') || href.includes('act=appearance')) {
+        const path = window.location.pathname.toLowerCase();
+        const search = window.location.search.toLowerCase();
+
+        // СТРОГАЯ ЗАЩИТА: Ни в коем случае не отображать в диалогах, ленте, клипах, профилях и т.д.
+        if (path.startsWith('/im') || path.startsWith('/feed') || path.startsWith('/clips') ||
+            path.startsWith('/video') || path.startsWith('/music') || path.startsWith('/id') ||
+            path.startsWith('/wall') || path.startsWith('/audios') || path.startsWith('/friends') ||
+            path.startsWith('/groups') || path.startsWith('/photos') || path.startsWith('/docs') ||
+            path.startsWith('/bookmarks') || path.startsWith('/call')) {
+            return false;
+        }
+
+        // Проверяем страницу настроек темы
+        if (search.includes('act=appearance') || path.includes('/settings/appearance')) {
             return true;
         }
-        if (document.querySelector('input[type="radio"], .vkuiRadio, [class*="Radio"], [class*="AppearanceSettings"]')) {
-            if (href.includes('settings') || href.includes('setting')) {
-                return true;
-            }
+
+        if (path.startsWith('/settings') && (search.includes('appearance') || document.querySelector('input[name="theme"], input[name="scheme"]'))) {
+            return true;
         }
+
         return false;
     }
 
@@ -549,13 +561,24 @@
         return row;
     }
 
-    function tryInjectSettings() {
-        if (!isAppearancePage()) return;
-        if (document.getElementById(SETTINGS_UI_ID)) return;
+    function updateSettingsVisibility() {
+        const isAppearance = isAppearancePage();
+        const existingCard = document.getElementById(SETTINGS_UI_ID);
 
+        // Если мы НЕ на странице внешнего вида — немедленно удаляем карточку из DOM
+        if (!isAppearance) {
+            if (existingCard) {
+                existingCard.remove();
+            }
+            return;
+        }
+
+        // Если мы на странице внешнего вида и карточка уже есть — ничего не делаем
+        if (existingCard) return;
+
+        // Ищем целевую группу радио-кнопок тем на странице внешнего вида
         const radio = document.querySelector('input[type="radio"], .vkuiRadio, [class*="Radio"], [class*="Appearance"]');
         let target = null;
-        let method = 'afterend';
 
         if (radio) {
             target = radio.closest('.vkuiGroup, [class*="Group"]') || radio.parentElement;
@@ -566,11 +589,6 @@
             if (groups.length > 0) {
                 target = groups[groups.length - 1];
             }
-        }
-
-        if (!target) {
-            target = document.querySelector('[class*="Panel__in"], .vkuiPanel__in, [class*="Panel"], main, .vkuiAppRoot, #root, body');
-            method = 'append';
         }
 
         if (!target) return;
@@ -606,7 +624,7 @@
         `;
         header.innerHTML = `
             <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v1.7</span>
+            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v1.8</span>
         `;
         card.appendChild(header);
 
@@ -637,10 +655,8 @@
         row2.style.borderBottom = 'none';
         card.appendChild(row2);
 
-        if (method === 'afterend' && target.parentElement) {
+        if (target.parentElement) {
             target.insertAdjacentElement('afterend', card);
-        } else {
-            target.appendChild(card);
         }
     }
 
@@ -649,7 +665,7 @@
     // ==========================================
     function init() {
         applyStyles();
-        tryInjectSettings();
+        updateSettingsVisibility();
     }
 
     if (document.readyState === 'loading') {
@@ -658,21 +674,20 @@
         init();
     }
 
-    // Периодическая проверка настроек и состояния нижней панели
+    // Периодическая синхронизация видимости настроек и скрытия подписей
     setInterval(() => {
-        if (isAppearancePage() && !document.getElementById(SETTINGS_UI_ID)) {
-            tryInjectSettings();
-        }
+        updateSettingsVisibility();
         if (isHideLabelsEnabled) {
             updateBottomBarLabels();
         }
-    }, 300);
+    }, 250);
 
     // SPA навигация
     function onNavigate() {
         applyStyles();
-        setTimeout(tryInjectSettings, 100);
-        setTimeout(tryInjectSettings, 400);
+        updateSettingsVisibility();
+        setTimeout(updateSettingsVisibility, 100);
+        setTimeout(updateSettingsVisibility, 300);
         if (isHideLabelsEnabled) {
             updateBottomBarLabels();
         }
