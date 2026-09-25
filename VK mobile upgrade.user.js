@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.10.1
-// @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопок нижней панели (Поиск, Клипы, Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
+// @version      2.11.0
+// @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -30,8 +30,7 @@
     // ==========================================
     const STORAGE_KEYS = {
         THEME_MODE: 'vmu_theme_mode', // 'light' | 'dark' | 'snow_black'
-        TAB_SEARCH: 'vmu_tab_search', // 'search' | 'clips' | 'friends' | 'groups' | 'music' | 'video' | 'bookmarks'
-        TAB_CLIPS: 'vmu_tab_clips', // 'clips' | 'search' | 'friends' | 'groups' | 'music' | 'video' | 'bookmarks'
+        TAB_SEARCH: 'vmu_tab_search', // 'search' | 'friends' | 'groups' | 'music' | 'video' | 'bookmarks'
         HIDE_TAB_LABELS: 'vmu_hide_tab_labels',
         HIDE_FOLDERS_BAR: 'vmu_hide_folders_bar',
         HIDE_CALLS: 'vmu_hide_calls',
@@ -79,7 +78,6 @@
 
     let currentThemeMode = getThemeSetting();
     let currentTabSearch = getStringSetting(STORAGE_KEYS.TAB_SEARCH, 'search');
-    let currentTabClips = getStringSetting(STORAGE_KEYS.TAB_CLIPS, 'clips');
     let isColorSwapEnabled = (currentThemeMode === 'snow_black');
     let isHideLabelsEnabled = getSetting(STORAGE_KEYS.HIDE_TAB_LABELS, false);
     let isHideFoldersEnabled = getSetting(STORAGE_KEYS.HIDE_FOLDERS_BAR, true);
@@ -95,12 +93,6 @@
             href: '/discover',
             matchPaths: ['/discover', '/search', '/feed?section=search'],
             svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--search_outline_28"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.5 3.5a9 9 0 105.7 15.98l4.41 4.41a1 1 0 001.42-1.42l-4.41-4.41A9 9 0 0012.5 3.5zM5.5 12.5a7 7 0 1114 0 7 7 0 01-14 0z" fill="currentColor"/></svg>`
-        },
-        clips: {
-            label: 'Клипы',
-            href: '/clips',
-            matchPaths: ['/clips'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--clips_outline_28"><path fill-rule="evenodd" clip-rule="evenodd" d="M7 4a3 3 0 00-3 3v14a3 3 0 003 3h14a3 3 0 003-3V7a3 3 0 00-3-3H7zm11.23 8.35a1 1 0 010 1.3l-5 5A1 1 0 0111.5 18V10a1 1 0 011.73-.65l5 3z" fill="currentColor"/></svg>`
         },
         friends: {
             label: 'Друзья',
@@ -135,17 +127,6 @@
     };
 
     const TAB_OPTIONS_SEARCH = [
-        { value: 'search', label: 'Поиск' },
-        { value: 'clips', label: 'Клипы' },
-        { value: 'friends', label: 'Друзья' },
-        { value: 'groups', label: 'Сообщества' },
-        { value: 'music', label: 'Музыка' },
-        { value: 'video', label: 'Видео' },
-        { value: 'bookmarks', label: 'Закладки' }
-    ];
-
-    const TAB_OPTIONS_CLIPS = [
-        { value: 'clips', label: 'Клипы' },
         { value: 'search', label: 'Поиск' },
         { value: 'friends', label: 'Друзья' },
         { value: 'groups', label: 'Сообщества' },
@@ -328,6 +309,17 @@
             padding: 0 !important;
             pointer-events: none !important;
             opacity: 0 !important;
+        }
+
+        /* 7. ФИКСИРОВАННАЯ НИЖНЯЯ ПАНЕЛЬ ПОВЕРХ ВСЕХ ЭЛЕМЕНТОВ */
+        .vkuiTabbar,
+        .vkuiTabbar__in,
+        [class*="Tabbar"],
+        #bottom_nav,
+        .bottom_nav,
+        .vkuiFixedLayout--bottom,
+        [class*="FixedLayout--bottom"] {
+            z-index: 1000 !important;
         }
     `;
 
@@ -1194,7 +1186,7 @@
             align-items: center;
             justify-content: space-between;
             padding: 14px 16px;
-            cursor: pointer;
+            cursor: default;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
             border-bottom: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08));
@@ -1229,6 +1221,7 @@
             transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease;
             flex-shrink: 0;
             cursor: pointer;
+            touch-action: manipulation;
         `;
 
         const slider = document.createElement('div');
@@ -1265,7 +1258,6 @@
 
         function handleToggle(e) {
             if (e) {
-                e.preventDefault();
                 e.stopPropagation();
             }
             isChecked = !isChecked;
@@ -1274,8 +1266,11 @@
             onToggle(isChecked);
         }
 
-        row.addEventListener('click', handleToggle, true);
-        row.addEventListener('touchend', handleToggle, { passive: false });
+        switchBtn.addEventListener('click', handleToggle);
+        switchBtn.addEventListener('touchend', (e) => {
+            e.stopPropagation();
+            handleToggle(e);
+        });
 
         row.appendChild(textCol);
         row.appendChild(switchBtn);
@@ -1417,15 +1412,15 @@
         card.id = SETTINGS_UI_ID;
         card.className = 'vkuiGroup vkuiGroup--mode-none vkuiGroup--padding-m';
         card.style.cssText = `
-            margin: 54px 0 24px 0 !important;
-            padding: 0 !important;
+            margin: 54px 0 90px 0 !important;
+            padding: 0 0 20px 0 !important;
             background: transparent !important;
             border: none !important;
             box-shadow: none !important;
             font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", sans-serif) !important;
             display: block !important;
             position: relative !important;
-            z-index: 100 !important;
+            z-index: 10 !important;
         `;
 
         const header = document.createElement('div');
@@ -1466,21 +1461,7 @@
         );
         card.appendChild(rowTabSearch);
 
-        // 3. Замена вкладки Клипы
-        const rowTabClips = createSelectRow(
-            'Замена вкладки Клипы',
-            'Кнопка на нижней панели (по умолчанию: Клипы)',
-            currentTabClips,
-            TAB_OPTIONS_CLIPS,
-            (selected) => {
-                currentTabClips = selected;
-                setSetting(STORAGE_KEYS.TAB_CLIPS, selected);
-                scheduleFixes();
-            }
-        );
-        card.appendChild(rowTabClips);
-
-        // 4. Скрыть подписи на нижней панели
+        // 3. Скрыть подписи на нижней панели
         const rowLabels = createSwitchRow(
             'Скрыть подписи на нижней панели',
             'Оставлять только иконки (Главная, Поиск, Мессенджер, Клипы, Ещё)',
@@ -1493,7 +1474,7 @@
         );
         card.appendChild(rowLabels);
 
-        // 5. Скрыть панель папок / категорий
+        // 4. Скрыть панель папок / категорий
         const rowFolders = createSwitchRow(
             'Скрыть вкладки папок в мессенджере',
             'Убирает панель категорий (Все, Каналы, Бизнес, Чаты) и лишние отступы',
@@ -1506,7 +1487,7 @@
         );
         card.appendChild(rowFolders);
 
-        // 6. Отключить звонки в чатах
+        // 5. Отключить звонки в чатах
         const rowCalls = createSwitchRow(
             'Отключить звонки в чатах',
             'Скрывает кнопку звонка из шапки диалогов',
@@ -1520,7 +1501,7 @@
         );
         card.appendChild(rowCalls);
 
-        // 7. Отключить видеосообщения (кружки)
+        // 6. Отключить видеосообщения (кружки)
         const rowVideo = createSwitchRow(
             'Отключить видеосообщения (кружки)',
             'Скрывает кнопку записи кружков в строке ввода сообщений',
@@ -1739,7 +1720,7 @@
     }
 
     // ==========================================
-    //       КАСТОМИЗАЦИЯ ВКЛАДОК НАВИГАЦИИ
+    //       КАСТОМИЗАЦИЯ ВКЛАДКИ ПОИСК
     // ==========================================
     function getTabbarItems() {
         const tabbar = document.querySelector('.vkuiTabbar, [class*="Tabbar"], #bottom_nav, .bottom_nav');
@@ -1777,11 +1758,12 @@
         return topItems;
     }
 
-    function applyTabCustomization(item, targetKey, defaultKey) {
+    function applySearchTabCustomization(item) {
         if (!item) return;
 
-        const isDefault = (targetKey === defaultKey);
-        const def = TAB_DEFINITIONS[targetKey] || TAB_DEFINITIONS[defaultKey];
+        const targetKey = currentTabSearch;
+        const isDefault = (targetKey === 'search');
+        const def = TAB_DEFINITIONS[targetKey] || TAB_DEFINITIONS.search;
         if (!def) return;
 
         const link = item.tagName === 'A' ? item : (item.querySelector('a') || item);
@@ -1817,14 +1799,13 @@
 
         // 4. Иконка SVG
         const iconContainer = item.querySelector('.vkuiTabbarItem__icon, [class*="TabbarItem__icon"], [class*="TabBarItem__icon"], [class*="icon"], [class*="Icon"]') || item;
-        const currentCustomIcon = iconContainer.dataset.vmuIcon;
+        const existingSvg = iconContainer.querySelector('svg');
 
-        if (currentCustomIcon !== targetKey) {
-            iconContainer.dataset.vmuIcon = targetKey;
-            const existingSvg = iconContainer.querySelector('svg');
+        if (!existingSvg || existingSvg.dataset.vmuSvg !== targetKey) {
             const temp = document.createElement('div');
             temp.innerHTML = def.svg.trim();
             const newSvg = temp.firstElementChild;
+            newSvg.dataset.vmuSvg = targetKey;
 
             if (existingSvg) {
                 existingSvg.replaceWith(newSvg);
@@ -1841,26 +1822,7 @@
             }
         }
 
-        // 5. Обработчик клика для кастомных вкладок
-        if (!item.dataset.vmuHandlerBound) {
-            item.dataset.vmuHandlerBound = 'true';
-            const handleCustomClick = (e) => {
-                const slot = item.dataset.vmuSlot;
-                const activeKey = slot === 'search' ? currentTabSearch : (slot === 'clips' ? currentTabClips : null);
-                if (activeKey && activeKey !== slot && TAB_DEFINITIONS[activeKey]) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation();
-                    const dest = TAB_DEFINITIONS[activeKey].href;
-                    if (window.location.pathname !== dest) {
-                        window.location.href = dest;
-                    }
-                }
-            };
-            item.addEventListener('click', handleCustomClick, true);
-        }
-
-        // 6. Подсветка активного состояния
+        // 5. Подсветка активного состояния
         const currentPath = window.location.pathname.toLowerCase();
         const isCurrentActive = def.matchPaths.some(p => currentPath.startsWith(p));
         if (isCurrentActive) {
@@ -1874,7 +1836,7 @@
         const items = getTabbarItems();
         if (!items || items.length === 0) return;
 
-        // Очистка ошибочно наслоившихся SVG в элементах таб-бара
+        // Очистка наслоившихся SVG в любых табах
         for (let i = 0; i < items.length; i++) {
             const it = items[i];
             const ic = it.querySelector('.vkuiTabbarItem__icon, [class*="TabbarItem__icon"], [class*="TabBarItem__icon"]') || it;
@@ -1894,31 +1856,27 @@
         }
 
         let searchItem = null;
-        let clipsItem = null;
 
-        // Поиск по слоту
+        // Поиск второго таба (Поиск)
         for (let i = 0; i < items.length; i++) {
             const it = items[i];
             if (it.dataset.vmuSlot === 'search') {
                 searchItem = it;
-            } else if (it.dataset.vmuSlot === 'clips') {
-                clipsItem = it;
+                break;
             }
         }
 
-        if (!searchItem || !clipsItem) {
-            if (items.length >= 5) {
+        if (!searchItem) {
+            if (items.length >= 2) {
                 searchItem = items[1];
-                clipsItem = items[3];
             } else {
                 for (let i = 0; i < items.length; i++) {
                     const it = items[i];
                     const href = (it.getAttribute('href') || (it.querySelector('a') && it.querySelector('a').getAttribute('href')) || '').toLowerCase();
                     const text = (it.textContent || '').toLowerCase();
-                    if (href.includes('discover') || href.includes('search') || text.includes('поиск')) {
+                    if (href.includes('discover') || href.includes('search') || text.includes('поиск') || href.includes('friends') || href.includes('groups') || href.includes('audio') || href.includes('video') || href.includes('bookmarks')) {
                         searchItem = it;
-                    } else if (href.includes('clips') || text.includes('клипы')) {
-                        clipsItem = it;
+                        break;
                     }
                 }
             }
@@ -1926,14 +1884,34 @@
 
         if (searchItem) {
             searchItem.dataset.vmuSlot = 'search';
-            applyTabCustomization(searchItem, currentTabSearch, 'search');
-        }
-
-        if (clipsItem) {
-            clipsItem.dataset.vmuSlot = 'clips';
-            applyTabCustomization(clipsItem, currentTabClips, 'clips');
+            applySearchTabCustomization(searchItem);
         }
     }
+
+    function interceptTabbarClick(e) {
+        if (currentTabSearch === 'search') return;
+        const target = e.target;
+        if (!target || !target.closest) return;
+
+        const tab = target.closest('.vkuiTabbarItem, .bottom_nav__item, [role="tab"], [class*="TabbarItem"], #bottom_nav > a, .bottom_nav > a');
+        if (!tab) return;
+
+        const items = getTabbarItems();
+        if (tab.dataset.vmuSlot === 'search' || (items.length >= 2 && tab === items[1])) {
+            const def = TAB_DEFINITIONS[currentTabSearch];
+            if (def && def.href) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                if (window.location.pathname !== def.href) {
+                    window.location.href = def.href;
+                }
+            }
+        }
+    }
+
+    document.addEventListener('click', interceptTabbarClick, true);
+    document.addEventListener('touchend', interceptTabbarClick, true);
 
     document.addEventListener('click', interceptChatMoreActions, true);
     document.addEventListener('click', interceptActionButtons, true);
