@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.14.0
+// @version      2.15.0
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -325,18 +325,50 @@
         /* 8. НЕПРОЗРАЧНАЯ ШАПКА С ВЫСОКИМ Z-INDEX НА ВСЕХ СТРАНИЦАХ (КРОМЕ КЛИПОВ) */
         body:not(.vmu-page-clips) .vkuiPanelHeader,
         body:not(.vmu-page-clips) .vkuiPanelHeader__in,
+        body:not(.vmu-page-clips) .vkuiPanelHeader__bg,
+        body:not(.vmu-page-clips) .vkuiPanelHeader__fixed,
+        body:not(.vmu-page-clips) .vkuiFixedLayout--top,
+        body:not(.vmu-page-clips) [class*="FixedLayout--top"],
         body:not(.vmu-page-clips) [class*="PanelHeader"],
         body:not(.vmu-page-clips) [class*="PanelHeader__in"],
+        body:not(.vmu-page-clips) [class*="PanelHeader__bg"],
+        body:not(.vmu-page-clips) [class*="PanelHeader__fixed"],
         body:not(.vmu-page-clips) .vkmListHeader,
         body:not(.vmu-page-clips) [class*="vkmListHeader"],
         body:not(.vmu-page-clips) header.layout__header,
-        body:not(.vmu-page-clips) .layout__header {
+        body:not(.vmu-page-clips) .layout__header,
+        body:not(.vmu-page-clips) header {
             z-index: 800 !important;
+            background: var(--vkui--color_background_content, #19191a) !important;
             background-color: var(--vkui--color_background_content, #19191a) !important;
+            opacity: 1 !important;
+        }
+
+        html[scheme="bright_light"] body:not(.vmu-page-clips) .vkuiPanelHeader,
+        html[scheme="bright_light"] body:not(.vmu-page-clips) .vkuiPanelHeader__in,
+        html[scheme="bright_light"] body:not(.vmu-page-clips) .vkuiPanelHeader__bg,
+        html[scheme="bright_light"] body:not(.vmu-page-clips) [class*="PanelHeader"],
+        html[data-theme="light"] body:not(.vmu-page-clips) .vkuiPanelHeader,
+        html[data-theme="light"] body:not(.vmu-page-clips) .vkuiPanelHeader__in,
+        html[data-theme="light"] body:not(.vmu-page-clips) [class*="PanelHeader"] {
+            background: #ffffff !important;
+            background-color: #ffffff !important;
+        }
+
+        html[scheme="space_gray"] body:not(.vmu-page-clips) .vkuiPanelHeader,
+        html[scheme="space_gray"] body:not(.vmu-page-clips) .vkuiPanelHeader__in,
+        html[scheme="space_gray"] body:not(.vmu-page-clips) .vkuiPanelHeader__bg,
+        html[scheme="space_gray"] body:not(.vmu-page-clips) [class*="PanelHeader"],
+        html[data-theme="dark"] body:not(.vmu-page-clips) .vkuiPanelHeader,
+        html[data-theme="dark"] body:not(.vmu-page-clips) .vkuiPanelHeader__in,
+        html[data-theme="dark"] body:not(.vmu-page-clips) [class*="PanelHeader"] {
+            background: #19191a !important;
+            background-color: #19191a !important;
         }
 
         body.vmu-page-clips .vkuiPanelHeader,
         body.vmu-page-clips .vkuiPanelHeader__in,
+        body.vmu-page-clips .vkuiPanelHeader__bg,
         body.vmu-page-clips [class*="PanelHeader"],
         body.vmu-page-clips [class*="PanelHeader__in"] {
             background: transparent !important;
@@ -344,7 +376,7 @@
         }
 
         #vk-mobile-upgrade-settings-card {
-            z-index: 5 !important;
+            z-index: 1 !important;
             position: relative !important;
         }
 
@@ -367,6 +399,71 @@
         .vmu-tab-unselected svg {
             color: var(--vkui--color_icon_secondary, var(--vkui--color_text_secondary, #828282)) !important;
             fill: currentColor !important;
+        }
+
+        /* 10. ЕДИНЫЙ СТИЛЬ, ШРИФТ И ПОЛОЖЕНИЕ ИКОНОК И ПОДПИСЕЙ В НИЖНЕЙ ПАНЕЛИ */
+        .vkuiTabbarItem,
+        [class*="TabbarItem"],
+        [class*="TabBarItem"] {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+            font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", sans-serif) !important;
+        }
+
+        .vkuiTabbarItem__in,
+        [class*="TabbarItem__in"],
+        [class*="TabBarItem__in"] {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .vkuiTabbarItem__icon,
+        [class*="TabbarItem__icon"],
+        [class*="TabBarItem__icon"] {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            margin: 0 auto !important;
+            position: relative !important;
+            width: 28px !important;
+            height: 28px !important;
+            flex-shrink: 0 !important;
+        }
+
+        .vkuiTabbarItem__icon svg,
+        [class*="TabbarItem__icon"] svg,
+        [class*="TabBarItem__icon"] svg {
+            display: block !important;
+            margin: 0 auto !important;
+            width: 28px !important;
+            height: 28px !important;
+            max-width: 28px !important;
+            max-height: 28px !important;
+        }
+
+        .vkuiTabbarItem__text,
+        .vkuiTabbarItem__children,
+        [class*="TabbarItem__text"],
+        [class*="TabBarItem__text"],
+        [class*="TabbarItem__children"],
+        [class*="TabBarItem__children"],
+        .bottom_nav__text,
+        .bottom_nav__label {
+            font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", sans-serif) !important;
+            font-size: 10px !important;
+            line-height: 12px !important;
+            font-weight: 500 !important;
+            letter-spacing: normal !important;
+            text-align: center !important;
+            margin-top: 2px !important;
         }
     `;
 
@@ -1878,7 +1975,7 @@
 
         // 3. Текстовая подпись
         const textEl = item.querySelector(
-            '.vkuiTabbarItem__text, .vkuiTabbarItem__children, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], .bottom_nav__text, .bottom_nav__label, [class*="label"], [class*="text"], [class*="caption"]'
+            '.vkuiTabbarItem__text, .vkuiTabbarItem__children, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], .bottom_nav__text, .bottom_nav__label'
         );
         if (textEl) {
             const firstTextNode = Array.from(textEl.childNodes).find(n => n.nodeType === Node.TEXT_NODE);
@@ -1892,7 +1989,7 @@
         }
 
         // 4. Иконка SVG
-        const iconContainer = item.querySelector('.vkuiTabbarItem__icon, [class*="TabbarItem__icon"], [class*="TabBarItem__icon"], [class*="icon"], [class*="Icon"]') || item;
+        const iconContainer = item.querySelector('.vkuiTabbarItem__icon, [class*="TabbarItem__icon"], [class*="TabBarItem__icon"]') || item;
         const existingSvg = iconContainer.querySelector('svg');
 
         if (!existingSvg || existingSvg.dataset.vmuSvg !== targetKey) {
@@ -1900,6 +1997,7 @@
             temp.innerHTML = def.svg.trim();
             const newSvg = temp.firstElementChild;
             newSvg.dataset.vmuSvg = targetKey;
+            newSvg.style.cssText = 'display: block !important; margin: 0 auto !important; width: 28px !important; height: 28px !important;';
 
             if (existingSvg) {
                 existingSvg.replaceWith(newSvg);
