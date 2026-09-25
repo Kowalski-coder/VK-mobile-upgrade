@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.19.0
+// @version      2.20.0
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -92,37 +92,37 @@
             label: 'Поиск',
             href: '/discover',
             matchPaths: ['/discover', '/search', '/feed?section=search', '/discover_search'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--search_outline_28"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.5 3.5a9 9 0 105.7 15.98l4.41 4.41a1 1 0 001.42-1.42l-4.41-4.41A9 9 0 0012.5 3.5zM5.5 12.5a7 7 0 1114 0 7 7 0 01-14 0z" fill="currentColor"/></svg>`
+            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--search_outline_28"><path fill="currentColor" fill-rule="evenodd" d="M12.5 3.5a9 9 0 1 0 5.7 15.98l4.41 4.41a1 1 0 0 0 1.42-1.42l-4.41-4.41A9 9 0 0 0 12.5 3.5ZM5.5 12.5a7 7 0 1 1 14 0 7 7 0 0 1-14 0Z" clip-rule="evenodd"/></svg>`
         },
         friends: {
             label: 'Друзья',
             href: '/friends',
             matchPaths: ['/friends'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_outline_28"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.5 4.5a4 4 0 100 8 4 4 0 000-8zM8.5 8.5a2 2 0 114 0 2 2 0 01-4 0zm10-1.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7zM17 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm-6.5 4.5c-3.3 0-6 2.7-6 6a1 1 0 001 1h10a1 1 0 001-1c0-3.3-2.7-6-6-6zm-4 5c.45-2.28 2.05-3 4-3s3.55.72 4 3H6.5zm12-3.5c1.6 0 3 1.4 3 3a1 1 0 01-1 1h-2.5a1 1 0 110-2h1.4c-.2-.6-.7-1-1.4-1a1 1 0 010-2h.5z" fill="currentColor"/></svg>`
+            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_outline_28"><path fill="currentColor" fill-rule="evenodd" d="M12 5a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM9.5 5a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM20.5 7.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Zm-2.5 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM7.5 14c-3.038 0-5.5 2.462-5.5 5.5v.75a1.75 1.75 0 0 0 1.75 1.75h11.5A1.75 1.75 0 0 0 17 20.25v-.75c0-3.038-2.462-5.5-5.5-5.5Zm-3 5.5c0-1.657 1.343-3 3-3s3 1.343 3 3v.75a.25.25 0 0 1-.25.25H4.75a.25.25 0 0 1-.25-.25v-.75Zm14.5-3.415c1.472.482 2.5 1.83 2.5 3.415v.75a1.75 1.75 0 0 1-1.75 1.75h-1.5a1 1 0 0 1 0-2h1.5a.25.25 0 0 0 .25-.25v-.75c0-.966-.784-1.75-1.75-1.75h-.5a1 1 0 1 1 0-2h.5c.264 0 .52.04.75.115Z" clip-rule="evenodd"/></svg>`
         },
         groups: {
             label: 'Сообщества',
             href: '/groups',
             matchPaths: ['/groups', '/communities', '/groups_list'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_3_outline_28"><path fill-rule="evenodd" clip-rule="evenodd" d="M14 4a4 4 0 100 8 4 4 0 000-8zm-2 4a2 2 0 114 0 2 2 0 01-4 0zM5.5 8a3 3 0 116 0 3 3 0 01-6 0zm3 1a1 1 0 100-2 1 1 0 000 2zm11-1a3 3 0 116 0 3 3 0 01-6 0zm3 1a1 1 0 100-2 1 1 0 000 2zM14 14c-3.31 0-6 2.46-6 5.5v.5a1 1 0 001 1h10a1 1 0 001-1v-.5c0-3.04-2.69-5.5-6-5.5zm-4 5c.42-1.93 2.04-3.5 4-3.5s3.58 1.57 4 3.5h-8zm-5-3c1.86 0 3.44 1.15 4.09 2.76A7.05 7.05 0 008.06 20H4a1 1 0 01-1-1v-.5C3 16.9 4.34 16 5 16zm18 0c.66 0 2 .9 2 2.5v.5a1 1 0 01-1 1h-4.06c-.3-1.07-1.1-2.22-2.03-3.24C19.56 17.15 21.14 16 23 16z" fill="currentColor"/></svg>`
+            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_3_outline_28"><path fill="currentColor" fill-rule="evenodd" d="M14 3.5a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12.5 7.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM6 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM5.5 10a1 1 0 1 1 2 0 1 1 0 0 1-2 0ZM22 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm-1.5 3a1 1 0 1 1 2 0 1 1 0 0 1-2 0ZM14 13.5c-3.175 0-5.75 2.575-5.75 5.75v1a1.75 1.75 0 0 0 1.75 1.75h8a1.75 1.75 0 0 0 1.75-1.75v-1c0-3.175-2.575-5.75-5.75-5.75Zm-3.25 5.75c0-1.795 1.455-3.25 3.25-3.25s3.25 1.455 3.25 3.25v1a.25.25 0 0 1-.25.25H11a.25.25 0 0 1-.25-.25v-1ZM6 15.5c1.47 0 2.768.618 3.682 1.608a1 1 0 0 1-1.464 1.362A3.242 3.242 0 0 0 6 17.5a.25.25 0 0 0-.25.25v.75a1 1 0 0 1-2 0v-.75C3.75 16.284 4.784 15.5 6 15.5Zm16 0c1.216 0 2.25.784 2.25 2.25v.75a1 1 0 1 1-2 0v-.75a.25.25 0 0 0-.25-.25 3.242 3.242 0 0 0-2.218.97 1 1 0 1 1-1.464-1.362A5.228 5.228 0 0 1 22 15.5Z" clip-rule="evenodd"/></svg>`
         },
         music: {
             label: 'Музыка',
             href: '/audio',
             matchPaths: ['/audio', '/audios', '/music', '/audio_feed'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--music_outline_28"><path fill-rule="evenodd" clip-rule="evenodd" d="M17 4a1 1 0 011 1v11.25a4.25 4.25 0 11-2-3.58V7.82l-6 1.71v8.72a4.25 4.25 0 11-2-3.58V7a1 1 0 01.73-.96l8-2.29A1 1 0 0117 4zM8 17.5a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5zm8-2a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5zm0-7.39l-6 1.71V8.1l6-1.71v1.72z" fill="currentColor"/></svg>`
+            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--music_outline_28"><path fill="currentColor" fill-rule="evenodd" d="M19.75 4a1 1 0 0 1 .993.883L20.75 5v10.75a4.75 4.75 0 1 1-2-3.873V7.618l-8.5 2.125V17.75a4.75 4.75 0 1 1-2-3.873V6a1 1 0 0 1 .757-.97l11.5-2.875A1 1 0 0 1 19.75 4ZM6.25 18.5a2.75 2.75 0 1 0 5.5 0 2.75 2.75 0 0 0-5.5 0Zm10-2a2.75 2.75 0 1 0 5.5 0 2.75 2.75 0 0 0-5.5 0Zm2.5-8.882L10.25 9.743V7.07l8.5-2.125v2.673Z" clip-rule="evenodd"/></svg>`
         },
         video: {
             label: 'Видео',
             href: '/video',
             matchPaths: ['/video', '/videos', '/vk_video'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--video_outline_28"><path fill-rule="evenodd" clip-rule="evenodd" d="M5 6a3 3 0 00-3 3v10a3 3 0 003 3h18a3 3 0 003-3V9a3 3 0 00-3-3H5zM4 9a1 1 0 011-1h18a1 1 0 011 1v10a1 1 0 01-1 1H5a1 1 0 01-1-1V9zm8 2.5a1 1 0 011.53-.85l5 3.5a1 1 0 010 1.7l-5 3.5A1 1 0 0112 18.5v-7z" fill="currentColor"/></svg>`
+            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--video_outline_28"><path fill="currentColor" fill-rule="evenodd" d="M4.75 6A2.75 2.75 0 0 0 2 8.75v10.5A2.75 2.75 0 0 0 4.75 22h12.5A2.75 2.75 0 0 0 20 19.25V17.7l4.135 2.481A1.75 1.75 0 0 0 26.75 18.68V9.32a1.75 1.75 0 0 0-2.615-1.501L20 10.3V8.75A2.75 2.75 0 0 0 17.25 6H4.75Zm13.25 4.75v6.5a.75.75 0 0 1-.75.75H4.75a.75.75 0 0 1-.75-.75V8.75a.75.75 0 0 1 .75-.75h12.5a.75.75 0 0 1 .75.75v2Zm2 4.148 4.75 2.85v-7.496l-4.75 2.85v1.796Z" clip-rule="evenodd"/></svg>`
         },
         bookmarks: {
             label: 'Закладки',
             href: '/bookmarks',
             matchPaths: ['/bookmarks', '/fave'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--bookmark_outline_28"><path fill-rule="evenodd" clip-rule="evenodd" d="M7 4a3 3 0 00-3 3v16a1 1 0 001.55.83L14 18.25l8.45 5.58A1 1 0 0024 23V7a3 3 0 00-3-3H7zm15 16.92l-7.45-4.92a1 1 0 00-1.1 0L6 20.92V7a1 1 0 011-1h14a1 1 0 011 1v13.92z" fill="currentColor"/></svg>`
+            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--bookmark_outline_28"><path fill="currentColor" fill-rule="evenodd" d="M7 4a3 3 0 0 0-3 3v16a1 1 0 0 0 1.55.83L14 18.25l8.45 5.58A1 1 0 0 0 24 23V7a3 3 0 0 0-3-3H7zm15 16.92-7.45-4.92a1 1 0 0 0-1.1 0L6 20.92V7a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v13.92z" clip-rule="evenodd"/></svg>`
         }
     };
 
@@ -411,52 +411,11 @@
             fill: currentColor !important;
         }
 
-        /* 10. ЕДИНЫЙ СТИЛЬ, ШРИФТ И ПОЛОЖЕНИЕ ИКОНОК И ПОДПИСЕЙ В НИЖНЕЙ ПАНЕЛИ */
+        /* 10. ЕДИНЫЙ ШРИФТ И СТИЛЬ ДЛЯ НИЖНЕЙ ПАНЕЛИ */
         .vkuiTabbarItem,
         [class*="TabbarItem"],
         [class*="TabBarItem"] {
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
-            text-align: center !important;
             font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", sans-serif) !important;
-        }
-
-        .vkuiTabbarItem__in,
-        [class*="TabbarItem__in"],
-        [class*="TabBarItem__in"] {
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
-            text-align: center !important;
-            width: 100% !important;
-            height: 100% !important;
-        }
-
-        .vkuiTabbarItem__icon,
-        [class*="TabbarItem__icon"],
-        [class*="TabBarItem__icon"] {
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            margin: 0 auto !important;
-            position: relative !important;
-            width: 28px !important;
-            height: 28px !important;
-            flex-shrink: 0 !important;
-        }
-
-        .vkuiTabbarItem__icon svg,
-        [class*="TabbarItem__icon"] svg,
-        [class*="TabBarItem__icon"] svg {
-            display: block !important;
-            margin: 0 auto !important;
-            width: 28px !important;
-            height: 28px !important;
-            max-width: 28px !important;
-            max-height: 28px !important;
         }
 
         .vkuiTabbarItem__text,
@@ -468,12 +427,6 @@
         .bottom_nav__text,
         .bottom_nav__label {
             font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", sans-serif) !important;
-            font-size: 10px !important;
-            line-height: 12px !important;
-            font-weight: 500 !important;
-            letter-spacing: normal !important;
-            text-align: center !important;
-            margin-top: 2px !important;
         }
     `;
 
@@ -1578,7 +1531,12 @@
             nativeGroup.style.setProperty('pointer-events', 'none', 'important');
         }
 
-        if (existingCard) return;
+        if (existingCard) {
+            if (nativeGroup && nativeGroup.parentElement && existingCard.nextElementSibling !== nativeGroup && existingCard.previousElementSibling !== nativeGroup) {
+                nativeGroup.insertAdjacentElement('beforebegin', existingCard);
+            }
+            return;
+        }
 
         let target = nativeGroup;
         if (!target) {
@@ -1595,8 +1553,8 @@
         card.id = SETTINGS_UI_ID;
         card.className = 'vkuiGroup vkuiGroup--mode-none vkuiGroup--padding-m';
         card.style.cssText = `
-            margin: 36px 0 90px 0 !important;
-            padding: 12px 0 20px 0 !important;
+            margin: 20px 0 90px 0 !important;
+            padding: 0 0 20px 0 !important;
             background: transparent !important;
             border: none !important;
             box-shadow: none !important;
@@ -1687,7 +1645,9 @@
         rowVideo.style.borderBottom = 'none';
         card.appendChild(rowVideo);
 
-        if (target.parentElement && target !== document.body) {
+        if (nativeGroup && nativeGroup.parentElement) {
+            nativeGroup.insertAdjacentElement('beforebegin', card);
+        } else if (target && target.parentElement && target !== document.body) {
             target.insertAdjacentElement('afterend', card);
         } else if (target) {
             target.appendChild(card);
@@ -2021,7 +1981,6 @@
             temp.innerHTML = def.svg.trim();
             const newSvg = temp.firstElementChild;
             newSvg.dataset.vmuSvg = targetKey;
-            newSvg.style.cssText = 'display: block !important; margin: 0 auto !important; width: 28px !important; height: 28px !important;';
 
             if (existingSvg) {
                 existingSvg.replaceWith(newSvg);
