@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.10.0
+// @version      2.10.1
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопок нижней панели (Поиск, Клипы, Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -1741,33 +1741,81 @@
     // ==========================================
     //       КАСТОМИЗАЦИЯ ВКЛАДОК НАВИГАЦИИ
     // ==========================================
+    function getTabbarItems() {
+        const tabbar = document.querySelector('.vkuiTabbar, [class*="Tabbar"], #bottom_nav, .bottom_nav');
+        if (!tabbar) return [];
+
+        let rawItems = tabbar.querySelectorAll('.vkuiTabbarItem, .bottom_nav__item, [role="tab"]');
+        if (rawItems.length === 0) {
+            rawItems = tabbar.querySelectorAll('#bottom_nav > a, .bottom_nav > a, .vkuiTabbar > a, [class*="Tabbar"] > a');
+        }
+        if (rawItems.length === 0) {
+            rawItems = tabbar.querySelectorAll('a, button, [role="link"]');
+        }
+
+        const topItems = [];
+        for (let i = 0; i < rawItems.length; i++) {
+            const el = rawItems[i];
+            // Исключаем внутренние элементы контейнера таба
+            if (el.classList.contains('vkuiTabbarItem__in') ||
+                el.classList.contains('vkuiTabbarItem__icon') ||
+                el.classList.contains('vkuiTabbarItem__text') ||
+                el.classList.contains('vkuiTabbarItem__children') ||
+                el.classList.contains('vkuiTabbarItem__label') ||
+                el.className.includes('TabbarItem__') ||
+                el.className.includes('TabBarItem__') ||
+                el.className.includes('bottom_nav__in') ||
+                el.className.includes('bottom_nav__icon')) {
+                continue;
+            }
+            const parentTab = el.parentElement ? el.parentElement.closest('.vkuiTabbarItem, .bottom_nav__item, [role="tab"]') : null;
+            if (!parentTab) {
+                topItems.push(el);
+            }
+        }
+
+        return topItems;
+    }
+
     function applyTabCustomization(item, targetKey, defaultKey) {
         if (!item) return;
 
+        const isDefault = (targetKey === defaultKey);
         const def = TAB_DEFINITIONS[targetKey] || TAB_DEFINITIONS[defaultKey];
         if (!def) return;
 
         const link = item.tagName === 'A' ? item : (item.querySelector('a') || item);
 
-        // Обновляем ссылку перехода
+        // 1. Ссылка перехода
         if (link && link.getAttribute('href') !== def.href) {
             link.setAttribute('href', def.href);
         }
-        if (item.getAttribute('href') && item.getAttribute('href') !== def.href) {
+        if (item.tagName === 'A' && item.getAttribute('href') !== def.href) {
             item.setAttribute('href', def.href);
         }
 
-        // Обновляем aria-label
+        // 2. aria-label и title
         item.setAttribute('aria-label', def.label);
-        if (link && link !== item) link.setAttribute('aria-label', def.label);
-
-        // Обновляем текстовую подпись (если включено отображение подписей)
-        const textEl = item.querySelector('.vkuiTabbarItem__text, .vkuiTabbarItem__children, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], .bottom_nav__text, .bottom_nav__label, [class*="label"], [class*="text"], [class*="caption"]');
-        if (textEl && textEl.textContent !== def.label) {
-            textEl.textContent = def.label;
+        item.setAttribute('title', def.label);
+        if (link && link !== item) {
+            link.setAttribute('aria-label', def.label);
+            link.setAttribute('title', def.label);
         }
 
-        // Обновляем SVG иконку
+        // 3. Текстовая подпись
+        const textEl = item.querySelector('.vkuiTabbarItem__text, .vkuiTabbarItem__children, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], .bottom_nav__text, .bottom_nav__label, [class*="label"], [class*="text"], [class*="caption"]');
+        if (textEl) {
+            const firstTextNode = Array.from(textEl.childNodes).find(n => n.nodeType === Node.TEXT_NODE);
+            if (firstTextNode) {
+                if (firstTextNode.textContent !== def.label) {
+                    firstTextNode.textContent = def.label;
+                }
+            } else if (textEl.textContent !== def.label) {
+                textEl.textContent = def.label;
+            }
+        }
+
+        // 4. Иконка SVG
         const iconContainer = item.querySelector('.vkuiTabbarItem__icon, [class*="TabbarItem__icon"], [class*="TabBarItem__icon"], [class*="icon"], [class*="Icon"]') || item;
         const currentCustomIcon = iconContainer.dataset.vmuIcon;
 
@@ -1785,7 +1833,34 @@
             }
         }
 
-        // Подсветка активной вкладки при совпадении URL
+        // Удаление лишних наслоившихся SVG
+        const allSvgs = iconContainer.querySelectorAll('svg');
+        if (allSvgs.length > 1) {
+            for (let s = 1; s < allSvgs.length; s++) {
+                allSvgs[s].remove();
+            }
+        }
+
+        // 5. Обработчик клика для кастомных вкладок
+        if (!item.dataset.vmuHandlerBound) {
+            item.dataset.vmuHandlerBound = 'true';
+            const handleCustomClick = (e) => {
+                const slot = item.dataset.vmuSlot;
+                const activeKey = slot === 'search' ? currentTabSearch : (slot === 'clips' ? currentTabClips : null);
+                if (activeKey && activeKey !== slot && TAB_DEFINITIONS[activeKey]) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    const dest = TAB_DEFINITIONS[activeKey].href;
+                    if (window.location.pathname !== dest) {
+                        window.location.href = dest;
+                    }
+                }
+            };
+            item.addEventListener('click', handleCustomClick, true);
+        }
+
+        // 6. Подсветка активного состояния
         const currentPath = window.location.pathname.toLowerCase();
         const isCurrentActive = def.matchPaths.some(p => currentPath.startsWith(p));
         if (isCurrentActive) {
@@ -1796,27 +1871,55 @@
     }
 
     function updateCustomTabs() {
-        const tabbar = document.querySelector('.vkuiTabbar, [class*="Tabbar"], #bottom_nav, .bottom_nav');
-        if (!tabbar) return;
-
-        const items = tabbar.querySelectorAll('.vkuiTabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item, #bottom_nav > a, .bottom_nav > a, [class*="Tabbar"] > a, [class*="Tabbar"] > [role="tab"], [class*="Tabbar"] > [role="link"], [class*="Tabbar"] > [class*="Item"]');
+        const items = getTabbarItems();
         if (!items || items.length === 0) return;
+
+        // Очистка ошибочно наслоившихся SVG в элементах таб-бара
+        for (let i = 0; i < items.length; i++) {
+            const it = items[i];
+            const ic = it.querySelector('.vkuiTabbarItem__icon, [class*="TabbarItem__icon"], [class*="TabBarItem__icon"]') || it;
+            const svgs = ic.querySelectorAll('svg');
+            if (svgs.length > 1) {
+                for (let s = 1; s < svgs.length; s++) {
+                    svgs[s].remove();
+                }
+            }
+            const txt = it.querySelector('.vkuiTabbarItem__text, [class*="TabbarItem__text"]');
+            if (txt) {
+                const stray = txt.querySelectorAll('svg');
+                for (let s = 0; s < stray.length; s++) {
+                    stray[s].remove();
+                }
+            }
+        }
 
         let searchItem = null;
         let clipsItem = null;
 
-        if (items.length >= 5) {
-            searchItem = items[1];
-            clipsItem = items[3];
-        } else {
-            for (let i = 0; i < items.length; i++) {
-                const it = items[i];
-                const href = (it.getAttribute('href') || (it.querySelector('a') && it.querySelector('a').getAttribute('href')) || '').toLowerCase();
-                const text = (it.textContent || '').toLowerCase();
-                if (href.includes('discover') || href.includes('search') || text.includes('поиск') || it.dataset.vmuSlot === 'search') {
-                    searchItem = it;
-                } else if (href.includes('clips') || text.includes('клипы') || it.dataset.vmuSlot === 'clips') {
-                    clipsItem = it;
+        // Поиск по слоту
+        for (let i = 0; i < items.length; i++) {
+            const it = items[i];
+            if (it.dataset.vmuSlot === 'search') {
+                searchItem = it;
+            } else if (it.dataset.vmuSlot === 'clips') {
+                clipsItem = it;
+            }
+        }
+
+        if (!searchItem || !clipsItem) {
+            if (items.length >= 5) {
+                searchItem = items[1];
+                clipsItem = items[3];
+            } else {
+                for (let i = 0; i < items.length; i++) {
+                    const it = items[i];
+                    const href = (it.getAttribute('href') || (it.querySelector('a') && it.querySelector('a').getAttribute('href')) || '').toLowerCase();
+                    const text = (it.textContent || '').toLowerCase();
+                    if (href.includes('discover') || href.includes('search') || text.includes('поиск')) {
+                        searchItem = it;
+                    } else if (href.includes('clips') || text.includes('клипы')) {
+                        clipsItem = it;
+                    }
                 }
             }
         }
