@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.20.0
+// @version      2.21.0
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -1931,7 +1931,7 @@
             innerLinks[l].setAttribute('title', def.label);
         }
 
-        // 3. Текстовая подпись - глубокий поиск и обновление всех текстовых узлов
+        // 3. Текстовая подпись - обновление только текстового узла без удаления внутренних span/шрифтовых стилей
         const walker = document.createTreeWalker(item, NodeFilter.SHOW_TEXT, {
             acceptNode(node) {
                 const p = node.parentElement;
@@ -1939,7 +1939,7 @@
                 if (p.closest('.vkuiTabbarItem__icon, [class*="TabbarItem__icon"], [class*="Counter"], [class*="Badge"], [class*="Indicator"], [class*="badge"], [class*="counter"]')) {
                     return NodeFilter.FILTER_REJECT;
                 }
-                if (node.textContent.trim().length > 0) {
+                if (node.nodeValue && node.nodeValue.trim().length > 0) {
                     return NodeFilter.FILTER_ACCEPT;
                 }
                 return NodeFilter.FILTER_REJECT;
@@ -1949,27 +1949,25 @@
         let foundTextNode = false;
         let textNode;
         while ((textNode = walker.nextNode())) {
-            if (textNode.textContent.trim() !== def.label) {
-                textNode.textContent = def.label;
+            if (textNode.nodeValue !== def.label) {
+                textNode.nodeValue = def.label;
             }
             foundTextNode = true;
         }
 
-        let textEl = item.querySelector(
-            '.vkuiTabbarItem__text, .vkuiTabbarItem__children, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], .bottom_nav__text, .bottom_nav__label'
-        );
-        if (!textEl && !foundTextNode) {
-            const inContainer = item.querySelector('.vkuiTabbarItem__in, [class*="TabbarItem__in"]') || item;
-            const spans = inContainer.querySelectorAll('span');
-            for (let s = 0; s < spans.length; s++) {
-                if (!spans[s].querySelector('svg') && !spans[s].className.includes('icon') && !spans[s].className.includes('Badge') && !spans[s].className.includes('Counter') && !spans[s].className.includes('indicator')) {
-                    textEl = spans[s];
-                    break;
+        if (!foundTextNode) {
+            let textEl = item.querySelector(
+                '.vkuiTabbarItem__text, .vkuiTabbarItem__children, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], .bottom_nav__text, .bottom_nav__label'
+            );
+            if (textEl) {
+                let deepChild = textEl;
+                while (deepChild.firstElementChild) {
+                    deepChild = deepChild.firstElementChild;
+                }
+                if (deepChild.textContent !== def.label) {
+                    deepChild.textContent = def.label;
                 }
             }
-        }
-        if (textEl && textEl.textContent.trim() !== def.label) {
-            textEl.textContent = def.label;
         }
 
         // 4. Иконка SVG
@@ -1983,6 +1981,11 @@
             newSvg.dataset.vmuSvg = targetKey;
 
             if (existingSvg) {
+                if (existingSvg.className && existingSvg.className.baseVal) {
+                    newSvg.className.baseVal = existingSvg.className.baseVal;
+                } else if (existingSvg.getAttribute('class')) {
+                    newSvg.setAttribute('class', existingSvg.getAttribute('class'));
+                }
                 existingSvg.replaceWith(newSvg);
             } else {
                 iconContainer.prepend(newSvg);
@@ -2217,7 +2220,16 @@
     let observer = null;
     function startObserver() {
         if (observer) return;
-        observer = new MutationObserver(() => {
+        observer = new MutationObserver((mutations) => {
+            if (currentTabSearch !== 'search') {
+                for (let i = 0; i < mutations.length; i++) {
+                    const target = mutations[i].target;
+                    if (target && target.closest && (target.closest('.vkuiTabbar, [class*="Tabbar"], .bottom_nav') || (target.classList && (target.classList.contains('vkuiTabbar') || target.classList.contains('vkuiTabbarItem'))))) {
+                        try { updateCustomTabs(); } catch(e) {}
+                        break;
+                    }
+                }
+            }
             scheduleFixes();
         });
         observer.observe(document.documentElement, {
