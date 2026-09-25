@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.9.0
+// @version      2.9.1
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -544,35 +544,61 @@
     const HIDE_CALLS_CSS = `
         /* ПОЛНОЕ СКРЫТИЕ ЗВОНКОВ В ШАПКЕ ЧАТОВ И ДИАЛОГОВ */
         .vkuiPanelHeader a[href*="call"],
+        .vkuiPanelHeader a[href*="act=call"],
         .vkuiPanelHeader [aria-label*="звон" i],
         .vkuiPanelHeader [aria-label*="Звон" i],
         .vkuiPanelHeader [aria-label*="вызов" i],
         .vkuiPanelHeader [aria-label*="Вызов" i],
-        .vkuiPanelHeader [aria-label*="позвонить" i],
-        .vkuiPanelHeader [aria-label*="Позвонить" i],
+        .vkuiPanelHeader [aria-label*="позвон" i],
+        .vkuiPanelHeader [aria-label*="Позвон" i],
+        .vkuiPanelHeader [aria-label*="call" i],
         .vkuiPanelHeader [aria-label*="Call" i],
         .vkuiPanelHeader [data-testid*="call" i],
         .vkuiPanelHeader [data-testid*="phone" i],
-        .vkuiPanelHeader [class*="Icon--phone"],
-        .vkuiPanelHeader [class*="Icon--videocam"],
+        .vkuiPanelHeader [class*="phone"],
+        .vkuiPanelHeader [class*="videocam"],
         .vkuiPanelHeader [class*="Icon--call"],
+        .vkuiPanelHeader button:has([class*="phone"]),
+        .vkuiPanelHeader button:has([class*="videocam"]),
+        .vkuiPanelHeader button:has([class*="call"]),
+        .vkuiPanelHeader a:has([class*="phone"]),
+        .vkuiPanelHeader a:has([class*="videocam"]),
+        .vkuiPanelHeader a:has([class*="call"]),
+        .vkuiPanelHeader [class*="PanelHeaderButton"]:has([class*="phone"]),
+        .vkuiPanelHeader [class*="PanelHeaderButton"]:has([class*="videocam"]),
+        .vkuiPanelHeader [class*="PanelHeaderButton"]:has([class*="call"]),
         [class*="PanelHeader"] a[href*="call"],
+        [class*="PanelHeader"] a[href*="act=call"],
         [class*="PanelHeader"] [aria-label*="звон" i],
         [class*="PanelHeader"] [aria-label*="Звон" i],
         [class*="PanelHeader"] [aria-label*="вызов" i],
         [class*="PanelHeader"] [aria-label*="Вызов" i],
-        [class*="PanelHeader"] [aria-label*="позвонить" i],
-        [class*="PanelHeader"] [aria-label*="Позвонить" i],
+        [class*="PanelHeader"] [aria-label*="позвон" i],
+        [class*="PanelHeader"] [aria-label*="Позвон" i],
+        [class*="PanelHeader"] [aria-label*="call" i],
         [class*="PanelHeader"] [aria-label*="Call" i],
         [class*="PanelHeader"] [data-testid*="call" i],
         [class*="PanelHeader"] [data-testid*="phone" i],
-        [class*="PanelHeader"] [class*="Icon--phone"],
-        [class*="PanelHeader"] [class*="Icon--videocam"],
+        [class*="PanelHeader"] [class*="phone"],
+        [class*="PanelHeader"] [class*="videocam"],
         [class*="PanelHeader"] [class*="Icon--call"],
+        [class*="PanelHeader"] button:has([class*="phone"]),
+        [class*="PanelHeader"] button:has([class*="videocam"]),
+        [class*="PanelHeader"] button:has([class*="call"]),
+        [class*="PanelHeader"] a:has([class*="phone"]),
+        [class*="PanelHeader"] a:has([class*="videocam"]),
+        [class*="PanelHeader"] a:has([class*="call"]),
+        [class*="PanelHeader"] [class*="PanelHeaderButton"]:has([class*="phone"]),
+        [class*="PanelHeader"] [class*="PanelHeaderButton"]:has([class*="videocam"]),
+        [class*="PanelHeader"] [class*="PanelHeaderButton"]:has([class*="call"]),
         [class*="ChatHeader__call"],
         [class*="im-header-call"],
         [class*="im-page--header-call"],
-        [class*="chat-header--call"] {
+        [class*="chat-header--call"],
+        [class*="vkmChatHeader__call"],
+        [class*="vkmChatHeader"] [class*="phone"],
+        [class*="vkmChatHeader"] [class*="videocam"],
+        [class*="vkmChatHeader"] [class*="call"] {
             display: none !important;
             visibility: hidden !important;
             pointer-events: none !important;
@@ -589,26 +615,44 @@
 
     const HIDE_VIDEO_MSGS_CSS = `
         /* ПОЛНОЕ СКРЫТИЕ КНОПКИ ЗАПИСИ КРУЖКОВ (ВИДЕОСООБЩЕНИЙ) В СТРОКЕ ВВОДА */
-        [class*="WriteBar"] [aria-label*="видеосообщен" i],
-        [class*="WriteBar"] [aria-label*="Видеосообщен" i],
-        [class*="WriteBar"] [aria-label*="кружоч" i],
-        [class*="WriteBar"] [aria-label*="кружок" i],
-        [class*="WriteBar"] [aria-label*="Кружок" i],
-        [class*="WriteBar"] [aria-label*="video message" i],
-        [class*="WriteBar"] [data-testid*="video-message" i],
+        [class*="WriteBar"] [aria-label*="видео" i],
+        [class*="WriteBar"] [aria-label*="Видео" i],
+        [class*="WriteBar"] [aria-label*="круж" i],
+        [class*="WriteBar"] [aria-label*="Круж" i],
+        [class*="WriteBar"] [aria-label*="video" i],
+        [class*="WriteBar"] [data-testid*="video" i],
         [class*="WriteBar"] [data-testid*="videomsg" i],
-        [class*="WriteBar"] [data-testid*="round_video" i],
-        [class*="WriteBar"] [class*="Icon--video_message"],
-        [class*="WriteBar"] [class*="Icon--video_circle"],
-        [class*="WriteBar"] [class*="Icon--camera_circle"],
-        [class*="writeBar"] [aria-label*="видеосообщен" i],
-        [class*="writeBar"] [aria-label*="кружоч" i],
-        [class*="writeBar"] [aria-label*="кружок" i],
-        [class*="writeBar"] [class*="Icon--video_message"],
-        [class*="im-chat-input"] [aria-label*="видеосообщен" i],
-        [class*="im-chat-input"] [aria-label*="кружоч" i],
-        [class*="im-chat-input"] [aria-label*="кружок" i],
-        [class*="im-chat-input"] [class*="Icon--video_message"],
+        [class*="WriteBar"] [data-testid*="round" i],
+        [class*="WriteBar"] [class*="video_message"],
+        [class*="WriteBar"] [class*="video_circle"],
+        [class*="WriteBar"] [class*="camera_circle"],
+        [class*="WriteBar"] [class*="camera_outline"],
+        [class*="WriteBar"] [class*="Icon--video"],
+        [class*="WriteBar"] [class*="Icon--camera"],
+        [class*="WriteBar"] button:has([class*="video"]),
+        [class*="WriteBar"] button:has([class*="camera"]),
+        [class*="WriteBar"] [class*="WriteBar__action"]:has([class*="video"]),
+        [class*="WriteBar"] [class*="WriteBar__action"]:has([class*="camera"]),
+        [class*="WriteBar"] [class*="IconButton"]:has([class*="video"]),
+        [class*="WriteBar"] [class*="IconButton"]:has([class*="camera"]),
+        [class*="WriteBar"] [class*="Tappable"]:has([class*="video"]),
+        [class*="WriteBar"] [class*="Tappable"]:has([class*="camera"]),
+        [class*="writeBar"] [aria-label*="видео" i],
+        [class*="writeBar"] [aria-label*="круж" i],
+        [class*="writeBar"] [class*="video"],
+        [class*="writeBar"] [class*="camera"],
+        [class*="writeBar"] button:has([class*="video"]),
+        [class*="writeBar"] button:has([class*="camera"]),
+        [class*="im-chat-input"] [aria-label*="видео" i],
+        [class*="im-chat-input"] [aria-label*="круж" i],
+        [class*="im-chat-input"] [class*="video"],
+        [class*="im-chat-input"] [class*="camera"],
+        [class*="im-chat-input"] button:has([class*="video"]),
+        [class*="im-chat-input"] button:has([class*="camera"]),
+        [class*="writebox"] [aria-label*="видео" i],
+        [class*="writebox"] [aria-label*="круж" i],
+        [class*="writebox"] button:has([class*="video"]),
+        [class*="writebox"] button:has([class*="camera"]),
         [class*="VideoMessage__record"],
         [class*="video_message__record"],
         [class*="WriteBar__videoMessage"],
@@ -1485,6 +1529,107 @@
         }
     }
 
+    function hideCallsAndVideoMessages() {
+        // 1. Скрытие кнопки звонка в шапке диалогов
+        if (isHideCallsEnabled) {
+            const headers = document.querySelectorAll(
+                '.vkuiPanelHeader, [class*="PanelHeader"], .vkmChatHeader, [class*="vkmChatHeader"], [class*="ChatHeader"], [class*="im-page--header"], [class*="im-header"]'
+            );
+            for (let i = 0; i < headers.length; i++) {
+                const header = headers[i];
+                const callTargets = header.querySelectorAll(
+                    'a[href*="call"], a[href*="act=call"], [aria-label*="звон" i], [aria-label*="Звон" i], [aria-label*="вызов" i], [aria-label*="Вызов" i], [aria-label*="позвон" i], [aria-label*="Позвон" i], [aria-label*="call" i], [aria-label*="Call" i], [data-testid*="call" i], [data-testid*="phone" i], [class*="Icon--phone"], [class*="Icon--videocam"], [class*="phone_outline"], [class*="videocam_outline"], [class*="Icon--call"], [class*="phone"], [class*="videocam"], [class*="Call"]'
+                );
+                for (let j = 0; j < callTargets.length; j++) {
+                    const el = callTargets[j];
+                    if (el.id === 'vmu-top-unread-btn' || el.closest('#vmu-top-unread-btn') || el.closest('#vk-mobile-upgrade-settings-card')) continue;
+                    const btn = el.closest('a, button, [role="button"], [class*="PanelHeaderButton"], [class*="IconButton"], [class*="Tappable"]') || el;
+                    btn.style.setProperty('display', 'none', 'important');
+                    btn.style.setProperty('visibility', 'hidden', 'important');
+                    btn.style.setProperty('width', '0', 'important');
+                    btn.style.setProperty('height', '0', 'important');
+                    btn.style.setProperty('min-width', '0', 'important');
+                    btn.style.setProperty('max-width', '0', 'important');
+                    btn.style.setProperty('padding', '0', 'important');
+                    btn.style.setProperty('margin', '0', 'important');
+                    btn.style.setProperty('pointer-events', 'none', 'important');
+                    btn.style.setProperty('opacity', '0', 'important');
+                }
+
+                // Поиск по SVG use tags
+                const uses = header.querySelectorAll('use');
+                for (let k = 0; k < uses.length; k++) {
+                    const use = uses[k];
+                    const href = (use.getAttribute('href') || use.getAttribute('xlink:href') || '').toLowerCase();
+                    if (href.includes('phone') || href.includes('videocam') || href.includes('call') || href.includes('video_camera')) {
+                        const btn = use.closest('a, button, [role="button"], [class*="PanelHeaderButton"], [class*="IconButton"], [class*="Tappable"]') || use.closest('svg');
+                        if (btn) {
+                            btn.style.setProperty('display', 'none', 'important');
+                            btn.style.setProperty('visibility', 'hidden', 'important');
+                            btn.style.setProperty('width', '0', 'important');
+                            btn.style.setProperty('height', '0', 'important');
+                            btn.style.setProperty('min-width', '0', 'important');
+                            btn.style.setProperty('max-width', '0', 'important');
+                            btn.style.setProperty('padding', '0', 'important');
+                            btn.style.setProperty('margin', '0', 'important');
+                            btn.style.setProperty('pointer-events', 'none', 'important');
+                            btn.style.setProperty('opacity', '0', 'important');
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. Скрытие кнопки записи кружков (видеосообщений) в строке ввода
+        if (isHideVideoMsgsEnabled) {
+            const writeBars = document.querySelectorAll(
+                '[class*="WriteBar"], [class*="writeBar"], [class*="write_bar"], [class*="im-chat-input"], [class*="writebox"], [class*="ChatInput"], [class*="chat-input"]'
+            );
+            for (let i = 0; i < writeBars.length; i++) {
+                const wb = writeBars[i];
+                const videoTargets = wb.querySelectorAll(
+                    '[aria-label*="видео" i], [aria-label*="Видео" i], [aria-label*="круж" i], [aria-label*="Круж" i], [aria-label*="video" i], [aria-label*="round" i], [data-testid*="video" i], [data-testid*="round" i], [class*="video_message"], [class*="VideoMessage"], [class*="video-message"], [class*="video_msg"], [class*="video_circle"], [class*="camera_circle"], [class*="Icon--video"], [class*="Icon--camera"], [class*="camera_outline"], [class*="video_outline"]'
+                );
+                for (let j = 0; j < videoTargets.length; j++) {
+                    const el = videoTargets[j];
+                    const btn = el.closest('button, [role="button"], [class*="WriteBar__action"], [class*="IconButton"], [class*="Tappable"], [class*="action"]') || el;
+                    btn.style.setProperty('display', 'none', 'important');
+                    btn.style.setProperty('visibility', 'hidden', 'important');
+                    btn.style.setProperty('width', '0', 'important');
+                    btn.style.setProperty('height', '0', 'important');
+                    btn.style.setProperty('min-width', '0', 'important');
+                    btn.style.setProperty('max-width', '0', 'important');
+                    btn.style.setProperty('padding', '0', 'important');
+                    btn.style.setProperty('margin', '0', 'important');
+                    btn.style.setProperty('pointer-events', 'none', 'important');
+                    btn.style.setProperty('opacity', '0', 'important');
+                }
+
+                // Поиск по SVG use tags
+                const uses = wb.querySelectorAll('use');
+                for (let k = 0; k < uses.length; k++) {
+                    const use = uses[k];
+                    const href = (use.getAttribute('href') || use.getAttribute('xlink:href') || '').toLowerCase();
+                    if (href.includes('video_message') || href.includes('video_circle') || href.includes('camera_circle') || (href.includes('camera') && !href.includes('attach')) || href.includes('round_video')) {
+                        const btn = use.closest('button, [role="button"], [class*="WriteBar__action"], [class*="IconButton"], [class*="Tappable"], [class*="action"]') || use.closest('svg');
+                        if (btn) {
+                            btn.style.setProperty('display', 'none', 'important');
+                            btn.style.setProperty('visibility', 'hidden', 'important');
+                            btn.style.setProperty('width', '0', 'important');
+                            btn.style.setProperty('height', '0', 'important');
+                            btn.style.setProperty('min-width', '0', 'important');
+                            btn.style.setProperty('max-width', '0', 'important');
+                            btn.style.setProperty('padding', '0', 'important');
+                            btn.style.setProperty('margin', '0', 'important');
+                            btn.style.setProperty('pointer-events', 'none', 'important');
+                            btn.style.setProperty('opacity', '0', 'important');
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     document.addEventListener('click', interceptChatMoreActions, true);
     document.addEventListener('click', interceptActionButtons, true);
     document.addEventListener('pointerdown', blockMorePointer, true);
@@ -1507,6 +1652,7 @@
             updateSettingsVisibility();
             handleUnreadFilter();
             hideChatListActions();
+            hideCallsAndVideoMessages();
         } finally {
             isRunningFixes = false;
         }
