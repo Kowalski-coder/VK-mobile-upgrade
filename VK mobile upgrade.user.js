@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.9.1
+// @version      2.9.2
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -543,62 +543,47 @@
 
     const HIDE_CALLS_CSS = `
         /* ПОЛНОЕ СКРЫТИЕ ЗВОНКОВ В ШАПКЕ ЧАТОВ И ДИАЛОГОВ */
-        .vkuiPanelHeader a[href*="call"],
-        .vkuiPanelHeader a[href*="act=call"],
-        .vkuiPanelHeader [aria-label*="звон" i],
-        .vkuiPanelHeader [aria-label*="Звон" i],
-        .vkuiPanelHeader [aria-label*="вызов" i],
-        .vkuiPanelHeader [aria-label*="Вызов" i],
-        .vkuiPanelHeader [aria-label*="позвон" i],
-        .vkuiPanelHeader [aria-label*="Позвон" i],
-        .vkuiPanelHeader [aria-label*="call" i],
-        .vkuiPanelHeader [aria-label*="Call" i],
-        .vkuiPanelHeader [data-testid*="call" i],
-        .vkuiPanelHeader [data-testid*="phone" i],
-        .vkuiPanelHeader [class*="phone"],
-        .vkuiPanelHeader [class*="videocam"],
-        .vkuiPanelHeader [class*="Icon--call"],
-        .vkuiPanelHeader button:has([class*="phone"]),
-        .vkuiPanelHeader button:has([class*="videocam"]),
-        .vkuiPanelHeader button:has([class*="call"]),
-        .vkuiPanelHeader a:has([class*="phone"]),
-        .vkuiPanelHeader a:has([class*="videocam"]),
-        .vkuiPanelHeader a:has([class*="call"]),
-        .vkuiPanelHeader [class*="PanelHeaderButton"]:has([class*="phone"]),
-        .vkuiPanelHeader [class*="PanelHeaderButton"]:has([class*="videocam"]),
-        .vkuiPanelHeader [class*="PanelHeaderButton"]:has([class*="call"]),
-        [class*="PanelHeader"] a[href*="call"],
-        [class*="PanelHeader"] a[href*="act=call"],
-        [class*="PanelHeader"] [aria-label*="звон" i],
-        [class*="PanelHeader"] [aria-label*="Звон" i],
-        [class*="PanelHeader"] [aria-label*="вызов" i],
-        [class*="PanelHeader"] [aria-label*="Вызов" i],
-        [class*="PanelHeader"] [aria-label*="позвон" i],
-        [class*="PanelHeader"] [aria-label*="Позвон" i],
-        [class*="PanelHeader"] [aria-label*="call" i],
-        [class*="PanelHeader"] [aria-label*="Call" i],
-        [class*="PanelHeader"] [data-testid*="call" i],
-        [class*="PanelHeader"] [data-testid*="phone" i],
-        [class*="PanelHeader"] [class*="phone"],
-        [class*="PanelHeader"] [class*="videocam"],
-        [class*="PanelHeader"] [class*="Icon--call"],
-        [class*="PanelHeader"] button:has([class*="phone"]),
-        [class*="PanelHeader"] button:has([class*="videocam"]),
-        [class*="PanelHeader"] button:has([class*="call"]),
-        [class*="PanelHeader"] a:has([class*="phone"]),
-        [class*="PanelHeader"] a:has([class*="videocam"]),
-        [class*="PanelHeader"] a:has([class*="call"]),
-        [class*="PanelHeader"] [class*="PanelHeaderButton"]:has([class*="phone"]),
-        [class*="PanelHeader"] [class*="PanelHeaderButton"]:has([class*="videocam"]),
-        [class*="PanelHeader"] [class*="PanelHeaderButton"]:has([class*="call"]),
+        /* Прямые ссылки и кнопки по атрибутам */
+        a[href*="/call"]:not(#vmu-top-unread-btn),
+        a[href*="act=call"]:not(#vmu-top-unread-btn),
+        a[href*="call?"]:not(#vmu-top-unread-btn),
+        a[href*="calls?"]:not(#vmu-top-unread-btn),
+        a[href*="/calls/"]:not(#vmu-top-unread-btn),
+        [aria-label*="звон" i]:not(#vmu-top-unread-btn),
+        [aria-label*="Звон" i]:not(#vmu-top-unread-btn),
+        [aria-label*="вызов" i]:not(#vmu-top-unread-btn),
+        [aria-label*="Вызов" i]:not(#vmu-top-unread-btn),
+        [aria-label*="позвон" i]:not(#vmu-top-unread-btn),
+        [aria-label*="Позвон" i]:not(#vmu-top-unread-btn),
+        [aria-label*="звонок" i]:not(#vmu-top-unread-btn),
+        [aria-label*="видеозвонок" i]:not(#vmu-top-unread-btn),
+        [aria-label*="аудиозвонок" i]:not(#vmu-top-unread-btn),
+        [aria-label*="call" i]:not(#vmu-top-unread-btn),
+        [aria-label*="Call" i]:not(#vmu-top-unread-btn),
+        [data-testid*="call" i]:not(#vmu-top-unread-btn),
+        [data-testid*="phone" i]:not(#vmu-top-unread-btn),
+        [data-testid*="videocall" i]:not(#vmu-top-unread-btn),
         [class*="ChatHeader__call"],
         [class*="im-header-call"],
         [class*="im-page--header-call"],
         [class*="chat-header--call"],
         [class*="vkmChatHeader__call"],
-        [class*="vkmChatHeader"] [class*="phone"],
-        [class*="vkmChatHeader"] [class*="videocam"],
-        [class*="vkmChatHeader"] [class*="call"] {
+
+        /* Кнопки внутри шапок с иконками звонков */
+        :is(.vkuiPanelHeader, [class*="PanelHeader"], .vkmChatHeader, [class*="vkmChatHeader"], [class*="ChatHeader"], [class*="im-page--header"], [class*="im-header"], header, .layout__header) :is(button, a, [role="button"], [class*="PanelHeaderButton"], [class*="HeaderButton"], [class*="IconButton"], [class*="Tappable"], [class*="action"]):has([class*="phone" i]),
+        :is(.vkuiPanelHeader, [class*="PanelHeader"], .vkmChatHeader, [class*="vkmChatHeader"], [class*="ChatHeader"], [class*="im-page--header"], [class*="im-header"], header, .layout__header) :is(button, a, [role="button"], [class*="PanelHeaderButton"], [class*="HeaderButton"], [class*="IconButton"], [class*="Tappable"], [class*="action"]):has([class*="videocam" i]),
+        :is(.vkuiPanelHeader, [class*="PanelHeader"], .vkmChatHeader, [class*="vkmChatHeader"], [class*="ChatHeader"], [class*="im-page--header"], [class*="im-header"], header, .layout__header) :is(button, a, [role="button"], [class*="PanelHeaderButton"], [class*="HeaderButton"], [class*="IconButton"], [class*="Tappable"], [class*="action"]):has([class*="call" i]),
+        :is(.vkuiPanelHeader, [class*="PanelHeader"], .vkmChatHeader, [class*="vkmChatHeader"], [class*="ChatHeader"], [class*="im-page--header"], [class*="im-header"], header, .layout__header) :is(button, a, [role="button"], [class*="PanelHeaderButton"], [class*="HeaderButton"], [class*="IconButton"], [class*="Tappable"], [class*="action"]):has([class*="video_camera" i]),
+        :is(.vkuiPanelHeader, [class*="PanelHeader"], .vkmChatHeader, [class*="vkmChatHeader"], [class*="ChatHeader"], [class*="im-page--header"], [class*="im-header"], header, .layout__header) :is(button, a, [role="button"], [class*="PanelHeaderButton"], [class*="HeaderButton"], [class*="IconButton"], [class*="Tappable"], [class*="action"]):has(use[*|href*="phone" i]),
+        :is(.vkuiPanelHeader, [class*="PanelHeader"], .vkmChatHeader, [class*="vkmChatHeader"], [class*="ChatHeader"], [class*="im-page--header"], [class*="im-header"], header, .layout__header) :is(button, a, [role="button"], [class*="PanelHeaderButton"], [class*="HeaderButton"], [class*="IconButton"], [class*="Tappable"], [class*="action"]):has(use[*|href*="videocam" i]),
+        :is(.vkuiPanelHeader, [class*="PanelHeader"], .vkmChatHeader, [class*="vkmChatHeader"], [class*="ChatHeader"], [class*="im-page--header"], [class*="im-header"], header, .layout__header) :is(button, a, [role="button"], [class*="PanelHeaderButton"], [class*="HeaderButton"], [class*="IconButton"], [class*="Tappable"], [class*="action"]):has(use[*|href*="call" i]),
+
+        /* Иконки звонков */
+        [class*="phone_outline"]:not(#vmu-top-unread-btn),
+        [class*="videocam_outline"]:not(#vmu-top-unread-btn),
+        [class*="Icon--phone"]:not(#vmu-top-unread-btn),
+        [class*="Icon--videocam"]:not(#vmu-top-unread-btn),
+        [class*="Icon--call"]:not(#vmu-top-unread-btn) {
             display: none !important;
             visibility: hidden !important;
             pointer-events: none !important;
@@ -615,48 +600,61 @@
 
     const HIDE_VIDEO_MSGS_CSS = `
         /* ПОЛНОЕ СКРЫТИЕ КНОПКИ ЗАПИСИ КРУЖКОВ (ВИДЕОСООБЩЕНИЙ) В СТРОКЕ ВВОДА */
-        [class*="WriteBar"] [aria-label*="видео" i],
-        [class*="WriteBar"] [aria-label*="Видео" i],
-        [class*="WriteBar"] [aria-label*="круж" i],
-        [class*="WriteBar"] [aria-label*="Круж" i],
-        [class*="WriteBar"] [aria-label*="video" i],
-        [class*="WriteBar"] [data-testid*="video" i],
-        [class*="WriteBar"] [data-testid*="videomsg" i],
-        [class*="WriteBar"] [data-testid*="round" i],
-        [class*="WriteBar"] [class*="video_message"],
-        [class*="WriteBar"] [class*="video_circle"],
-        [class*="WriteBar"] [class*="camera_circle"],
-        [class*="WriteBar"] [class*="camera_outline"],
-        [class*="WriteBar"] [class*="Icon--video"],
-        [class*="WriteBar"] [class*="Icon--camera"],
-        [class*="WriteBar"] button:has([class*="video"]),
-        [class*="WriteBar"] button:has([class*="camera"]),
-        [class*="WriteBar"] [class*="WriteBar__action"]:has([class*="video"]),
-        [class*="WriteBar"] [class*="WriteBar__action"]:has([class*="camera"]),
-        [class*="WriteBar"] [class*="IconButton"]:has([class*="video"]),
-        [class*="WriteBar"] [class*="IconButton"]:has([class*="camera"]),
-        [class*="WriteBar"] [class*="Tappable"]:has([class*="video"]),
-        [class*="WriteBar"] [class*="Tappable"]:has([class*="camera"]),
-        [class*="writeBar"] [aria-label*="видео" i],
-        [class*="writeBar"] [aria-label*="круж" i],
-        [class*="writeBar"] [class*="video"],
-        [class*="writeBar"] [class*="camera"],
-        [class*="writeBar"] button:has([class*="video"]),
-        [class*="writeBar"] button:has([class*="camera"]),
-        [class*="im-chat-input"] [aria-label*="видео" i],
-        [class*="im-chat-input"] [aria-label*="круж" i],
-        [class*="im-chat-input"] [class*="video"],
-        [class*="im-chat-input"] [class*="camera"],
-        [class*="im-chat-input"] button:has([class*="video"]),
-        [class*="im-chat-input"] button:has([class*="camera"]),
-        [class*="writebox"] [aria-label*="видео" i],
-        [class*="writebox"] [aria-label*="круж" i],
-        [class*="writebox"] button:has([class*="video"]),
-        [class*="writebox"] button:has([class*="camera"]),
+        /* Прямые селекторы атрибутов и классов */
+        [aria-label*="видеосообщен" i],
+        [aria-label*="Видеосообщен" i],
+        [aria-label*="кружок" i],
+        [aria-label*="Кружок" i],
+        [aria-label*="кружоч" i],
+        [aria-label*="Кружоч" i],
+        [aria-label*="video message" i],
+        [aria-label*="Video message" i],
+        [aria-label*="video_message" i],
+        [data-testid*="video-message" i],
+        [data-testid*="video_message" i],
+        [data-testid*="videomsg" i],
+        [data-testid*="video-msg" i],
+        [data-testid*="round_video" i],
+        [data-testid*="round-video" i],
+        [data-testid*="roundVideo" i],
+        [class*="VideoMessage"],
+        [class*="video_message"],
+        [class*="videoMessage"],
+        [class*="video-message"],
+        [class*="video_circle"],
+        [class*="camera_circle"],
+        [class*="WriteBar__action--video"],
+        [class*="writeBar__action--video"],
+        [class*="WriteBar__video"],
+        [class*="writeBar__video"],
         [class*="VideoMessage__record"],
         [class*="video_message__record"],
-        [class*="WriteBar__videoMessage"],
-        [class*="writeBar__videoMessage"] {
+
+        /* Внутри строк ввода сообщений (WriteBar / im-chat-input) */
+        :is([class*="WriteBar"], [class*="writeBar"], [class*="writebox"], [class*="chat-input"], [class*="ChatInput"], [class*="im-chat-input"], [class*="im-send-btn"], .vkuiWriteBar, .im-write-form) [aria-label*="видео" i],
+        :is([class*="WriteBar"], [class*="writeBar"], [class*="writebox"], [class*="chat-input"], [class*="ChatInput"], [class*="im-chat-input"], [class*="im-send-btn"], .vkuiWriteBar, .im-write-form) [aria-label*="Видео" i],
+        :is([class*="WriteBar"], [class*="writeBar"], [class*="writebox"], [class*="chat-input"], [class*="ChatInput"], [class*="im-chat-input"], [class*="im-send-btn"], .vkuiWriteBar, .im-write-form) [aria-label*="круж" i],
+        :is([class*="WriteBar"], [class*="writeBar"], [class*="writebox"], [class*="chat-input"], [class*="ChatInput"], [class*="im-chat-input"], [class*="im-send-btn"], .vkuiWriteBar, .im-write-form) [aria-label*="Круж" i],
+        :is([class*="WriteBar"], [class*="writeBar"], [class*="writebox"], [class*="chat-input"], [class*="ChatInput"], [class*="im-chat-input"], [class*="im-send-btn"], .vkuiWriteBar, .im-write-form) [aria-label*="video" i],
+        :is([class*="WriteBar"], [class*="writeBar"], [class*="writebox"], [class*="chat-input"], [class*="ChatInput"], [class*="im-chat-input"], [class*="im-send-btn"], .vkuiWriteBar, .im-write-form) [aria-label*="Video" i],
+        :is([class*="WriteBar"], [class*="writeBar"], [class*="writebox"], [class*="chat-input"], [class*="ChatInput"], [class*="im-chat-input"], [class*="im-send-btn"], .vkuiWriteBar, .im-write-form) :is(button, a, [role="button"], [class*="WriteBar__action"], [class*="IconButton"], [class*="Tappable"], [class*="action"]):has([class*="video_message" i]),
+        :is([class*="WriteBar"], [class*="writeBar"], [class*="writebox"], [class*="chat-input"], [class*="ChatInput"], [class*="im-chat-input"], [class*="im-send-btn"], .vkuiWriteBar, .im-write-form) :is(button, a, [role="button"], [class*="WriteBar__action"], [class*="IconButton"], [class*="Tappable"], [class*="action"]):has([class*="video_circle" i]),
+        :is([class*="WriteBar"], [class*="writeBar"], [class*="writebox"], [class*="chat-input"], [class*="ChatInput"], [class*="im-chat-input"], [class*="im-send-btn"], .vkuiWriteBar, .im-write-form) :is(button, a, [role="button"], [class*="WriteBar__action"], [class*="IconButton"], [class*="Tappable"], [class*="action"]):has([class*="camera_circle" i]),
+        :is([class*="WriteBar"], [class*="writeBar"], [class*="writebox"], [class*="chat-input"], [class*="ChatInput"], [class*="im-chat-input"], [class*="im-send-btn"], .vkuiWriteBar, .im-write-form) :is(button, a, [role="button"], [class*="WriteBar__action"], [class*="IconButton"], [class*="Tappable"], [class*="action"]):has([class*="videocam" i]),
+        :is([class*="WriteBar"], [class*="writeBar"], [class*="writebox"], [class*="chat-input"], [class*="ChatInput"], [class*="im-chat-input"], [class*="im-send-btn"], .vkuiWriteBar, .im-write-form) :is(button, a, [role="button"], [class*="WriteBar__action"], [class*="IconButton"], [class*="Tappable"], [class*="action"]):has([class*="video" i]:not([class*="attach"]):not([class*="photo"])),
+        :is([class*="WriteBar"], [class*="writeBar"], [class*="writebox"], [class*="chat-input"], [class*="ChatInput"], [class*="im-chat-input"], [class*="im-send-btn"], .vkuiWriteBar, .im-write-form) :is(button, a, [role="button"], [class*="WriteBar__action"], [class*="IconButton"], [class*="Tappable"], [class*="action"]):has([class*="camera" i]:not([class*="attach"]):not([class*="photo"]):not([class*="picture"])),
+        :is([class*="WriteBar"], [class*="writeBar"], [class*="writebox"], [class*="chat-input"], [class*="ChatInput"], [class*="im-chat-input"], [class*="im-send-btn"], .vkuiWriteBar, .im-write-form) :is(button, a, [role="button"], [class*="WriteBar__action"], [class*="IconButton"], [class*="Tappable"], [class*="action"]):has(use[*|href*="video_message" i]),
+        :is([class*="WriteBar"], [class*="writeBar"], [class*="writebox"], [class*="chat-input"], [class*="ChatInput"], [class*="im-chat-input"], [class*="im-send-btn"], .vkuiWriteBar, .im-write-form) :is(button, a, [role="button"], [class*="WriteBar__action"], [class*="IconButton"], [class*="Tappable"], [class*="action"]):has(use[*|href*="video_circle" i]),
+        :is([class*="WriteBar"], [class*="writeBar"], [class*="writebox"], [class*="chat-input"], [class*="ChatInput"], [class*="im-chat-input"], [class*="im-send-btn"], .vkuiWriteBar, .im-write-form) :is(button, a, [role="button"], [class*="WriteBar__action"], [class*="IconButton"], [class*="Tappable"], [class*="action"]):has(use[*|href*="camera_circle" i]),
+        :is([class*="WriteBar"], [class*="writeBar"], [class*="writebox"], [class*="chat-input"], [class*="ChatInput"], [class*="im-chat-input"], [class*="im-send-btn"], .vkuiWriteBar, .im-write-form) :is(button, a, [role="button"], [class*="WriteBar__action"], [class*="IconButton"], [class*="Tappable"], [class*="action"]):has(use[*|href*="videocam" i]),
+
+        /* Иконки кружков */
+        :is(button, a, [role="button"], [class*="IconButton"], [class*="Tappable"]):has(svg[class*="video_message" i]),
+        :is(button, a, [role="button"], [class*="IconButton"], [class*="Tappable"]):has(svg[class*="video_circle" i]),
+        :is(button, a, [role="button"], [class*="IconButton"], [class*="Tappable"]):has(svg[class*="camera_circle" i]),
+        :is(button, a, [role="button"], [class*="IconButton"], [class*="Tappable"]):has(use[*|href*="video_message" i]),
+        :is(button, a, [role="button"], [class*="IconButton"], [class*="Tappable"]):has(use[*|href*="video_circle" i]),
+        :is(button, a, [role="button"], [class*="IconButton"], [class*="Tappable"]):has(use[*|href*="camera_circle" i]) {
             display: none !important;
             visibility: hidden !important;
             pointer-events: none !important;
@@ -1402,6 +1400,7 @@
                 isHideCallsEnabled = checked;
                 setSetting(STORAGE_KEYS.HIDE_CALLS, isHideCallsEnabled);
                 applyStyles();
+                scheduleFixes();
             }
         );
         card.appendChild(rowCalls);
@@ -1415,6 +1414,7 @@
                 isHideVideoMsgsEnabled = checked;
                 setSetting(STORAGE_KEYS.HIDE_VIDEO_MSGS, isHideVideoMsgsEnabled);
                 applyStyles();
+                scheduleFixes();
             }
         );
         rowVideo.style.borderBottom = 'none';
@@ -1467,10 +1467,10 @@
     function interceptActionButtons(e) {
         // Блокировка звонков при включенной опции
         if (isHideCallsEnabled) {
-            const callBtn = e.target && e.target.closest && e.target.closest(
-                'a[href*="call"], [aria-label*="звон" i], [aria-label*="Звон" i], [aria-label*="вызов" i], [aria-label*="Вызов" i], [aria-label*="позвонить" i], [aria-label*="Позвонить" i], [data-testid*="call" i], [class*="ChatHeader__call"], [class*="Icon--phone"], [class*="Icon--videocam"], [class*="Icon--call"]'
+            const callTarget = e.target && e.target.closest && e.target.closest(
+                'a[href*="/call"], a[href*="act=call"], a[href*="call?"], a[href*="calls?"], a[href*="/calls/"], [aria-label*="звон" i], [aria-label*="вызов" i], [aria-label*="позвон" i], [aria-label*="звонок" i], [aria-label*="видеозвонок" i], [aria-label*="аудиозвонок" i], [aria-label*="call" i], [data-testid*="call" i], [data-testid*="phone" i], [data-testid*="videocall" i], [class*="ChatHeader__call"], [class*="Icon--phone"], [class*="Icon--videocam"], [class*="Icon--call"], [class*="phone_outline"], [class*="videocam_outline"]'
             );
-            if (callBtn && callBtn.closest('.vkuiPanelHeader, [class*="PanelHeader"], [class*="ChatHeader"]')) {
+            if (callTarget && callTarget.id !== 'vmu-top-unread-btn' && !callTarget.closest('#vmu-top-unread-btn') && !callTarget.closest('#vk-mobile-upgrade-settings-card')) {
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
@@ -1480,10 +1480,10 @@
 
         // Блокировка кружков (видеосообщений) при включенной опции
         if (isHideVideoMsgsEnabled) {
-            const videoBtn = e.target && e.target.closest && e.target.closest(
-                '[aria-label*="видеосообщен" i], [aria-label*="Видеосообщен" i], [aria-label*="кружоч" i], [aria-label*="кружок" i], [aria-label*="Кружок" i], [data-testid*="video-message" i], [class*="Icon--video_message"], [class*="Icon--video_circle"], [class*="Icon--camera_circle"]'
+            const videoTarget = e.target && e.target.closest && e.target.closest(
+                '[aria-label*="видеосообщен" i], [aria-label*="круж" i], [aria-label*="video message" i], [data-testid*="video-message" i], [data-testid*="video_message" i], [data-testid*="videomsg" i], [data-testid*="round_video" i], [data-testid*="round-video" i], [class*="Icon--video_message"], [class*="Icon--video_circle"], [class*="Icon--camera_circle"], [class*="video_message"], [class*="video_circle"], [class*="camera_circle"], [class*="VideoMessage"]'
             );
-            if (videoBtn && videoBtn.closest('[class*="WriteBar"], [class*="writeBar"], [class*="im-chat-input"]')) {
+            if (videoTarget && !videoTarget.closest('#vk-mobile-upgrade-settings-card')) {
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
@@ -1532,18 +1532,14 @@
     function hideCallsAndVideoMessages() {
         // 1. Скрытие кнопки звонка в шапке диалогов
         if (isHideCallsEnabled) {
-            const headers = document.querySelectorAll(
-                '.vkuiPanelHeader, [class*="PanelHeader"], .vkmChatHeader, [class*="vkmChatHeader"], [class*="ChatHeader"], [class*="im-page--header"], [class*="im-header"]'
+            const callTargets = document.querySelectorAll(
+                'a[href*="/call"], a[href*="act=call"], a[href*="call?"], a[href*="calls?"], a[href*="/calls/"], [aria-label*="звон" i], [aria-label*="Звон" i], [aria-label*="вызов" i], [aria-label*="Вызов" i], [aria-label*="позвон" i], [aria-label*="Позвон" i], [aria-label*="звонок" i], [aria-label*="видеозвонок" i], [aria-label*="аудиозвонок" i], [aria-label*="call" i], [aria-label*="Call" i], [data-testid*="call" i], [data-testid*="phone" i], [data-testid*="videocall" i], [class*="phone_outline"], [class*="videocam_outline"], [class*="Icon--phone"], [class*="Icon--videocam"], [class*="Icon--call"], [class*="ChatHeader__call"], [class*="im-header-call"], [class*="vkmChatHeader__call"]'
             );
-            for (let i = 0; i < headers.length; i++) {
-                const header = headers[i];
-                const callTargets = header.querySelectorAll(
-                    'a[href*="call"], a[href*="act=call"], [aria-label*="звон" i], [aria-label*="Звон" i], [aria-label*="вызов" i], [aria-label*="Вызов" i], [aria-label*="позвон" i], [aria-label*="Позвон" i], [aria-label*="call" i], [aria-label*="Call" i], [data-testid*="call" i], [data-testid*="phone" i], [class*="Icon--phone"], [class*="Icon--videocam"], [class*="phone_outline"], [class*="videocam_outline"], [class*="Icon--call"], [class*="phone"], [class*="videocam"], [class*="Call"]'
-                );
-                for (let j = 0; j < callTargets.length; j++) {
-                    const el = callTargets[j];
-                    if (el.id === 'vmu-top-unread-btn' || el.closest('#vmu-top-unread-btn') || el.closest('#vk-mobile-upgrade-settings-card')) continue;
-                    const btn = el.closest('a, button, [role="button"], [class*="PanelHeaderButton"], [class*="IconButton"], [class*="Tappable"]') || el;
+            for (let j = 0; j < callTargets.length; j++) {
+                const el = callTargets[j];
+                if (el.id === 'vmu-top-unread-btn' || el.closest('#vmu-top-unread-btn') || el.closest('#vk-mobile-upgrade-settings-card')) continue;
+                const btn = el.closest('a, button, [role="button"], [class*="PanelHeaderButton"], [class*="HeaderButton"], [class*="IconButton"], [class*="Tappable"], [class*="action"]') || el;
+                if (btn && btn.id !== 'vmu-top-unread-btn' && !btn.closest('#vk-mobile-upgrade-settings-card')) {
                     btn.style.setProperty('display', 'none', 'important');
                     btn.style.setProperty('visibility', 'hidden', 'important');
                     btn.style.setProperty('width', '0', 'important');
@@ -1555,26 +1551,26 @@
                     btn.style.setProperty('pointer-events', 'none', 'important');
                     btn.style.setProperty('opacity', '0', 'important');
                 }
+            }
 
-                // Поиск по SVG use tags
-                const uses = header.querySelectorAll('use');
-                for (let k = 0; k < uses.length; k++) {
-                    const use = uses[k];
-                    const href = (use.getAttribute('href') || use.getAttribute('xlink:href') || '').toLowerCase();
-                    if (href.includes('phone') || href.includes('videocam') || href.includes('call') || href.includes('video_camera')) {
-                        const btn = use.closest('a, button, [role="button"], [class*="PanelHeaderButton"], [class*="IconButton"], [class*="Tappable"]') || use.closest('svg');
-                        if (btn) {
-                            btn.style.setProperty('display', 'none', 'important');
-                            btn.style.setProperty('visibility', 'hidden', 'important');
-                            btn.style.setProperty('width', '0', 'important');
-                            btn.style.setProperty('height', '0', 'important');
-                            btn.style.setProperty('min-width', '0', 'important');
-                            btn.style.setProperty('max-width', '0', 'important');
-                            btn.style.setProperty('padding', '0', 'important');
-                            btn.style.setProperty('margin', '0', 'important');
-                            btn.style.setProperty('pointer-events', 'none', 'important');
-                            btn.style.setProperty('opacity', '0', 'important');
-                        }
+            // Поиск по SVG use tags в заголовках
+            const uses = document.querySelectorAll('header use, [class*="Header"] use, [class*="Panel"] use, .vkuiPanelHeader use, [class*="vkmChatHeader"] use, [class*="ChatHeader"] use');
+            for (let k = 0; k < uses.length; k++) {
+                const use = uses[k];
+                const href = (use.getAttribute('href') || use.getAttribute('xlink:href') || '').toLowerCase();
+                if (href.includes('phone') || href.includes('videocam') || href.includes('call') || href.includes('video_camera')) {
+                    const btn = use.closest('a, button, [role="button"], [class*="PanelHeaderButton"], [class*="HeaderButton"], [class*="IconButton"], [class*="Tappable"], [class*="action"]') || use.closest('svg');
+                    if (btn && btn.id !== 'vmu-top-unread-btn' && !btn.closest('#vk-mobile-upgrade-settings-card')) {
+                        btn.style.setProperty('display', 'none', 'important');
+                        btn.style.setProperty('visibility', 'hidden', 'important');
+                        btn.style.setProperty('width', '0', 'important');
+                        btn.style.setProperty('height', '0', 'important');
+                        btn.style.setProperty('min-width', '0', 'important');
+                        btn.style.setProperty('max-width', '0', 'important');
+                        btn.style.setProperty('padding', '0', 'important');
+                        btn.style.setProperty('margin', '0', 'important');
+                        btn.style.setProperty('pointer-events', 'none', 'important');
+                        btn.style.setProperty('opacity', '0', 'important');
                     }
                 }
             }
@@ -1582,17 +1578,14 @@
 
         // 2. Скрытие кнопки записи кружков (видеосообщений) в строке ввода
         if (isHideVideoMsgsEnabled) {
-            const writeBars = document.querySelectorAll(
-                '[class*="WriteBar"], [class*="writeBar"], [class*="write_bar"], [class*="im-chat-input"], [class*="writebox"], [class*="ChatInput"], [class*="chat-input"]'
+            const videoTargets = document.querySelectorAll(
+                '[aria-label*="видеосообщен" i], [aria-label*="Видеосообщен" i], [aria-label*="кружок" i], [aria-label*="Кружок" i], [aria-label*="кружоч" i], [aria-label*="Кружоч" i], [aria-label*="video message" i], [aria-label*="Video message" i], [aria-label*="video_message" i], [data-testid*="video-message" i], [data-testid*="video_message" i], [data-testid*="videomsg" i], [data-testid*="video-msg" i], [data-testid*="round_video" i], [data-testid*="round-video" i], [data-testid*="roundVideo" i], [class*="video_message"], [class*="VideoMessage"], [class*="video-message"], [class*="video_circle"], [class*="camera_circle"], [class*="WriteBar__action--video"], [class*="writeBar__action--video"], [class*="WriteBar__video"], [class*="writeBar__video"], [class*="VideoMessage__record"], [class*="Icon--video_message"], [class*="Icon--video_circle"], [class*="Icon--camera_circle"], [class*="video_message_outline"], [class*="video_circle_outline"], [class*="camera_circle_outline"]'
             );
-            for (let i = 0; i < writeBars.length; i++) {
-                const wb = writeBars[i];
-                const videoTargets = wb.querySelectorAll(
-                    '[aria-label*="видео" i], [aria-label*="Видео" i], [aria-label*="круж" i], [aria-label*="Круж" i], [aria-label*="video" i], [aria-label*="round" i], [data-testid*="video" i], [data-testid*="round" i], [class*="video_message"], [class*="VideoMessage"], [class*="video-message"], [class*="video_msg"], [class*="video_circle"], [class*="camera_circle"], [class*="Icon--video"], [class*="Icon--camera"], [class*="camera_outline"], [class*="video_outline"]'
-                );
-                for (let j = 0; j < videoTargets.length; j++) {
-                    const el = videoTargets[j];
-                    const btn = el.closest('button, [role="button"], [class*="WriteBar__action"], [class*="IconButton"], [class*="Tappable"], [class*="action"]') || el;
+            for (let j = 0; j < videoTargets.length; j++) {
+                const el = videoTargets[j];
+                if (el.closest('#vk-mobile-upgrade-settings-card')) continue;
+                const btn = el.closest('button, [role="button"], [class*="WriteBar__action"], [class*="IconButton"], [class*="Tappable"], [class*="action"]') || el;
+                if (btn && !btn.closest('#vk-mobile-upgrade-settings-card')) {
                     btn.style.setProperty('display', 'none', 'important');
                     btn.style.setProperty('visibility', 'hidden', 'important');
                     btn.style.setProperty('width', '0', 'important');
@@ -1604,26 +1597,26 @@
                     btn.style.setProperty('pointer-events', 'none', 'important');
                     btn.style.setProperty('opacity', '0', 'important');
                 }
+            }
 
-                // Поиск по SVG use tags
-                const uses = wb.querySelectorAll('use');
-                for (let k = 0; k < uses.length; k++) {
-                    const use = uses[k];
-                    const href = (use.getAttribute('href') || use.getAttribute('xlink:href') || '').toLowerCase();
-                    if (href.includes('video_message') || href.includes('video_circle') || href.includes('camera_circle') || (href.includes('camera') && !href.includes('attach')) || href.includes('round_video')) {
-                        const btn = use.closest('button, [role="button"], [class*="WriteBar__action"], [class*="IconButton"], [class*="Tappable"], [class*="action"]') || use.closest('svg');
-                        if (btn) {
-                            btn.style.setProperty('display', 'none', 'important');
-                            btn.style.setProperty('visibility', 'hidden', 'important');
-                            btn.style.setProperty('width', '0', 'important');
-                            btn.style.setProperty('height', '0', 'important');
-                            btn.style.setProperty('min-width', '0', 'important');
-                            btn.style.setProperty('max-width', '0', 'important');
-                            btn.style.setProperty('padding', '0', 'important');
-                            btn.style.setProperty('margin', '0', 'important');
-                            btn.style.setProperty('pointer-events', 'none', 'important');
-                            btn.style.setProperty('opacity', '0', 'important');
-                        }
+            // Поиск по SVG use tags в строке ввода
+            const uses = document.querySelectorAll('[class*="WriteBar"] use, [class*="writeBar"] use, [class*="writebox"] use, [class*="chat-input"] use, [class*="im-chat-input"] use, .vkuiWriteBar use, .im-write-form use');
+            for (let k = 0; k < uses.length; k++) {
+                const use = uses[k];
+                const href = (use.getAttribute('href') || use.getAttribute('xlink:href') || '').toLowerCase();
+                if (href.includes('video_message') || href.includes('video_circle') || href.includes('camera_circle') || href.includes('round_video') || (href.includes('videocam') && !href.includes('attach'))) {
+                    const btn = use.closest('button, [role="button"], [class*="WriteBar__action"], [class*="IconButton"], [class*="Tappable"], [class*="action"]') || use.closest('svg');
+                    if (btn && !btn.closest('#vk-mobile-upgrade-settings-card')) {
+                        btn.style.setProperty('display', 'none', 'important');
+                        btn.style.setProperty('visibility', 'hidden', 'important');
+                        btn.style.setProperty('width', '0', 'important');
+                        btn.style.setProperty('height', '0', 'important');
+                        btn.style.setProperty('min-width', '0', 'important');
+                        btn.style.setProperty('max-width', '0', 'important');
+                        btn.style.setProperty('padding', '0', 'important');
+                        btn.style.setProperty('margin', '0', 'important');
+                        btn.style.setProperty('pointer-events', 'none', 'important');
+                        btn.style.setProperty('opacity', '0', 'important');
                     }
                 }
             }
@@ -1632,6 +1625,9 @@
 
     document.addEventListener('click', interceptChatMoreActions, true);
     document.addEventListener('click', interceptActionButtons, true);
+    document.addEventListener('pointerdown', interceptActionButtons, true);
+    document.addEventListener('touchstart', interceptActionButtons, true);
+    document.addEventListener('mousedown', interceptActionButtons, true);
     document.addEventListener('pointerdown', blockMorePointer, true);
     document.addEventListener('touchstart', blockMorePointer, true);
     document.addEventListener('mousedown', blockMorePointer, true);
