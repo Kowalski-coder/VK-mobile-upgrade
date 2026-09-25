@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.12.0
+// @version      2.13.0
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -322,14 +322,30 @@
             z-index: 1000 !important;
         }
 
-        /* 8. ФИКСИРОВАННАЯ ШАПКА СТРАНИЦЫ НАСТРОЕК ВНЕШНЕГО ВИДА ПОВЕРХ КОНТЕНТА ПРИ СКРОЛЛЕ */
-        body.vmu-page-appearance .vkuiPanelHeader,
-        body.vmu-page-appearance .vkuiPanelHeader__in,
-        body.vmu-page-appearance [class*="PanelHeader"],
-        body.vmu-page-appearance [class*="PanelHeader__in"],
-        body.vmu-page-appearance header {
-            z-index: 500 !important;
-            background-color: var(--vkui--color_background_header, var(--vkui--color_background_content, #19191a)) !important;
+        /* 8. НЕПРОЗРАЧНАЯ ШАПКА С ВЫСОКИМ Z-INDEX НА ВСЕХ СТРАНИЦАХ (КРОМЕ КЛИПОВ) */
+        body:not(.vmu-page-clips) .vkuiPanelHeader,
+        body:not(.vmu-page-clips) .vkuiPanelHeader__in,
+        body:not(.vmu-page-clips) [class*="PanelHeader"],
+        body:not(.vmu-page-clips) [class*="PanelHeader__in"],
+        body:not(.vmu-page-clips) .vkmListHeader,
+        body:not(.vmu-page-clips) [class*="vkmListHeader"],
+        body:not(.vmu-page-clips) header.layout__header,
+        body:not(.vmu-page-clips) .layout__header {
+            z-index: 800 !important;
+            background-color: var(--vkui--color_background_content, #19191a) !important;
+        }
+
+        body.vmu-page-clips .vkuiPanelHeader,
+        body.vmu-page-clips .vkuiPanelHeader__in,
+        body.vmu-page-clips [class*="PanelHeader"],
+        body.vmu-page-clips [class*="PanelHeader__in"] {
+            background: transparent !important;
+            background-color: transparent !important;
+        }
+
+        #vk-mobile-upgrade-settings-card {
+            z-index: 5 !important;
+            position: relative !important;
         }
     `;
 
@@ -904,6 +920,17 @@
         } else {
             if (document.body.classList.contains('vmu-page-appearance')) {
                 document.body.classList.remove('vmu-page-appearance');
+            }
+        }
+
+        const isClips = window.location.pathname.toLowerCase().startsWith('/clips') || window.location.pathname.toLowerCase().startsWith('/clip-');
+        if (isClips) {
+            if (!document.body.classList.contains('vmu-page-clips')) {
+                document.body.classList.add('vmu-page-clips');
+            }
+        } else {
+            if (document.body.classList.contains('vmu-page-clips')) {
+                document.body.classList.remove('vmu-page-clips');
             }
         }
     }
@@ -1750,54 +1777,47 @@
     // ==========================================
     //       КАСТОМИЗАЦИЯ ВКЛАДКИ ПОИСК
     // ==========================================
-    function getBottomNavTabbar() {
-        // 1. Ищем внутри явного нижнего фиксированного контейнера
-        const fixedContainers = document.querySelectorAll('.vkuiFixedLayout--bottom, [class*="FixedLayout--bottom"], #bottom_nav, .bottom_nav, .layout__bottom');
-        for (let i = 0; i < fixedContainers.length; i++) {
-            const fc = fixedContainers[i];
-            if (fc.closest('.ConvoList, [class*="ConvoList"], .vkuiPanelHeader, [class*="PanelHeader"], header, .vkuiSearch, [class*="Search"], .WriteBar, [class*="WriteBar"]')) {
+    function getAllBottomNavItems() {
+        // 1. Ищем внутри контейнеров навигации
+        const containers = document.querySelectorAll(
+            '.vkuiTabbar, [class*="Tabbar"], #bottom_nav, .bottom_nav, .vkuiFixedLayout--bottom, [class*="FixedLayout--bottom"], .layout__bottom, nav'
+        );
+        for (let i = 0; i < containers.length; i++) {
+            const c = containers[i];
+            if (c.closest('.ConvoList, [class*="ConvoList"], .vkuiPanelHeader, [class*="PanelHeader"], header, [class*="Subnavigation"], [class*="Tabs"], [class*="HorizontalScroll"], [class*="WriteBar"], [class*="writeBar"], .vkuiSearch, [class*="Search"]')) {
                 continue;
             }
-            const tb = fc.querySelector('.vkuiTabbar, [class*="Tabbar"], nav') || fc;
-            return tb;
-        }
-
-        // 2. Ищем среди всех таббаров на странице
-        const candidates = document.querySelectorAll('.vkuiTabbar, [class*="Tabbar"], #bottom_nav, .bottom_nav, nav');
-        for (let i = candidates.length - 1; i >= 0; i--) {
-            const tb = candidates[i];
-            if (tb.closest('.ConvoList, [class*="ConvoList"], .vkuiPanelHeader, [class*="PanelHeader"], header, [class*="Subnavigation"], [class*="Tabs"], [class*="HorizontalScroll"], [class*="WriteBar"], [class*="writeBar"], .vkuiSearch, [class*="Search"]')) {
-                continue;
+            let items = Array.from(c.querySelectorAll('.vkuiTabbarItem, [class*="TabbarItem"], .bottom_nav__item, [role="tab"]'));
+            items = items.filter(el => {
+                const p = el.parentElement;
+                return !p || !p.closest('.vkuiTabbarItem, [class*="TabbarItem"], .bottom_nav__item, [role="tab"]');
+            });
+            if (items.length >= 3) {
+                return items;
             }
-            return tb;
         }
-        return null;
-    }
 
-    function getBottomNavItems() {
-        const tabbar = getBottomNavTabbar();
-        if (!tabbar) return [];
-
-        // Ищем элементы табов в нижней панели
-        let items = Array.from(tabbar.querySelectorAll('.vkuiTabbarItem, .bottom_nav__item, [role="tab"], #bottom_nav > a, .bottom_nav > a'));
-
-        // Оставляем только элементы первого уровня (не вложенные внутрь)
-        items = items.filter(el => {
+        // 2. Прямой поиск всех элементов табов на странице
+        const allCandidateItems = Array.from(document.querySelectorAll(
+            '.vkuiTabbarItem, [class*="TabbarItem"], .bottom_nav__item, [class*="TabBarItem"]'
+        ));
+        const filteredItems = allCandidateItems.filter(el => {
+            if (el.closest('.ConvoList, [class*="ConvoList"], .vkuiPanelHeader, [class*="PanelHeader"], header, [class*="Subnavigation"], [class*="Tabs"], [class*="HorizontalScroll"], [class*="WriteBar"], .vkuiSearch')) {
+                return false;
+            }
             const p = el.parentElement;
-            return !p || !p.closest('.vkuiTabbarItem, .bottom_nav__item, [role="tab"]');
+            return !p || !p.closest('.vkuiTabbarItem, [class*="TabbarItem"], .bottom_nav__item, [class*="TabBarItem"]');
         });
 
-        // Если не найдены через классы, берем прямых потомков контейнера
-        if (items.length === 0) {
-            const tabbarIn = tabbar.querySelector('.vkuiTabbar__in, [class*="Tabbar__in"]') || tabbar;
-            items = Array.from(tabbarIn.children).filter(el => !el.classList.contains('vkuiTabbar__in'));
+        if (filteredItems.length >= 3) {
+            return filteredItems;
         }
 
-        return items;
+        return [];
     }
 
     function getBottomSearchTab() {
-        const items = getBottomNavItems();
+        const items = getAllBottomNavItems();
         if (items.length >= 2) {
             // Вторая кнопка снизу (индекс 1) — это ВСЕГДА кнопка Поиска!
             return items[1];
@@ -1886,13 +1906,13 @@
     }
 
     function updateCustomTabs() {
-        const bottomNav = getBottomNavTabbar();
-
         // Очистка ошибочных SVG на верхней панели и в контенте
         const nonBottomSvgs = document.querySelectorAll('header [data-vmu-svg], .vkuiPanelHeader [data-vmu-svg], [class*="PanelHeader"] [data-vmu-svg], .vkuiTabs [data-vmu-svg], [class*="Tabs"] [data-vmu-svg]');
+        const items = getAllBottomNavItems();
         for (let i = 0; i < nonBottomSvgs.length; i++) {
             const s = nonBottomSvgs[i];
-            if (!bottomNav || !bottomNav.contains(s)) {
+            const isInsideBottom = items.some(it => it.contains(s));
+            if (!isInsideBottom) {
                 s.removeAttribute('data-vmu-svg');
             }
         }
@@ -1909,9 +1929,6 @@
         const target = e.target;
         if (!target || !target.closest) return;
 
-        const bottomNav = getBottomNavTabbar();
-        if (!bottomNav || !bottomNav.contains(target)) return;
-
         const searchItem = getBottomSearchTab();
         if (!searchItem) return;
 
@@ -1921,8 +1938,10 @@
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();
-                if (window.location.pathname !== def.href) {
-                    window.location.href = def.href;
+                if (e.type === 'click' || e.type === 'touchend') {
+                    if (window.location.pathname !== def.href) {
+                        window.location.href = def.href;
+                    }
                 }
             }
         }
@@ -1930,6 +1949,9 @@
 
     document.addEventListener('click', interceptTabbarClick, true);
     document.addEventListener('touchend', interceptTabbarClick, true);
+    document.addEventListener('pointerdown', interceptTabbarClick, true);
+    document.addEventListener('touchstart', interceptTabbarClick, true);
+    document.addEventListener('mousedown', interceptTabbarClick, true);
 
     document.addEventListener('click', interceptChatMoreActions, true);
     document.addEventListener('click', interceptActionButtons, true);
