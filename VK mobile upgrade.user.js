@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.11.2
+// @version      2.12.0
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -1750,87 +1750,58 @@
     // ==========================================
     //       КАСТОМИЗАЦИЯ ВКЛАДКИ ПОИСК
     // ==========================================
-    function getBottomNavContainer() {
+    function getBottomNavTabbar() {
+        // 1. Ищем внутри явного нижнего фиксированного контейнера
+        const fixedContainers = document.querySelectorAll('.vkuiFixedLayout--bottom, [class*="FixedLayout--bottom"], #bottom_nav, .bottom_nav, .layout__bottom');
+        for (let i = 0; i < fixedContainers.length; i++) {
+            const fc = fixedContainers[i];
+            if (fc.closest('.ConvoList, [class*="ConvoList"], .vkuiPanelHeader, [class*="PanelHeader"], header, .vkuiSearch, [class*="Search"], .WriteBar, [class*="WriteBar"]')) {
+                continue;
+            }
+            const tb = fc.querySelector('.vkuiTabbar, [class*="Tabbar"], nav') || fc;
+            return tb;
+        }
+
+        // 2. Ищем среди всех таббаров на странице
         const candidates = document.querySelectorAll('.vkuiTabbar, [class*="Tabbar"], #bottom_nav, .bottom_nav, nav');
         for (let i = candidates.length - 1; i >= 0; i--) {
             const tb = candidates[i];
-            if (tb.closest('.ConvoList, [class*="ConvoList"], .vkuiPanelHeader, [class*="PanelHeader"], header, [class*="Subnavigation"], [class*="Tabs"], [class*="HorizontalScroll"], [class*="WriteBar"], [class*="writeBar"]')) {
+            if (tb.closest('.ConvoList, [class*="ConvoList"], .vkuiPanelHeader, [class*="PanelHeader"], header, [class*="Subnavigation"], [class*="Tabs"], [class*="HorizontalScroll"], [class*="WriteBar"], [class*="writeBar"], .vkuiSearch, [class*="Search"]')) {
                 continue;
             }
-            const items = tb.querySelectorAll('.vkuiTabbarItem, .bottom_nav__item, [role="tab"], a[href]');
-            if (items.length >= 3) {
-                return tb;
-            }
+            return tb;
         }
         return null;
     }
 
-    function getBottomTabItems() {
-        const tabbar = getBottomNavContainer();
+    function getBottomNavItems() {
+        const tabbar = getBottomNavTabbar();
         if (!tabbar) return [];
 
-        let rawItems = Array.from(tabbar.querySelectorAll('.vkuiTabbarItem, .bottom_nav__item, [role="tab"]'));
-        if (rawItems.length === 0) {
-            rawItems = Array.from(tabbar.querySelectorAll('#bottom_nav > a, .bottom_nav > a, .vkuiTabbar > a, [class*="Tabbar"] > a'));
-        }
-        if (rawItems.length === 0) {
-            rawItems = Array.from(tabbar.querySelectorAll('a, button, [role="link"]'));
+        // Ищем элементы табов в нижней панели
+        let items = Array.from(tabbar.querySelectorAll('.vkuiTabbarItem, .bottom_nav__item, [role="tab"], #bottom_nav > a, .bottom_nav > a'));
+
+        // Оставляем только элементы первого уровня (не вложенные внутрь)
+        items = items.filter(el => {
+            const p = el.parentElement;
+            return !p || !p.closest('.vkuiTabbarItem, .bottom_nav__item, [role="tab"]');
+        });
+
+        // Если не найдены через классы, берем прямых потомков контейнера
+        if (items.length === 0) {
+            const tabbarIn = tabbar.querySelector('.vkuiTabbar__in, [class*="Tabbar__in"]') || tabbar;
+            items = Array.from(tabbarIn.children).filter(el => !el.classList.contains('vkuiTabbar__in'));
         }
 
-        const topItems = [];
-        for (let i = 0; i < rawItems.length; i++) {
-            const el = rawItems[i];
-            const cls = (typeof el.className === 'string' ? el.className : (el.getAttribute('class') || ''));
-            if (el.classList.contains('vkuiTabbarItem__in') ||
-                el.classList.contains('vkuiTabbarItem__icon') ||
-                el.classList.contains('vkuiTabbarItem__text') ||
-                el.classList.contains('vkuiTabbarItem__children') ||
-                el.classList.contains('vkuiTabbarItem__label') ||
-                cls.includes('TabbarItem__') ||
-                cls.includes('TabBarItem__') ||
-                cls.includes('bottom_nav__in') ||
-                cls.includes('bottom_nav__icon')) {
-                continue;
-            }
-            const parentTab = el.parentElement ? el.parentElement.closest('.vkuiTabbarItem, .bottom_nav__item, [role="tab"]') : null;
-            if (!parentTab || parentTab === tabbar) {
-                topItems.push(el);
-            }
-        }
-
-        return topItems;
+        return items;
     }
 
-    function findSearchTabItem() {
-        const bottomNav = getBottomNavContainer();
-
-        // 1. Поиск по слоту
-        if (bottomNav) {
-            const slotItem = bottomNav.querySelector('[data-vmu-slot="search"]');
-            if (slotItem) return slotItem;
+    function getBottomSearchTab() {
+        const items = getBottomNavItems();
+        if (items.length >= 2) {
+            // Вторая кнопка снизу (индекс 1) — это ВСЕГДА кнопка Поиска!
+            return items[1];
         }
-
-        // 2. Ищем по ссылкам
-        const allCandidates = document.querySelectorAll(
-            'a[href="/discover"], a[href^="/discover?"], a[href="/search"], a[href^="/search?"], a[href*="feed?section=search"], a[data-vmu-href], [data-vmu-slot="search"]'
-        );
-        for (let i = 0; i < allCandidates.length; i++) {
-            const el = allCandidates[i];
-            if (el.closest('.vkuiPanelHeader, [class*="PanelHeader"], header, .vkuiSearch, [class*="Search"], .ConvoList, [class*="ConvoList"]')) {
-                continue;
-            }
-            const tab = el.closest('.vkuiTabbarItem, .bottom_nav__item, [role="tab"]') || el;
-            return tab;
-        }
-
-        // 3. 2-й элемент в нижней панели
-        if (bottomNav) {
-            const items = getBottomTabItems();
-            if (items && items.length >= 2) {
-                return items[1];
-            }
-        }
-
         return null;
     }
 
@@ -1838,7 +1809,6 @@
         if (!item) return;
 
         const targetKey = currentTabSearch;
-        const isDefault = (targetKey === 'search');
         const def = TAB_DEFINITIONS[targetKey] || TAB_DEFINITIONS.search;
         if (!def) return;
 
@@ -1916,10 +1886,10 @@
     }
 
     function updateCustomTabs() {
-        const bottomNav = getBottomNavContainer();
+        const bottomNav = getBottomNavTabbar();
 
-        // Очистка ошибочных SVG на верхней панели
-        const nonBottomSvgs = document.querySelectorAll('header [data-vmu-svg], .vkuiPanelHeader [data-vmu-svg], [class*="PanelHeader"] [data-vmu-svg]');
+        // Очистка ошибочных SVG на верхней панели и в контенте
+        const nonBottomSvgs = document.querySelectorAll('header [data-vmu-svg], .vkuiPanelHeader [data-vmu-svg], [class*="PanelHeader"] [data-vmu-svg], .vkuiTabs [data-vmu-svg], [class*="Tabs"] [data-vmu-svg]');
         for (let i = 0; i < nonBottomSvgs.length; i++) {
             const s = nonBottomSvgs[i];
             if (!bottomNav || !bottomNav.contains(s)) {
@@ -1927,7 +1897,7 @@
             }
         }
 
-        const searchItem = findSearchTabItem();
+        const searchItem = getBottomSearchTab();
         if (searchItem) {
             searchItem.dataset.vmuSlot = 'search';
             applySearchTabCustomization(searchItem);
@@ -1939,10 +1909,13 @@
         const target = e.target;
         if (!target || !target.closest) return;
 
-        const searchItem = findSearchTabItem();
+        const bottomNav = getBottomNavTabbar();
+        if (!bottomNav || !bottomNav.contains(target)) return;
+
+        const searchItem = getBottomSearchTab();
         if (!searchItem) return;
 
-        if (searchItem === target || searchItem.contains(target) || target.closest('[data-vmu-slot="search"]') || target.closest('a[data-vmu-href]')) {
+        if (searchItem === target || searchItem.contains(target)) {
             const def = TAB_DEFINITIONS[currentTabSearch];
             if (def && def.href) {
                 e.preventDefault();
