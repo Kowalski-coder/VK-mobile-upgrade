@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.23.3
+// @version      2.23.4
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -34,55 +34,60 @@
         HIDE_TAB_LABELS: 'vmu_hide_tab_labels',
         HIDE_FOLDERS_BAR: 'vmu_hide_folders_bar',
         HIDE_CALLS: 'vmu_hide_calls',
-        HIDE_VIDEO_MSGS: 'vmu_hide_video_msgs'
+        HIDE_VIDEO_MSGS: 'vmu_hide_video_msgs',
+        CUSTOM_ICON_PARAMS: 'vmu_custom_icon_params',
+        CUSTOM_SECTION_OPEN: 'vmu_custom_section_open'
     };
 
-    function getSetting(key, defaultValue) {
-        try {
-            const val = localStorage.getItem(key);
-            if (val === null) return defaultValue;
-            return val === 'true';
-        } catch (e) {
-            return defaultValue;
-        }
-    }
+    const DEFAULT_CUSTOM_PARAMS = {
+        friends: { scale: 105, stroke: 1.5 },
+        groups: { scale: 105, stroke: 1.5 },
+        music: { scale: 105, stroke: 1.5 },
+        video: { scale: 105, stroke: 1.5 }
+    };
 
-    function getStringSetting(key, defaultValue) {
+    function getCustomIconParams() {
         try {
-            const val = localStorage.getItem(key);
-            if (val === null || val === undefined) return defaultValue;
-            return val;
-        } catch (e) {
-            return defaultValue;
-        }
-    }
-
-    function setSetting(key, value) {
-        try {
-            localStorage.setItem(key, String(value));
-        } catch (e) {}
-    }
-
-    function getThemeSetting() {
-        try {
-            const val = localStorage.getItem(STORAGE_KEYS.THEME_MODE);
-            if (val === 'light' || val === 'dark' || val === 'snow_black') {
-                return val;
+            const raw = localStorage.getItem(STORAGE_KEYS.CUSTOM_ICON_PARAMS);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                return Object.assign({}, DEFAULT_CUSTOM_PARAMS, parsed);
             }
-            const legacySwap = localStorage.getItem('vmu_color_swap');
-            if (legacySwap === 'true') return 'snow_black';
-            if (legacySwap === 'false') return 'dark';
         } catch (e) {}
-        return 'dark'; // по умолчанию тёмная тема
+        return JSON.parse(JSON.stringify(DEFAULT_CUSTOM_PARAMS));
     }
 
-    let currentThemeMode = getThemeSetting();
-    let currentTabSearch = getStringSetting(STORAGE_KEYS.TAB_SEARCH, 'search');
-    let isColorSwapEnabled = (currentThemeMode === 'snow_black');
-    let isHideLabelsEnabled = getSetting(STORAGE_KEYS.HIDE_TAB_LABELS, false);
-    let isHideFoldersEnabled = getSetting(STORAGE_KEYS.HIDE_FOLDERS_BAR, true);
-    let isHideCallsEnabled = getSetting(STORAGE_KEYS.HIDE_CALLS, false);
-    let isHideVideoMsgsEnabled = getSetting(STORAGE_KEYS.HIDE_VIDEO_MSGS, false);
+    function setCustomIconParams(params) {
+        try {
+            localStorage.setItem(STORAGE_KEYS.CUSTOM_ICON_PARAMS, JSON.stringify(params));
+        } catch (e) {}
+    }
+
+    function getTabSvg(targetKey) {
+        const customParams = getCustomIconParams();
+        const p = customParams[targetKey] || { scale: 100, stroke: 1.5 };
+        const s = (p.scale || 100) / 100;
+        const st = (parseFloat(p.stroke) || 1.5).toFixed(1);
+        const tx = (14 * (1 - s)).toFixed(2);
+        const ty = (14 * (1 - s)).toFixed(2);
+        const sStr = s.toFixed(2);
+
+        switch (targetKey) {
+            case 'friends':
+                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_outline_28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})" fill="none" stroke="currentColor" stroke-width="${st}" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="7.5" r="3.5"/><path d="M4.5 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M17.5 5.5a3 3 0 0 1 0 5"/><path d="M17.5 14.5c2 .5 3.5 2 3.5 4.5"/></g></svg>`;
+            case 'groups':
+                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_3_outline_28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})" fill="none" stroke="currentColor" stroke-width="${st}" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="7.5" r="3.5"/><path d="M7 6.5a2.5 2.5 0 0 0 0 5"/><path d="M21 6.5a2.5 2.5 0 0 1 0 5"/><path d="M8.5 20c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5"/><path d="M4 20c0-2 1.5-3.8 3.5-4.2"/><path d="M24 20c0-2-1.5-3.8-3.5-4.2"/></g></svg>`;
+            case 'music':
+                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--music_outline_28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})" fill="none" stroke="currentColor" stroke-width="${st}" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="8.5" cy="17.5" rx="3.5" ry="2.8"/><ellipse cx="18.5" cy="15.2" rx="3.5" ry="2.8"/><path d="M12 17.5V7.5L22 5.2V15.2"/><path d="M12 10.2L22 7.9"/></g></svg>`;
+            case 'video':
+                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--video_outline_28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})" fill="none" stroke="currentColor" stroke-width="${st}" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="6.5" width="14.5" height="15" rx="3"/><path d="M18 11.5L24.5 7.8v12.4L18 16.5"/></g></svg>`;
+            case 'bookmarks':
+                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--bookmark_outline_28"><path fill="currentColor" fill-rule="evenodd" d="M7 4a3 3 0 0 0-3 3v16a1 1 0 0 0 1.55.83L14 18.25l8.45 5.58A1 1 0 0 0 24 23V7a3 3 0 0 0-3-3H7zm15 16.92-7.45-4.92a1 1 0 0 0-1.1 0L6 20.92V7a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v13.92z" clip-rule="evenodd"/></svg>`;
+            case 'search':
+            default:
+                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--search_outline_28"><path fill="currentColor" fill-rule="evenodd" d="M12.5 3.5a9 9 0 1 0 5.7 15.98l4.41 4.41a1 1 0 0 0 1.42-1.42l-4.41-4.41A9 9 0 0 0 12.5 3.5ZM5.5 12.5a7 7 0 1 1 14 0 7 7 0 0 1-14 0Z" clip-rule="evenodd"/></svg>`;
+        }
+    }
 
     // ==========================================
     //     ОПРЕДЕЛЕНИЯ ИКОНОК И ВКЛАДОК
@@ -91,38 +96,32 @@
         search: {
             label: 'Поиск',
             href: '/discover',
-            matchPaths: ['/discover', '/search', '/feed?section=search', '/discover_search'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--search_outline_28"><path fill="currentColor" fill-rule="evenodd" d="M12.5 3.5a9 9 0 1 0 5.7 15.98l4.41 4.41a1 1 0 0 0 1.42-1.42l-4.41-4.41A9 9 0 0 0 12.5 3.5ZM5.5 12.5a7 7 0 1 1 14 0 7 7 0 0 1-14 0Z" clip-rule="evenodd"/></svg>`
+            matchPaths: ['/discover', '/search', '/feed?section=search', '/discover_search']
         },
         friends: {
             label: 'Друзья',
             href: '/friends',
-            matchPaths: ['/friends'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_outline_28"><g transform="matrix(1.05, 0, 0, 1.05, -0.7, -0.7)"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M10.5 4.25a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5ZM8.25 8a2.25 2.25 0 1 1 4.5 0 2.25 2.25 0 0 1-4.5 0Zm9.5-2a3.25 3.25 0 1 0 0 6.5 3.25 3.25 0 0 0 0-6.5ZM16.25 9.25a1.75 1.75 0 1 1 3.5 0 1.75 1.75 0 0 1-3.5 0ZM10.5 14.25c-3.1 0-5.75 2.35-5.75 5.25v.5a.75.75 0 0 0 .75.75h10a.75.75 0 0 0 .75-.75v-.5c0-2.9-2.65-5.25-5.75-5.25Zm-4.25 5c.38-2.1 2.1-3.75 4.25-3.75s3.87 1.65 4.25 3.75H6.25Zm11.5-2.25c1.55 0 2.95 1.05 3.1 2.35v.4a.75.75 0 0 1-.75.75h-2a.75.75 0 1 1 0-1.5h1.1c-.25-.6-.75-1-1.35-1a.75.75 0 0 1 0-1.5h-.1z"/></g></svg>`
+            matchPaths: ['/friends']
         },
         groups: {
             label: 'Сообщества',
             href: '/groups',
-            matchPaths: ['/groups', '/communities', '/groups_list'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_3_outline_28"><g transform="matrix(1.05, 0, 0, 1.05, -0.7, -0.7)"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M14 4.25a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5ZM11.75 8a2.25 2.25 0 1 1 4.5 0 2.25 2.25 0 0 1-4.5 0ZM5.5 7.25a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM4 10.25a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM22.5 7.25a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM21 10.25a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM14 13.75c-3 0-5.5 2.25-5.5 5v.5a.75.75 0 0 0 .75.75h9.5a.75.75 0 0 0 .75-.75v-.5c0-2.75-2.5-5-5.5-5Zm-4 4.75c.38-1.95 2-3.25 4-3.25s3.62 1.3 4 3.25H10Zm-4.65-2.25c1.3 0 2.4.9 2.65 2.15a.75.75 0 1 1-1.45.35c-.15-.55-.65-1-1.2-1H5a.75.75 0 0 1-.75-.75v-.25c0-1.4 1.25-2.5 2.75-2.5h.35a.75.75 0 0 1 0 1.5H7.35Zm15.3 0c1.5 0 2.75 1.1 2.75 2.5v.25a.75.75 0 0 1-.75.75h-.35c-.55 0-1.05.45-1.2 1a.75.75 0 1 1-1.45-.35c.25-1.25 1.35-2.15 2.65-2.15h-.65a.75.75 0 0 1 0-1.5h.65z"/></g></svg>`
+            matchPaths: ['/groups', '/communities', '/groups_list']
         },
         music: {
             label: 'Музыка',
             href: '/audio',
-            matchPaths: ['/audio', '/audios', '/music', '/audio_feed'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--music_outline_28"><g transform="matrix(1.05, 0, 0, 1.05, -0.7, -0.7)"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M19 4a1 1 0 0 1 1 1v10.5a4 4 0 1 1-1.5-3.12V7.15l-8 1.85v7.5a4 4 0 1 1-1.5-3.12V6a1 1 0 0 1 .78-.98l9.5-2.2a1 1 0 0 1 .72.18ZM7.5 17.5a2.5 2.5 0 1 0 5 0 2.5 2.5 0 0 0-5 0Zm10-2a2.5 2.5 0 1 0 5 0 2.5 2.5 0 0 0-5 0Zm1.5-7.75l-8 1.85V7.4l8-1.85v1.8Z"/></g></svg>`
+            matchPaths: ['/audio', '/audios', '/music', '/audio_feed']
         },
         video: {
             label: 'Видео',
             href: '/video',
-            matchPaths: ['/video', '/videos', '/vk_video'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--video_outline_28"><g transform="matrix(1.05, 0, 0, 1.05, -0.7, -0.7)"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M5 6.5a2.5 2.5 0 0 0-2.5 2.5v9.5a2.5 2.5 0 0 0 2.5 2.5h12a2.5 2.5 0 0 0 2.5-2.5V17l4.3-2.6a1.25 1.25 0 0 0 .7-1.1v-5.6a1.25 1.25 0 0 0-1.95-1.05L19.5 9.2V9a2.5 2.5 0 0 0-2.5-2.5H5Zm13 4v6.5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v1.5Zm2.25 3.4l3.25 2V10.1l-3.25 2v1.8Z"/></g></svg>`
+            matchPaths: ['/video', '/videos', '/vk_video']
         },
         bookmarks: {
             label: 'Закладки',
             href: '/bookmarks',
-            matchPaths: ['/bookmarks', '/fave'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--bookmark_outline_28"><path fill="currentColor" fill-rule="evenodd" d="M7 4a3 3 0 0 0-3 3v16a1 1 0 0 0 1.55.83L14 18.25l8.45 5.58A1 1 0 0 0 24 23V7a3 3 0 0 0-3-3H7zm15 16.92-7.45-4.92a1 1 0 0 0-1.1 0L6 20.92V7a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v13.92z" clip-rule="evenodd"/></svg>`
+            matchPaths: ['/bookmarks', '/fave']
         }
     };
 
@@ -1421,6 +1420,366 @@
         return row;
     }
 
+    function createCustomIconsSection() {
+        const container = document.createElement('div');
+        container.style.cssText = `
+            margin-top: 14px;
+            border: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.12));
+            border-radius: 12px;
+            background: var(--vkui--color_background_secondary, rgba(255, 255, 255, 0.04));
+            overflow: hidden;
+        `;
+
+        let isOpen = getSetting(STORAGE_KEYS.CUSTOM_SECTION_OPEN, true);
+
+        // Header (Click to toggle)
+        const header = document.createElement('div');
+        header.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        `;
+
+        const titleCol = document.createElement('div');
+        titleCol.style.cssText = 'flex: 1; padding-right: 10px; pointer-events: none;';
+
+        const titleText = document.createElement('div');
+        titleText.style.cssText = 'font-size: 16px; font-weight: 500; color: var(--vkui--color_text_primary, #ffffff); display: flex; align-items: center; gap: 8px;';
+        titleText.innerHTML = '<span>🛠️ Кастом</span> <span style="font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 6px; background: rgba(39, 135, 245, 0.2); color: var(--vkui--color_text_accent, #71aaeb);">ручная настройка</span>';
+
+        const descText = document.createElement('div');
+        descText.style.cssText = 'font-size: 13px; color: var(--vkui--color_text_secondary, #999999); margin-top: 3px;';
+        descText.textContent = 'Размер и толщина линий (Друзья, Сообщества, Музыка, Видео)';
+
+        titleCol.appendChild(titleText);
+        titleCol.appendChild(descText);
+
+        const chevron = document.createElement('div');
+        chevron.style.cssText = `
+            font-size: 14px;
+            color: var(--vkui--color_text_secondary, #999999);
+            transition: transform 0.25s ease;
+            transform: ${isOpen ? 'rotate(180deg)' : 'rotate(0deg)'};
+            pointer-events: none;
+        `;
+        chevron.textContent = '▼';
+
+        header.appendChild(titleCol);
+        header.appendChild(chevron);
+        container.appendChild(header);
+
+        // Body
+        const body = document.createElement('div');
+        body.style.cssText = `
+            display: ${isOpen ? 'block' : 'none'};
+            padding: 0 14px 14px 14px;
+            border-top: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08));
+        `;
+
+        const iconsList = [
+            { key: 'friends', name: 'Друзья' },
+            { key: 'groups', name: 'Сообщества' },
+            { key: 'music', name: 'Музыка' },
+            { key: 'video', name: 'Видео' }
+        ];
+
+        let customParams = getCustomIconParams();
+        const previewMap = {};
+        const badgeMap = {};
+
+        function refreshAll() {
+            setCustomIconParams(customParams);
+            iconsList.forEach(item => {
+                if (previewMap[item.key]) {
+                    previewMap[item.key].innerHTML = getTabSvg(item.key);
+                }
+                if (badgeMap[item.key]) {
+                    const p = customParams[item.key] || { scale: 100, stroke: 1.5 };
+                    badgeMap[item.key].textContent = `${p.scale}% • ${Number(p.stroke).toFixed(1)}px`;
+                }
+            });
+            updateSummary();
+            try { updateCustomTabs(); } catch(e) {}
+        }
+
+        iconsList.forEach(item => {
+            const card = document.createElement('div');
+            card.style.cssText = `
+                margin-top: 10px;
+                padding: 12px;
+                border-radius: 10px;
+                background: rgba(0, 0, 0, 0.15);
+                border: 1px solid rgba(255, 255, 255, 0.06);
+            `;
+
+            // Card Header (Icon Preview + Name + Badge)
+            const cardHeader = document.createElement('div');
+            cardHeader.style.cssText = 'display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;';
+
+            const leftBox = document.createElement('div');
+            leftBox.style.cssText = 'display: flex; align-items: center; gap: 10px;';
+
+            const prevBox = document.createElement('div');
+            prevBox.style.cssText = `
+                width: 32px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 8px;
+                background: rgba(255, 255, 255, 0.08);
+                color: var(--vkui--color_text_accent, #71aaeb);
+            `;
+            prevBox.innerHTML = getTabSvg(item.key);
+            previewMap[item.key] = prevBox;
+
+            const nameEl = document.createElement('div');
+            nameEl.style.cssText = 'font-size: 15px; font-weight: 500; color: var(--vkui--color_text_primary, #ffffff);';
+            nameEl.textContent = item.name;
+
+            leftBox.appendChild(prevBox);
+            leftBox.appendChild(nameEl);
+
+            const badge = document.createElement('div');
+            badge.style.cssText = `
+                font-size: 12px;
+                font-weight: 600;
+                padding: 3px 8px;
+                border-radius: 6px;
+                background: rgba(255, 255, 255, 0.08);
+                color: var(--vkui--color_text_primary, #ffffff);
+                font-family: monospace;
+            `;
+            const initP = customParams[item.key] || { scale: 105, stroke: 1.5 };
+            badge.textContent = `${initP.scale}% • ${Number(initP.stroke).toFixed(1)}px`;
+            badgeMap[item.key] = badge;
+
+            cardHeader.appendChild(leftBox);
+            cardHeader.appendChild(badge);
+            card.appendChild(cardHeader);
+
+            // Controls 1: Размер
+            const scaleRow = document.createElement('div');
+            scaleRow.style.cssText = 'margin-bottom: 8px;';
+
+            const scaleLabelRow = document.createElement('div');
+            scaleLabelRow.style.cssText = 'display: flex; justify-content: space-between; font-size: 12px; color: var(--vkui--color_text_secondary, #999); margin-bottom: 4px;';
+            scaleLabelRow.innerHTML = `<span>Размер</span><span id="vmu-scale-val-${item.key}">${initP.scale}%</span>`;
+
+            const scaleControl = document.createElement('div');
+            scaleControl.style.cssText = 'display: flex; align-items: center; gap: 8px;';
+
+            const btnScaleMinus = document.createElement('button');
+            btnScaleMinus.textContent = '-5%';
+            btnScaleMinus.style.cssText = 'padding: 4px 8px; font-size: 11px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color: #fff; cursor: pointer; touch-action: manipulation;';
+
+            const scaleSlider = document.createElement('input');
+            scaleSlider.type = 'range';
+            scaleSlider.min = '80';
+            scaleSlider.max = '150';
+            scaleSlider.step = '1';
+            scaleSlider.value = String(initP.scale);
+            scaleSlider.style.cssText = 'flex: 1; accent-color: #2787F5; cursor: pointer;';
+
+            const btnScalePlus = document.createElement('button');
+            btnScalePlus.textContent = '+5%';
+            btnScalePlus.style.cssText = 'padding: 4px 8px; font-size: 11px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color: #fff; cursor: pointer; touch-action: manipulation;';
+
+            btnScaleMinus.onclick = (e) => {
+                e.preventDefault();
+                let v = Math.max(80, (customParams[item.key].scale || 100) - 5);
+                customParams[item.key].scale = v;
+                scaleSlider.value = String(v);
+                scaleLabelRow.lastElementChild.textContent = `${v}%`;
+                refreshAll();
+            };
+
+            btnScalePlus.onclick = (e) => {
+                e.preventDefault();
+                let v = Math.min(150, (customParams[item.key].scale || 100) + 5);
+                customParams[item.key].scale = v;
+                scaleSlider.value = String(v);
+                scaleLabelRow.lastElementChild.textContent = `${v}%`;
+                refreshAll();
+            };
+
+            scaleSlider.oninput = (e) => {
+                let v = parseInt(e.target.value, 10);
+                customParams[item.key].scale = v;
+                scaleLabelRow.lastElementChild.textContent = `${v}%`;
+                refreshAll();
+            };
+
+            scaleControl.appendChild(btnScaleMinus);
+            scaleControl.appendChild(scaleSlider);
+            scaleControl.appendChild(btnScalePlus);
+            scaleRow.appendChild(scaleLabelRow);
+            scaleRow.appendChild(scaleControl);
+            card.appendChild(scaleRow);
+
+            // Controls 2: Толщина линий
+            const strokeRow = document.createElement('div');
+            strokeRow.style.cssText = 'margin-bottom: 4px;';
+
+            const strokeLabelRow = document.createElement('div');
+            strokeLabelRow.style.cssText = 'display: flex; justify-content: space-between; font-size: 12px; color: var(--vkui--color_text_secondary, #999); margin-bottom: 4px;';
+            strokeLabelRow.innerHTML = `<span>Толщина линий</span><span id="vmu-stroke-val-${item.key}">${Number(initP.stroke).toFixed(1)}px</span>`;
+
+            const strokeControl = document.createElement('div');
+            strokeControl.style.cssText = 'display: flex; align-items: center; gap: 8px;';
+
+            const btnStrokeMinus = document.createElement('button');
+            btnStrokeMinus.textContent = '-0.1';
+            btnStrokeMinus.style.cssText = 'padding: 4px 8px; font-size: 11px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color: #fff; cursor: pointer; touch-action: manipulation;';
+
+            const strokeSlider = document.createElement('input');
+            strokeSlider.type = 'range';
+            strokeSlider.min = '0.5';
+            strokeSlider.max = '3.5';
+            strokeSlider.step = '0.1';
+            strokeSlider.value = String(initP.stroke);
+            strokeSlider.style.cssText = 'flex: 1; accent-color: #2787F5; cursor: pointer;';
+
+            const btnStrokePlus = document.createElement('button');
+            btnStrokePlus.textContent = '+0.1';
+            btnStrokePlus.style.cssText = 'padding: 4px 8px; font-size: 11px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color: #fff; cursor: pointer; touch-action: manipulation;';
+
+            btnStrokeMinus.onclick = (e) => {
+                e.preventDefault();
+                let v = Math.max(0.5, Math.round(((customParams[item.key].stroke || 1.5) - 0.1) * 10) / 10);
+                customParams[item.key].stroke = v;
+                strokeSlider.value = String(v);
+                strokeLabelRow.lastElementChild.textContent = `${v.toFixed(1)}px`;
+                refreshAll();
+            };
+
+            btnStrokePlus.onclick = (e) => {
+                e.preventDefault();
+                let v = Math.min(3.5, Math.round(((customParams[item.key].stroke || 1.5) + 0.1) * 10) / 10);
+                customParams[item.key].stroke = v;
+                strokeSlider.value = String(v);
+                strokeLabelRow.lastElementChild.textContent = `${v.toFixed(1)}px`;
+                refreshAll();
+            };
+
+            strokeSlider.oninput = (e) => {
+                let v = Math.round(parseFloat(e.target.value) * 10) / 10;
+                customParams[item.key].stroke = v;
+                strokeLabelRow.lastElementChild.textContent = `${v.toFixed(1)}px`;
+                refreshAll();
+            };
+
+            strokeControl.appendChild(btnStrokeMinus);
+            strokeControl.appendChild(strokeSlider);
+            strokeControl.appendChild(btnStrokePlus);
+            strokeRow.appendChild(strokeLabelRow);
+            strokeRow.appendChild(strokeControl);
+            card.appendChild(strokeRow);
+
+            body.appendChild(card);
+        });
+
+        // Summary Box & Copy Button
+        const summaryCard = document.createElement('div');
+        summaryCard.style.cssText = `
+            margin-top: 14px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.25);
+            border: 1px dashed rgba(255,255,255,0.15);
+        `;
+
+        const summaryText = document.createElement('div');
+        summaryText.style.cssText = 'font-size: 12px; color: var(--vkui--color_text_primary, #fff); font-family: monospace; word-break: break-all; margin-bottom: 8px; line-height: 1.4;';
+
+        function getSummaryString() {
+            return `Друзья: ${customParams.friends.scale}% / ${Number(customParams.friends.stroke).toFixed(1)}px | Сообщества: ${customParams.groups.scale}% / ${Number(customParams.groups.stroke).toFixed(1)}px | Музыка: ${customParams.music.scale}% / ${Number(customParams.music.stroke).toFixed(1)}px | Видео: ${customParams.video.scale}% / ${Number(customParams.video.stroke).toFixed(1)}px`;
+        }
+
+        function updateSummary() {
+            summaryText.textContent = getSummaryString();
+        }
+        updateSummary();
+
+        const actionsRow = document.createElement('div');
+        actionsRow.style.cssText = 'display: flex; gap: 8px; align-items: center; justify-content: space-between;';
+
+        const copyBtn = document.createElement('button');
+        copyBtn.textContent = '📋 Скопировать параметры';
+        copyBtn.style.cssText = `
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: none;
+            background: var(--vkui--color_background_accent, #2787F5);
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            touch-action: manipulation;
+        `;
+        copyBtn.onclick = (e) => {
+            e.preventDefault();
+            const str = getSummaryString();
+            try {
+                navigator.clipboard.writeText(str).then(() => {
+                    const orig = copyBtn.textContent;
+                    copyBtn.textContent = '✓ Скопировано!';
+                    setTimeout(() => { copyBtn.textContent = orig; }, 2000);
+                });
+            } catch (err) {
+                const textarea = document.createElement('textarea');
+                textarea.value = str;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                textarea.remove();
+                copyBtn.textContent = '✓ Скопировано!';
+                setTimeout(() => { copyBtn.textContent = '📋 Скопировать параметры'; }, 2000);
+            }
+        };
+
+        const resetBtn = document.createElement('button');
+        resetBtn.textContent = '↺ Сброс';
+        resetBtn.style.cssText = `
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: transparent;
+            color: var(--vkui--color_text_secondary, #999);
+            font-size: 12px;
+            cursor: pointer;
+            touch-action: manipulation;
+        `;
+        resetBtn.onclick = (e) => {
+            e.preventDefault();
+            customParams = JSON.parse(JSON.stringify(DEFAULT_CUSTOM_PARAMS));
+            refreshAll();
+            scheduleFixes();
+        };
+
+        actionsRow.appendChild(copyBtn);
+        actionsRow.appendChild(resetBtn);
+
+        summaryCard.appendChild(summaryText);
+        summaryCard.appendChild(actionsRow);
+        body.appendChild(summaryCard);
+
+        container.appendChild(body);
+
+        header.addEventListener('click', () => {
+            isOpen = !isOpen;
+            body.style.display = isOpen ? 'block' : 'none';
+            chevron.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+            setSetting(STORAGE_KEYS.CUSTOM_SECTION_OPEN, isOpen);
+        });
+
+        return container;
+    }
+
     // ==========================================
     //       УПРАВЛЕНИЕ И СИНХРОНИЗАЦИЯ ТЕМ
     // ==========================================
@@ -1649,8 +2008,11 @@
                 scheduleFixes();
             }
         );
-        rowVideo.style.borderBottom = 'none';
         card.appendChild(rowVideo);
+
+        // 7. Кастомные параметры иконок (размер и толщина линий)
+        const customSection = createCustomIconsSection();
+        card.appendChild(customSection);
 
         if (nativeGroup && nativeGroup.parentElement) {
             nativeGroup.insertAdjacentElement('beforebegin', card);
@@ -1980,12 +2342,16 @@
         // 4. Иконка SVG
         const iconContainer = item.querySelector('.vkuiTabbarItem__icon, [class*="TabbarItem__icon"], [class*="TabBarItem__icon"]') || item;
         const existingSvg = iconContainer.querySelector('svg');
+        const customParams = getCustomIconParams();
+        const p = customParams[targetKey] || { scale: 100, stroke: 1.5 };
+        const svgSig = `${targetKey}_${p.scale || 100}_${p.stroke || 1.5}`;
 
-        if (!existingSvg || existingSvg.dataset.vmuSvg !== targetKey) {
+        if (!existingSvg || existingSvg.dataset.vmuSvgSig !== svgSig) {
             const temp = document.createElement('div');
-            temp.innerHTML = def.svg.trim();
+            temp.innerHTML = getTabSvg(targetKey).trim();
             const newSvg = temp.firstElementChild;
             newSvg.dataset.vmuSvg = targetKey;
+            newSvg.dataset.vmuSvgSig = svgSig;
             newSvg.style.cssText = 'display: block !important; margin: 0 auto !important;';
 
             if (existingSvg) {
