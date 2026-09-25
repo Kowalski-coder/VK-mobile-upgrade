@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.18.0
+// @version      2.19.0
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -98,25 +98,25 @@
             label: 'Друзья',
             href: '/friends',
             matchPaths: ['/friends'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_outline_28"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.5 5a4 4 0 100 8 4 4 0 000-8zM8.5 9a2 2 0 114 0 2 2 0 01-4 0zm10-2a3.5 3.5 0 100 7 3.5 3.5 0 000-7zM17 10.5a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm-6.5 4.5c-3.3 0-6 2.7-6 6a1 1 0 001 1h10a1 1 0 001-1c0-3.3-2.7-6-6-6zm-4 5c.45-2.28 2.05-3 4-3s3.55.72 4 3H6.5zm12-3.5c1.6 0 3 1.4 3 3a1 1 0 01-1 1h-2.5a1 1 0 110-2h1.4c-.2-.6-.7-1-1.4-1a1 1 0 010-2h.5z" fill="currentColor"/></svg>`
+            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_outline_28"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.5 4.5a4 4 0 100 8 4 4 0 000-8zM8.5 8.5a2 2 0 114 0 2 2 0 01-4 0zm10-1.5a3.5 3.5 0 100 7 3.5 3.5 0 000-7zM17 10a1.5 1.5 0 113 0 1.5 1.5 0 01-3 0zm-6.5 4.5c-3.3 0-6 2.7-6 6a1 1 0 001 1h10a1 1 0 001-1c0-3.3-2.7-6-6-6zm-4 5c.45-2.28 2.05-3 4-3s3.55.72 4 3H6.5zm12-3.5c1.6 0 3 1.4 3 3a1 1 0 01-1 1h-2.5a1 1 0 110-2h1.4c-.2-.6-.7-1-1.4-1a1 1 0 010-2h.5z" fill="currentColor"/></svg>`
         },
         groups: {
             label: 'Сообщества',
             href: '/groups',
             matchPaths: ['/groups', '/communities', '/groups_list'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--community_outline_28"><path fill-rule="evenodd" clip-rule="evenodd" d="M14 4a5 5 0 100 10 5 5 0 000-10zM11 9a3 3 0 116 0 3 3 0 01-6 0zm-3 7a6 6 0 00-6 6 1 1 0 001 1h16a1 1 0 001-1 6 6 0 00-6-6H8zm-3.9 5c.5-2.8 2.5-4 4.9-4h6c2.4 0 4.4 1.2 4.9 4H4.1z" fill="currentColor"/></svg>`
+            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_3_outline_28"><path fill-rule="evenodd" clip-rule="evenodd" d="M14 4a4 4 0 100 8 4 4 0 000-8zm-2 4a2 2 0 114 0 2 2 0 01-4 0zM5.5 8a3 3 0 116 0 3 3 0 01-6 0zm3 1a1 1 0 100-2 1 1 0 000 2zm11-1a3 3 0 116 0 3 3 0 01-6 0zm3 1a1 1 0 100-2 1 1 0 000 2zM14 14c-3.31 0-6 2.46-6 5.5v.5a1 1 0 001 1h10a1 1 0 001-1v-.5c0-3.04-2.69-5.5-6-5.5zm-4 5c.42-1.93 2.04-3.5 4-3.5s3.58 1.57 4 3.5h-8zm-5-3c1.86 0 3.44 1.15 4.09 2.76A7.05 7.05 0 008.06 20H4a1 1 0 01-1-1v-.5C3 16.9 4.34 16 5 16zm18 0c.66 0 2 .9 2 2.5v.5a1 1 0 01-1 1h-4.06c-.3-1.07-1.1-2.22-2.03-3.24C19.56 17.15 21.14 16 23 16z" fill="currentColor"/></svg>`
         },
         music: {
             label: 'Музыка',
             href: '/audio',
             matchPaths: ['/audio', '/audios', '/music', '/audio_feed'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--music_outline_28"><path fill-rule="evenodd" clip-rule="evenodd" d="M20 4.14a1 1 0 011 .98v11.38a4.5 4.5 0 11-2-3.74V7.64l-8 2.29v8.57a4.5 4.5 0 11-2-3.74V7a1 1 0 01.73-.96l10-2.86a1 1 0 01.27-.04zM9 16.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5zm10-2a2.5 2.5 0 100 5 2.5 2.5 0 000-5zm0-8.38l-8 2.29v-1.9l8-2.29v1.9z" fill="currentColor"/></svg>`
+            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--music_outline_28"><path fill-rule="evenodd" clip-rule="evenodd" d="M17 4a1 1 0 011 1v11.25a4.25 4.25 0 11-2-3.58V7.82l-6 1.71v8.72a4.25 4.25 0 11-2-3.58V7a1 1 0 01.73-.96l8-2.29A1 1 0 0117 4zM8 17.5a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5zm8-2a2.25 2.25 0 100 4.5 2.25 2.25 0 000-4.5zm0-7.39l-6 1.71V8.1l6-1.71v1.72z" fill="currentColor"/></svg>`
         },
         video: {
             label: 'Видео',
             href: '/video',
             matchPaths: ['/video', '/videos', '/vk_video'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--video_outline_28"><path fill-rule="evenodd" clip-rule="evenodd" d="M4 6a3 3 0 00-3 3v10a3 3 0 003 3h13a3 3 0 003-3v-2.09l4.15 2.49A1.5 1.5 0 0026 18.1V9.9a1.5 1.5 0 00-1.85-1.46L20 10.93V9a3 3 0 00-3-3H4zm14 3a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h13a1 1 0 001-1V9zm2 3.27l4-2.4v8.26l-4-2.4v-3.46z" fill="currentColor"/></svg>`
+            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--video_outline_28"><path fill-rule="evenodd" clip-rule="evenodd" d="M5 6a3 3 0 00-3 3v10a3 3 0 003 3h18a3 3 0 003-3V9a3 3 0 00-3-3H5zM4 9a1 1 0 011-1h18a1 1 0 011 1v10a1 1 0 01-1 1H5a1 1 0 01-1-1V9zm8 2.5a1 1 0 011.53-.85l5 3.5a1 1 0 010 1.7l-5 3.5A1 1 0 0112 18.5v-7z" fill="currentColor"/></svg>`
         },
         bookmarks: {
             label: 'Закладки',
@@ -1595,8 +1595,8 @@
         card.id = SETTINGS_UI_ID;
         card.className = 'vkuiGroup vkuiGroup--mode-none vkuiGroup--padding-m';
         card.style.cssText = `
-            margin: 16px 0 90px 0 !important;
-            padding: 0 0 20px 0 !important;
+            margin: 36px 0 90px 0 !important;
+            padding: 12px 0 20px 0 !important;
             background: transparent !important;
             border: none !important;
             box-shadow: none !important;
@@ -2040,6 +2040,75 @@
 
     }
 
+    function syncMessengerCounter(items) {
+        if (!items || items.length < 3) return;
+        const messengerItem = items[2];
+        if (!messengerItem) return;
+
+        const existingCounter = messengerItem.querySelector('.vkuiCounter, .vkuiBadge, [class*="Counter"], [class*="Badge"], [class*="Indicator"], .vkuiTabbarItem__indicator, .vkuiTabbarItem__badge');
+        const restoredBadge = messengerItem.querySelector('.vmu-restored-badge');
+        const isNativeCounter = existingCounter && !existingCounter.classList.contains('vmu-restored-badge');
+
+        if (isNativeCounter && existingCounter.textContent.trim().length > 0) {
+            const countText = existingCounter.textContent.trim();
+            const num = parseInt(countText, 10);
+            if (!isNaN(num) && num > 0) {
+                try { localStorage.setItem('vmu_cached_unread_count', String(num)); } catch(e) {}
+            } else if (num === 0 || countText === '') {
+                try { localStorage.removeItem('vmu_cached_unread_count'); } catch(e) {}
+            }
+            if (restoredBadge) {
+                restoredBadge.remove();
+            }
+        } else {
+            const currentPath = window.location.pathname.toLowerCase();
+            const isMailPage = currentPath.startsWith('/mail') || currentPath.startsWith('/im') || currentPath.startsWith('/messages');
+
+            if (isMailPage && (!isNativeCounter || existingCounter.textContent.trim() === '')) {
+                try { localStorage.removeItem('vmu_cached_unread_count'); } catch(e) {}
+                if (restoredBadge) restoredBadge.remove();
+            } else {
+                let cachedCount = null;
+                try { cachedCount = localStorage.getItem('vmu_cached_unread_count'); } catch(e) {}
+                if (cachedCount && parseInt(cachedCount, 10) > 0) {
+                    const iconContainer = messengerItem.querySelector('.vkuiTabbarItem__icon, [class*="TabbarItem__icon"], [class*="TabBarItem__icon"]') || messengerItem;
+                    let badge = restoredBadge;
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'vkuiCounter vkuiCounter--mode-prominent vkuiCounter--size-s vmu-restored-badge';
+                        badge.style.cssText = `
+                            position: absolute !important;
+                            top: -2px !important;
+                            right: -4px !important;
+                            min-width: 18px !important;
+                            height: 18px !important;
+                            line-height: 18px !important;
+                            border-radius: 9px !important;
+                            padding: 0 4px !important;
+                            background-color: #FF5C5C !important;
+                            color: #ffffff !important;
+                            font-size: 11px !important;
+                            font-weight: 700 !important;
+                            display: inline-flex !important;
+                            align-items: center !important;
+                            justify-content: center !important;
+                            text-align: center !important;
+                            z-index: 10 !important;
+                            box-shadow: 0 0 0 2px var(--vkui--color_background_content, #19191a) !important;
+                        `;
+                        iconContainer.style.setProperty('position', 'relative', 'important');
+                        iconContainer.appendChild(badge);
+                    }
+                    if (badge.textContent !== cachedCount) {
+                        badge.textContent = cachedCount;
+                    }
+                } else {
+                    if (restoredBadge) restoredBadge.remove();
+                }
+            }
+        }
+    }
+
     function updateCustomTabs() {
         // Очистка ошибочных SVG на верхней панели и в контенте
         const nonBottomSvgs = document.querySelectorAll('header [data-vmu-svg], .vkuiPanelHeader [data-vmu-svg], [class*="PanelHeader"] [data-vmu-svg], .vkuiTabs [data-vmu-svg], [class*="Tabs"] [data-vmu-svg]');
@@ -2053,6 +2122,9 @@
         }
 
         if (items.length < 2) return;
+
+        // Синхронизация и сохранение счетчика сообщений Мессенджера
+        syncMessengerCounter(items);
 
         const searchItem = items[1];
         searchItem.dataset.vmuSlot = 'search';
