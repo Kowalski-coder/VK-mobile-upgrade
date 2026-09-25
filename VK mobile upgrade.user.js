@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.23.4
+// @version      2.23.5
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -38,6 +38,53 @@
         CUSTOM_ICON_PARAMS: 'vmu_custom_icon_params',
         CUSTOM_SECTION_OPEN: 'vmu_custom_section_open'
     };
+
+    function getSetting(key, defaultValue) {
+        try {
+            const val = localStorage.getItem(key);
+            if (val === null) return defaultValue;
+            return val === 'true';
+        } catch (e) {
+            return defaultValue;
+        }
+    }
+
+    function getStringSetting(key, defaultValue) {
+        try {
+            const val = localStorage.getItem(key);
+            if (val === null || val === undefined) return defaultValue;
+            return val;
+        } catch (e) {
+            return defaultValue;
+        }
+    }
+
+    function setSetting(key, value) {
+        try {
+            localStorage.setItem(key, String(value));
+        } catch (e) {}
+    }
+
+    function getThemeSetting() {
+        try {
+            const val = localStorage.getItem(STORAGE_KEYS.THEME_MODE);
+            if (val === 'light' || val === 'dark' || val === 'snow_black') {
+                return val;
+            }
+            const legacySwap = localStorage.getItem('vmu_color_swap');
+            if (legacySwap === 'true') return 'snow_black';
+            if (legacySwap === 'false') return 'dark';
+        } catch (e) {}
+        return 'dark'; // по умолчанию тёмная тема
+    }
+
+    let currentThemeMode = getThemeSetting();
+    let currentTabSearch = getStringSetting(STORAGE_KEYS.TAB_SEARCH, 'search');
+    let isColorSwapEnabled = (currentThemeMode === 'snow_black');
+    let isHideLabelsEnabled = getSetting(STORAGE_KEYS.HIDE_TAB_LABELS, false);
+    let isHideFoldersEnabled = getSetting(STORAGE_KEYS.HIDE_FOLDERS_BAR, true);
+    let isHideCallsEnabled = getSetting(STORAGE_KEYS.HIDE_CALLS, false);
+    let isHideVideoMsgsEnabled = getSetting(STORAGE_KEYS.HIDE_VIDEO_MSGS, false);
 
     const DEFAULT_CUSTOM_PARAMS = {
         friends: { scale: 105, stroke: 1.5 },
