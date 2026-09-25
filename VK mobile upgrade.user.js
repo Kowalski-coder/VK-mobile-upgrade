@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.11.0
+// @version      2.11.1
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -320,6 +320,19 @@
         .vkuiFixedLayout--bottom,
         [class*="FixedLayout--bottom"] {
             z-index: 1000 !important;
+        }
+
+        /* 8. ФИКСИРОВАННАЯ ШАПКА СТРАНИЦ ПОВЕРХ КОНТЕНТА ПРИ СКРОЛЛЕ */
+        .vkuiPanelHeader,
+        .vkuiPanelHeader__in,
+        [class*="PanelHeader"],
+        [class*="PanelHeader__in"],
+        .vkmListHeader,
+        [class*="vkmListHeader"],
+        header.layout__header,
+        .layout__header {
+            z-index: 500 !important;
+            background-color: var(--vkui--color_background_header, var(--vkui--color_background_content, #19191a)) !important;
         }
     `;
 
@@ -1208,6 +1221,19 @@
             textCol.appendChild(descEl);
         }
 
+        const switchWrapper = document.createElement('div');
+        switchWrapper.style.cssText = `
+            padding: 8px;
+            margin: -8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            flex-shrink: 0;
+        `;
+
         const switchBtn = document.createElement('div');
         switchBtn.role = 'switch';
         switchBtn.setAttribute('aria-checked', initialChecked ? 'true' : 'false');
@@ -1220,8 +1246,7 @@
             box-sizing: border-box;
             transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.25s ease;
             flex-shrink: 0;
-            cursor: pointer;
-            touch-action: manipulation;
+            pointer-events: none;
         `;
 
         const slider = document.createElement('div');
@@ -1237,6 +1262,7 @@
             pointer-events: none;
         `;
         switchBtn.appendChild(slider);
+        switchWrapper.appendChild(switchBtn);
 
         let isChecked = initialChecked;
 
@@ -1256,7 +1282,12 @@
 
         updateSwitchVisual(isChecked);
 
+        let lastToggleTime = 0;
         function handleToggle(e) {
+            const now = Date.now();
+            if (now - lastToggleTime < 250) return;
+            lastToggleTime = now;
+
             if (e) {
                 e.stopPropagation();
             }
@@ -1266,14 +1297,14 @@
             onToggle(isChecked);
         }
 
-        switchBtn.addEventListener('click', handleToggle);
-        switchBtn.addEventListener('touchend', (e) => {
+        switchWrapper.addEventListener('click', handleToggle);
+        switchWrapper.addEventListener('touchend', (e) => {
             e.stopPropagation();
             handleToggle(e);
         });
 
         row.appendChild(textCol);
-        row.appendChild(switchBtn);
+        row.appendChild(switchWrapper);
 
         return row;
     }
@@ -1412,7 +1443,7 @@
         card.id = SETTINGS_UI_ID;
         card.className = 'vkuiGroup vkuiGroup--mode-none vkuiGroup--padding-m';
         card.style.cssText = `
-            margin: 54px 0 90px 0 !important;
+            margin: 16px 0 90px 0 !important;
             padding: 0 0 20px 0 !important;
             background: transparent !important;
             border: none !important;
@@ -1722,22 +1753,51 @@
     // ==========================================
     //       КАСТОМИЗАЦИЯ ВКЛАДКИ ПОИСК
     // ==========================================
-    function getTabbarItems() {
-        const tabbar = document.querySelector('.vkuiTabbar, [class*="Tabbar"], #bottom_nav, .bottom_nav');
+    function getBottomNavContainer() {
+        // 1. Ищем внутри явного фиксированного контейнера внизу
+        const fixedBottomContainers = document.querySelectorAll(
+            '.vkuiFixedLayout--bottom, [class*="FixedLayout--bottom"], .layout__bottom, [class*="layout__bottom"], #bottom_nav, .bottom_nav'
+        );
+        for (let i = 0; i < fixedBottomContainers.length; i++) {
+            const container = fixedBottomContainers[i];
+            const tabbar = container.querySelector('.vkuiTabbar, [class*="Tabbar"], [role="tablist"], nav') || container;
+            const rect = tabbar.getBoundingClientRect();
+            if (rect.top > window.innerHeight * 0.4 || rect.height > 0) {
+                return tabbar;
+            }
+        }
+
+        // 2. Ищем среди всех таббаров строго в нижней половине окна
+        const tabbars = document.querySelectorAll('.vkuiTabbar, [class*="Tabbar"], nav, [role="tablist"]');
+        for (let i = tabbars.length - 1; i >= 0; i--) {
+            const tb = tabbars[i];
+            if (tb.closest('.vkuiPanelHeader, [class*="PanelHeader"], header, [class*="Subnavigation"], [class*="Tabs"], [class*="HorizontalScroll"]')) {
+                continue;
+            }
+            const rect = tb.getBoundingClientRect();
+            if (rect.top >= window.innerHeight * 0.5) {
+                return tb;
+            }
+        }
+
+        return null;
+    }
+
+    function getBottomTabItems() {
+        const tabbar = getBottomNavContainer();
         if (!tabbar) return [];
 
-        let rawItems = tabbar.querySelectorAll('.vkuiTabbarItem, .bottom_nav__item, [role="tab"]');
+        let rawItems = Array.from(tabbar.querySelectorAll('.vkuiTabbarItem, .bottom_nav__item, [role="tab"]'));
         if (rawItems.length === 0) {
-            rawItems = tabbar.querySelectorAll('#bottom_nav > a, .bottom_nav > a, .vkuiTabbar > a, [class*="Tabbar"] > a');
+            rawItems = Array.from(tabbar.querySelectorAll('#bottom_nav > a, .bottom_nav > a, .vkuiTabbar > a, [class*="Tabbar"] > a'));
         }
         if (rawItems.length === 0) {
-            rawItems = tabbar.querySelectorAll('a, button, [role="link"]');
+            rawItems = Array.from(tabbar.querySelectorAll('a, button, [role="link"]'));
         }
 
         const topItems = [];
         for (let i = 0; i < rawItems.length; i++) {
             const el = rawItems[i];
-            // Исключаем внутренние элементы контейнера таба
             if (el.classList.contains('vkuiTabbarItem__in') ||
                 el.classList.contains('vkuiTabbarItem__icon') ||
                 el.classList.contains('vkuiTabbarItem__text') ||
@@ -1750,7 +1810,7 @@
                 continue;
             }
             const parentTab = el.parentElement ? el.parentElement.closest('.vkuiTabbarItem, .bottom_nav__item, [role="tab"]') : null;
-            if (!parentTab) {
+            if (!parentTab || parentTab === tabbar) {
                 topItems.push(el);
             }
         }
@@ -1766,14 +1826,18 @@
         const def = TAB_DEFINITIONS[targetKey] || TAB_DEFINITIONS.search;
         if (!def) return;
 
+        item.dataset.vmuSlot = 'search';
+
         const link = item.tagName === 'A' ? item : (item.querySelector('a') || item);
 
         // 1. Ссылка перехода
-        if (link && link.getAttribute('href') !== def.href) {
+        if (link && link.tagName === 'A' && link.getAttribute('href') !== def.href) {
             link.setAttribute('href', def.href);
+            link.dataset.vmuHref = def.href;
         }
         if (item.tagName === 'A' && item.getAttribute('href') !== def.href) {
             item.setAttribute('href', def.href);
+            item.dataset.vmuHref = def.href;
         }
 
         // 2. aria-label и title
@@ -1785,7 +1849,9 @@
         }
 
         // 3. Текстовая подпись
-        const textEl = item.querySelector('.vkuiTabbarItem__text, .vkuiTabbarItem__children, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], .bottom_nav__text, .bottom_nav__label, [class*="label"], [class*="text"], [class*="caption"]');
+        const textEl = item.querySelector(
+            '.vkuiTabbarItem__text, .vkuiTabbarItem__children, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], .bottom_nav__text, .bottom_nav__label, [class*="label"], [class*="text"], [class*="caption"]'
+        );
         if (textEl) {
             const firstTextNode = Array.from(textEl.childNodes).find(n => n.nodeType === Node.TEXT_NODE);
             if (firstTextNode) {
@@ -1833,10 +1899,22 @@
     }
 
     function updateCustomTabs() {
-        const items = getTabbarItems();
+        const bottomNav = getBottomNavContainer();
+        if (!bottomNav) return;
+
+        const items = getBottomTabItems();
         if (!items || items.length === 0) return;
 
-        // Очистка наслоившихся SVG в любых табах
+        // Очистка ошибочных SVG на верхней панели
+        const nonBottomSvgs = document.querySelectorAll('header [data-vmu-svg], .vkuiPanelHeader [data-vmu-svg], [class*="PanelHeader"] [data-vmu-svg]');
+        for (let i = 0; i < nonBottomSvgs.length; i++) {
+            const s = nonBottomSvgs[i];
+            if (!bottomNav.contains(s)) {
+                s.removeAttribute('data-vmu-svg');
+            }
+        }
+
+        // Очистка наслоившихся SVG в элементах нижней панели
         for (let i = 0; i < items.length; i++) {
             const it = items[i];
             const ic = it.querySelector('.vkuiTabbarItem__icon, [class*="TabbarItem__icon"], [class*="TabBarItem__icon"]') || it;
@@ -1893,11 +1971,16 @@
         const target = e.target;
         if (!target || !target.closest) return;
 
-        const tab = target.closest('.vkuiTabbarItem, .bottom_nav__item, [role="tab"], [class*="TabbarItem"], #bottom_nav > a, .bottom_nav > a');
+        const bottomNav = getBottomNavContainer();
+        if (!bottomNav || !bottomNav.contains(target)) return;
+
+        const tab = target.closest('.vkuiTabbarItem, .bottom_nav__item, [role="tab"], [class*="TabbarItem"], #bottom_nav > a, .bottom_nav > a, a, button');
         if (!tab) return;
 
-        const items = getTabbarItems();
-        if (tab.dataset.vmuSlot === 'search' || (items.length >= 2 && tab === items[1])) {
+        const items = getBottomTabItems();
+        const isSearchTab = (tab.dataset.vmuSlot === 'search' || (items.length >= 2 && (tab === items[1] || items[1].contains(tab))));
+
+        if (isSearchTab) {
             const def = TAB_DEFINITIONS[currentTabSearch];
             if (def && def.href) {
                 e.preventDefault();
