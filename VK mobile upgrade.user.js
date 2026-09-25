@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.15.0
+// @version      2.16.0
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -339,8 +339,10 @@
         body:not(.vmu-page-clips) .layout__header,
         body:not(.vmu-page-clips) header {
             z-index: 800 !important;
-            background: var(--vkui--color_background_content, #19191a) !important;
-            background-color: var(--vkui--color_background_content, #19191a) !important;
+            background: #19191a !important;
+            background-color: #19191a !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
             opacity: 1 !important;
         }
 
@@ -353,17 +355,8 @@
         html[data-theme="light"] body:not(.vmu-page-clips) [class*="PanelHeader"] {
             background: #ffffff !important;
             background-color: #ffffff !important;
-        }
-
-        html[scheme="space_gray"] body:not(.vmu-page-clips) .vkuiPanelHeader,
-        html[scheme="space_gray"] body:not(.vmu-page-clips) .vkuiPanelHeader__in,
-        html[scheme="space_gray"] body:not(.vmu-page-clips) .vkuiPanelHeader__bg,
-        html[scheme="space_gray"] body:not(.vmu-page-clips) [class*="PanelHeader"],
-        html[data-theme="dark"] body:not(.vmu-page-clips) .vkuiPanelHeader,
-        html[data-theme="dark"] body:not(.vmu-page-clips) .vkuiPanelHeader__in,
-        html[data-theme="dark"] body:not(.vmu-page-clips) [class*="PanelHeader"] {
-            background: #19191a !important;
-            background-color: #19191a !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
         }
 
         body.vmu-page-clips .vkuiPanelHeader,
@@ -380,8 +373,24 @@
             position: relative !important;
         }
 
+        #vk-mobile-upgrade-settings-card * {
+            position: relative;
+            z-index: 1;
+        }
+
         /* 9. КАСТОМНАЯ ПОДСВЕТКА АКТИВНОЙ ВКЛАДКИ ПРИ ЗАМЕНЕ ПОИСКА */
-        .vmu-tab-selected,
+        .vkuiTabbarItem.vkuiTabbarItem--selected,
+        .vkuiTabbarItem.vmu-tab-selected,
+        [class*="TabbarItem"].vkuiTabbarItem--selected,
+        [class*="TabbarItem"].vmu-tab-selected {
+            color: var(--vkui--color_icon_accent, var(--vkui--color_text_accent, var(--color_icon_accent, #FF5C5C))) !important;
+        }
+
+        .vkuiTabbarItem.vkuiTabbarItem--selected [class*="TabbarItem__in"],
+        .vkuiTabbarItem.vkuiTabbarItem--selected [class*="TabbarItem__icon"],
+        .vkuiTabbarItem.vkuiTabbarItem--selected [class*="TabbarItem__text"],
+        .vkuiTabbarItem.vkuiTabbarItem--selected [class*="TabbarItem__children"],
+        .vkuiTabbarItem.vkuiTabbarItem--selected svg,
         .vmu-tab-selected [class*="TabbarItem__in"],
         .vmu-tab-selected [class*="TabbarItem__icon"],
         .vmu-tab-selected [class*="TabbarItem__text"],
@@ -391,7 +400,16 @@
             fill: currentColor !important;
         }
 
-        .vmu-tab-unselected,
+        .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected),
+        .vmu-tab-unselected {
+            color: var(--vkui--color_icon_secondary, var(--vkui--color_text_secondary, #828282)) !important;
+        }
+
+        .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected) [class*="TabbarItem__in"],
+        .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected) [class*="TabbarItem__icon"],
+        .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected) [class*="TabbarItem__text"],
+        .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected) [class*="TabbarItem__children"],
+        .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected) svg,
         .vmu-tab-unselected [class*="TabbarItem__in"],
         .vmu-tab-unselected [class*="TabbarItem__icon"],
         .vmu-tab-unselected [class*="TabbarItem__text"],
@@ -1974,18 +1992,21 @@
         }
 
         // 3. Текстовая подпись
-        const textEl = item.querySelector(
+        let textEl = item.querySelector(
             '.vkuiTabbarItem__text, .vkuiTabbarItem__children, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], .bottom_nav__text, .bottom_nav__label'
         );
-        if (textEl) {
-            const firstTextNode = Array.from(textEl.childNodes).find(n => n.nodeType === Node.TEXT_NODE);
-            if (firstTextNode) {
-                if (firstTextNode.textContent !== def.label) {
-                    firstTextNode.textContent = def.label;
+        if (!textEl) {
+            const inContainer = item.querySelector('.vkuiTabbarItem__in, [class*="TabbarItem__in"]') || item;
+            const spans = inContainer.querySelectorAll('span');
+            for (let s = 0; s < spans.length; s++) {
+                if (!spans[s].querySelector('svg') && !spans[s].className.includes('icon') && !spans[s].className.includes('Badge') && !spans[s].className.includes('Counter') && !spans[s].className.includes('indicator')) {
+                    textEl = spans[s];
+                    break;
                 }
-            } else if (textEl.textContent !== def.label) {
-                textEl.textContent = def.label;
             }
+        }
+        if (textEl && textEl.textContent !== def.label) {
+            textEl.textContent = def.label;
         }
 
         // 4. Иконка SVG
@@ -2058,14 +2079,19 @@
                         menuItem.setAttribute('aria-selected', 'false');
                     }
                 } else {
-                    searchItem.classList.remove('vmu-tab-selected');
+                    searchItem.classList.remove('vmu-tab-selected', 'vkuiTabbarItem--selected');
+                    searchItem.setAttribute('aria-selected', 'false');
                     if (menuItem) {
                         menuItem.classList.remove('vmu-tab-unselected');
+                        if (currentPath.startsWith('/menu')) {
+                            menuItem.classList.add('vkuiTabbarItem--selected');
+                            menuItem.setAttribute('aria-selected', 'true');
+                        }
                     }
                 }
             }
         } else {
-            searchItem.classList.remove('vmu-tab-selected', 'vmu-tab-unselected');
+            searchItem.classList.remove('vmu-tab-selected');
             const menuItem = items[items.length - 1];
             if (menuItem) {
                 menuItem.classList.remove('vmu-tab-unselected');
