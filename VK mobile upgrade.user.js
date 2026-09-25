@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.23.1
+// @version      2.23.2
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -98,25 +98,25 @@
             label: 'Друзья',
             href: '/friends',
             matchPaths: ['/friends'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_outline_28"><g transform="matrix(1.08, 0, 0, 1.08, -1.12, -1.12)"><path fill="currentColor" fill-rule="evenodd" d="M10.5 3a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9ZM8.5 7.5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0ZM20 5a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM18 9a2 2 0 1 1 4 0 2 2 0 0 1-4 0ZM10.5 13.5c-3.6 0-6.5 2.6-6.5 5.8v.7a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1v-.7c0-3.2-2.9-5.8-6.5-5.8Zm-4.5 5.5c.42-2.1 2.2-3.8 4.5-3.8s4.08 1.7 4.5 3.8H6Zm12.5-2.7c1.8 0 3.5 1.25 3.5 2.7v.5a1 1 0 0 1-1 1h-2a1 1 0 1 1 0-2h1.3c-.2-.55-.7-1.2-1.3-1.2a1 1 0 0 1 0-2h.5z" clip-rule="evenodd"/></g></svg>`
+            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_outline_28"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M10.5 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM8.5 8a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm9.5-2a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM16 9.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM10.5 14c-3.3 0-6 2.46-6 5.5v.5a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-.5c0-3.04-2.7-5.5-6-5.5Zm-4 5c.42-1.93 2.04-3.5 4-3.5s3.58 1.57 4 3.5h-8Zm11.5-2.5c1.6 0 3 1.12 3 2.5v.5a1 1 0 0 1-1 1h-2a1 1 0 1 1 0-2h1.15c-.2-.48-.6-1-1.15-1a1 1 0 0 1 0-2h1z"/></svg>`
         },
         groups: {
             label: 'Сообщества',
             href: '/groups',
             matchPaths: ['/groups', '/communities', '/groups_list'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_3_outline_28"><g transform="matrix(1.07, 0, 0, 1.07, -0.98, -0.98)"><path fill="currentColor" fill-rule="evenodd" d="M14 3a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9ZM12 7.5a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0ZM4.5 6.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM3 10a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM23.5 6.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM22 10a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM14 13c-3.5 0-6.25 2.5-6.25 5.5v.75a1 1 0 0 0 1 1h10.5a1 1 0 0 0 1-1v-.75c0-3-2.75-5.5-6.25-5.5Zm-4.25 5.25c.42-1.95 2.15-3.25 4.25-3.25s3.83 1.3 4.25 3.25h-8.5Zm-5-2.75c1.5 0 2.8 1.05 3.1 2.5a1 1 0 1 1-1.95.45c-.15-.45-.6-.95-1.15-.95H3.5a1 1 0 0 1-1-1v-.25c0-1.65 1.45-3 3.25-3Zm18.5 0c1.8 0 3.25 1.35 3.25 3v.25a1 1 0 0 1-1 1h-1.25a1 1 0 1 1 0-2c-.55 0-1 .5-1.15.95a1 1 0 1 1-1.95-.45c.3-1.45 1.6-2.5 3.1-2.5z" clip-rule="evenodd"/></g></svg>`
+            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_3_outline_28"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M14 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2 4a2 2 0 1 1 4 0 2 2 0 0 1-4 0ZM5.5 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm-1 3a1 1 0 1 1 2 0 1 1 0 0 1-2 0ZM22.5 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm-1 3a1 1 0 1 1 2 0 1 1 0 0 1-2 0ZM14 13.5c-3.1 0-5.75 2.35-5.75 5.25v.75a1 1 0 0 0 1 1h9.5a1 1 0 0 0 1-1v-.75c0-2.9-2.65-5.25-5.75-5.25Zm-3.75 5c.42-1.79 1.95-3.25 3.75-3.25s3.33 1.46 3.75 3.25h-7.5Zm-4.5-2.5c1.35 0 2.5.95 2.8 2.25a1 1 0 1 1-1.95.44.98.98 0 0 0-.85-.69H4.75a1 1 0 0 1-1-1v-.25c0-1.52 1.34-2.75 3-2.75Zm16.5 0c1.66 0 3 1.23 3 2.75v.25a1 1 0 0 1-1 1h-1a1 1 0 1 1 0-2h.2c-.32-.47-.73-.83-1.2-.95a1 1 0 0 1 0-1.05z"/></svg>`
         },
         music: {
             label: 'Музыка',
             href: '/audio',
             matchPaths: ['/audio', '/audios', '/music', '/audio_feed'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--music_outline_28"><g transform="matrix(1.08, 0, 0, 1.08, -1.12, -1.12)"><path fill-rule="evenodd" clip-rule="evenodd" d="M20 4.14a1 1 0 011 .98v11.38a4.5 4.5 0 11-2-3.74V7.64l-8 2.29v8.57a4.5 4.5 0 11-2-3.74V7a1 1 0 01.73-.96l10-2.86a1 1 0 01.27-.04zM9 16.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5zm10-2a2.5 2.5 0 100 5 2.5 2.5 0 000-5zm0-8.38l-8 2.29v-1.9l8-2.29v1.9z" fill="currentColor"/></g></svg>`
+            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--music_outline_28"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M18.5 4a1 1 0 0 1 1 1v10.5a4.25 4.25 0 1 1-2-3.62V7.7l-7.5 1.88v7.92a4.25 4.25 0 1 1-2-3.62V6a1 1 0 0 1 .76-.97l9.5-2.38a1 1 0 0 1 .24-.03ZM7.5 17.5a2.25 2.25 0 1 0 4.5 0 2.25 2.25 0 0 0-4.5 0Zm9-2a2.25 2.25 0 1 0 4.5 0 2.25 2.25 0 0 0-4.5 0Zm2-7.85l-7.5 1.88V7.5l7.5-1.88v1.86Z"/></svg>`
         },
         video: {
             label: 'Видео',
             href: '/video',
             matchPaths: ['/video', '/videos', '/vk_video'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--video_outline_28"><g transform="matrix(1.07, 0, 0, 1.07, -0.98, -0.98)"><path fill="currentColor" fill-rule="evenodd" d="M4.5 5.5a3 3 0 0 0-3 3v11a3 3 0 0 0 3 3h13a3 3 0 0 0 3-3v-2l4.35 2.61A1.5 1.5 0 0 0 27 18.82V9.18a1.5 1.5 0 0 0-2.15-1.29L20.5 10.5v-2a3 3 0 0 0-3-3h-13Zm14 4.5v8a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1v-11a1 1 0 0 1 1-1h13a1 1 0 0 1 1 1v2Zm2 4.19l4.5 2.7V9.61l-4.5 2.7v1.88Z" clip-rule="evenodd"/></g></svg>`
+            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--video_outline_28"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M5 6a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-1.8l4.15 2.49A1.5 1.5 0 0 0 26.5 18.4V9.6a1.5 1.5 0 0 0-2.35-1.29L20 10.8V9a3 3 0 0 0-3-3H5Zm13 4.2v7.6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v1.2Zm2 4.07l4.5 2.7V9.73l-4.5 2.7v1.84Z"/></svg>`
         },
         bookmarks: {
             label: 'Закладки',
