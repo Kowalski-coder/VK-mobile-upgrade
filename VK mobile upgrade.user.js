@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.8.9
-// @description  Улучшение интерфейса m.vk.ru: тема Snow Black, скрытие стандартного блока темы, скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке мессенджера, скрытие меню действий в списке чатов, скрытие панели папок и исправление верстки.
+// @version      2.9.0
+// @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), скрытие подписей в нижней панели, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -29,9 +29,11 @@
     //            НАСТРОЙКИ (STORAGE)
     // ==========================================
     const STORAGE_KEYS = {
-        COLOR_SWAP: 'vmu_color_swap',
+        THEME_MODE: 'vmu_theme_mode', // 'light' | 'dark' | 'snow_black'
         HIDE_TAB_LABELS: 'vmu_hide_tab_labels',
-        HIDE_FOLDERS_BAR: 'vmu_hide_folders_bar'
+        HIDE_FOLDERS_BAR: 'vmu_hide_folders_bar',
+        HIDE_CALLS: 'vmu_hide_calls',
+        HIDE_VIDEO_MSGS: 'vmu_hide_video_msgs'
     };
 
     function getSetting(key, defaultValue) {
@@ -50,9 +52,25 @@
         } catch (e) {}
     }
 
-    let isColorSwapEnabled = getSetting(STORAGE_KEYS.COLOR_SWAP, true);
+    function getThemeSetting() {
+        try {
+            const val = localStorage.getItem(STORAGE_KEYS.THEME_MODE);
+            if (val === 'light' || val === 'dark' || val === 'snow_black') {
+                return val;
+            }
+            const legacySwap = localStorage.getItem('vmu_color_swap');
+            if (legacySwap === 'true') return 'snow_black';
+            if (legacySwap === 'false') return 'dark';
+        } catch (e) {}
+        return 'dark'; // по умолчанию тёмная тема
+    }
+
+    let currentThemeMode = getThemeSetting();
+    let isColorSwapEnabled = (currentThemeMode === 'snow_black');
     let isHideLabelsEnabled = getSetting(STORAGE_KEYS.HIDE_TAB_LABELS, false);
     let isHideFoldersEnabled = getSetting(STORAGE_KEYS.HIDE_FOLDERS_BAR, true);
+    let isHideCallsEnabled = getSetting(STORAGE_KEYS.HIDE_CALLS, false);
+    let isHideVideoMsgsEnabled = getSetting(STORAGE_KEYS.HIDE_VIDEO_MSGS, false);
 
     // ==========================================
     //     БАЗОВЫЕ ИСПРАВЛЕНИЯ UI (ВСЕГДА АКТИВНЫ)
@@ -523,6 +541,92 @@
         }
     `;
 
+    const HIDE_CALLS_CSS = `
+        /* ПОЛНОЕ СКРЫТИЕ ЗВОНКОВ В ШАПКЕ ЧАТОВ И ДИАЛОГОВ */
+        .vkuiPanelHeader a[href*="call"],
+        .vkuiPanelHeader [aria-label*="звон" i],
+        .vkuiPanelHeader [aria-label*="Звон" i],
+        .vkuiPanelHeader [aria-label*="вызов" i],
+        .vkuiPanelHeader [aria-label*="Вызов" i],
+        .vkuiPanelHeader [aria-label*="позвонить" i],
+        .vkuiPanelHeader [aria-label*="Позвонить" i],
+        .vkuiPanelHeader [aria-label*="Call" i],
+        .vkuiPanelHeader [data-testid*="call" i],
+        .vkuiPanelHeader [data-testid*="phone" i],
+        .vkuiPanelHeader [class*="Icon--phone"],
+        .vkuiPanelHeader [class*="Icon--videocam"],
+        .vkuiPanelHeader [class*="Icon--call"],
+        [class*="PanelHeader"] a[href*="call"],
+        [class*="PanelHeader"] [aria-label*="звон" i],
+        [class*="PanelHeader"] [aria-label*="Звон" i],
+        [class*="PanelHeader"] [aria-label*="вызов" i],
+        [class*="PanelHeader"] [aria-label*="Вызов" i],
+        [class*="PanelHeader"] [aria-label*="позвонить" i],
+        [class*="PanelHeader"] [aria-label*="Позвонить" i],
+        [class*="PanelHeader"] [aria-label*="Call" i],
+        [class*="PanelHeader"] [data-testid*="call" i],
+        [class*="PanelHeader"] [data-testid*="phone" i],
+        [class*="PanelHeader"] [class*="Icon--phone"],
+        [class*="PanelHeader"] [class*="Icon--videocam"],
+        [class*="PanelHeader"] [class*="Icon--call"],
+        [class*="ChatHeader__call"],
+        [class*="im-header-call"],
+        [class*="im-page--header-call"],
+        [class*="chat-header--call"] {
+            display: none !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            min-width: 0 !important;
+            max-width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            opacity: 0 !important;
+            overflow: hidden !important;
+        }
+    `;
+
+    const HIDE_VIDEO_MSGS_CSS = `
+        /* ПОЛНОЕ СКРЫТИЕ КНОПКИ ЗАПИСИ КРУЖКОВ (ВИДЕОСООБЩЕНИЙ) В СТРОКЕ ВВОДА */
+        [class*="WriteBar"] [aria-label*="видеосообщен" i],
+        [class*="WriteBar"] [aria-label*="Видеосообщен" i],
+        [class*="WriteBar"] [aria-label*="кружоч" i],
+        [class*="WriteBar"] [aria-label*="кружок" i],
+        [class*="WriteBar"] [aria-label*="Кружок" i],
+        [class*="WriteBar"] [aria-label*="video message" i],
+        [class*="WriteBar"] [data-testid*="video-message" i],
+        [class*="WriteBar"] [data-testid*="videomsg" i],
+        [class*="WriteBar"] [data-testid*="round_video" i],
+        [class*="WriteBar"] [class*="Icon--video_message"],
+        [class*="WriteBar"] [class*="Icon--video_circle"],
+        [class*="WriteBar"] [class*="Icon--camera_circle"],
+        [class*="writeBar"] [aria-label*="видеосообщен" i],
+        [class*="writeBar"] [aria-label*="кружоч" i],
+        [class*="writeBar"] [aria-label*="кружок" i],
+        [class*="writeBar"] [class*="Icon--video_message"],
+        [class*="im-chat-input"] [aria-label*="видеосообщен" i],
+        [class*="im-chat-input"] [aria-label*="кружоч" i],
+        [class*="im-chat-input"] [aria-label*="кружок" i],
+        [class*="im-chat-input"] [class*="Icon--video_message"],
+        [class*="VideoMessage__record"],
+        [class*="video_message__record"],
+        [class*="WriteBar__videoMessage"],
+        [class*="writeBar__videoMessage"] {
+            display: none !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            min-width: 0 !important;
+            max-width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            opacity: 0 !important;
+            overflow: hidden !important;
+        }
+    `;
+
     // ==========================================
     //           УПРАВЛЕНИЕ СТИЛЯМИ
     // ==========================================
@@ -553,6 +657,8 @@
         setOrRemoveStyle('vmu-color-swap-styles', COLOR_SWAP_CSS, isColorSwapEnabled);
         setOrRemoveStyle('vmu-hide-labels-styles', HIDE_LABELS_CSS, isHideLabelsEnabled);
         setOrRemoveStyle('vmu-hide-folders-styles', HIDE_FOLDERS_CSS, isHideFoldersEnabled);
+        setOrRemoveStyle('vmu-hide-calls-styles', HIDE_CALLS_CSS, isHideCallsEnabled);
+        setOrRemoveStyle('vmu-hide-video-msgs-styles', HIDE_VIDEO_MSGS_CSS, isHideVideoMsgsEnabled);
     }
 
     // Применяем стили мгновенно при старте
@@ -860,6 +966,104 @@
     // ==========================================
     const SETTINGS_UI_ID = 'vk-mobile-upgrade-settings-card';
 
+    function createThemeSelectRow(currentMode, onSelect) {
+        const row = document.createElement('div');
+        row.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            border-bottom: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08));
+        `;
+
+        const textCol = document.createElement('div');
+        textCol.style.cssText = 'flex: 1; padding-right: 12px; pointer-events: none;';
+
+        const titleEl = document.createElement('div');
+        titleEl.style.cssText = 'font-size: 16px; font-weight: 400; color: var(--vkui--color_text_primary, #ffffff); line-height: 1.3;';
+        titleEl.textContent = 'Тема';
+
+        const descEl = document.createElement('div');
+        descEl.style.cssText = 'font-size: 13px; color: var(--vkui--color_text_secondary, #999999); margin-top: 3px; line-height: 1.3;';
+        descEl.textContent = 'Оформление интерфейса';
+
+        textCol.appendChild(titleEl);
+        textCol.appendChild(descEl);
+
+        const rightCol = document.createElement('div');
+        rightCol.style.cssText = 'display: flex; align-items: center; gap: 6px; pointer-events: none;';
+
+        const valueEl = document.createElement('div');
+        valueEl.style.cssText = 'font-size: 15px; color: var(--vkui--color_text_secondary, #999999); font-weight: 400;';
+
+        function getModeTitle(mode) {
+            if (mode === 'light') return 'Светлая';
+            if (mode === 'snow_black') return 'Snow Black';
+            return 'Тёмная';
+        }
+
+        valueEl.textContent = getModeTitle(currentMode);
+
+        const chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        chevron.setAttribute('width', '16');
+        chevron.setAttribute('height', '16');
+        chevron.setAttribute('viewBox', '0 0 24 24');
+        chevron.setAttribute('fill', 'none');
+        chevron.setAttribute('stroke', 'currentColor');
+        chevron.style.cssText = 'color: var(--vkui--color_icon_secondary, #828282); flex-shrink: 0;';
+        chevron.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />';
+
+        rightCol.appendChild(valueEl);
+        rightCol.appendChild(chevron);
+
+        const select = document.createElement('select');
+        select.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            -webkit-appearance: none;
+            background: transparent;
+            z-index: 2;
+        `;
+
+        const optDark = document.createElement('option');
+        optDark.value = 'dark';
+        optDark.textContent = 'Тёмная';
+
+        const optLight = document.createElement('option');
+        optLight.value = 'light';
+        optLight.textContent = 'Светлая';
+
+        const optSnow = document.createElement('option');
+        optSnow.value = 'snow_black';
+        optSnow.textContent = 'Snow Black';
+
+        select.appendChild(optDark);
+        select.appendChild(optLight);
+        select.appendChild(optSnow);
+        select.value = currentMode;
+
+        select.addEventListener('change', (e) => {
+            const selected = e.target.value;
+            valueEl.textContent = getModeTitle(selected);
+            onSelect(selected);
+        });
+
+        row.appendChild(textCol);
+        row.appendChild(rightCol);
+        row.appendChild(select);
+
+        return row;
+    }
+
     function createSwitchRow(title, desc, initialChecked, onToggle) {
         const row = document.createElement('div');
         row.style.cssText = `
@@ -877,15 +1081,17 @@
         textCol.style.cssText = 'flex: 1; padding-right: 14px; pointer-events: none;';
 
         const titleEl = document.createElement('div');
-        titleEl.style.cssText = 'font-size: 15px; font-weight: 500; color: var(--vkui--color_text_primary, #ffffff); line-height: 1.3;';
+        titleEl.style.cssText = 'font-size: 16px; font-weight: 400; color: var(--vkui--color_text_primary, #ffffff); line-height: 1.3;';
         titleEl.textContent = title;
 
-        const descEl = document.createElement('div');
-        descEl.style.cssText = 'font-size: 12px; color: var(--vkui--color_text_secondary, #999999); margin-top: 3px; line-height: 1.3;';
-        descEl.textContent = desc;
-
         textCol.appendChild(titleEl);
-        textCol.appendChild(descEl);
+
+        if (desc) {
+            const descEl = document.createElement('div');
+            descEl.style.cssText = 'font-size: 13px; color: var(--vkui--color_text_secondary, #999999); margin-top: 3px; line-height: 1.3;';
+            descEl.textContent = desc;
+            textCol.appendChild(descEl);
+        }
 
         const switchBtn = document.createElement('div');
         switchBtn.role = 'switch';
@@ -955,24 +1161,41 @@
     }
 
     // ==========================================
-    //       ПРИНУДИТЕЛЬНАЯ ТЕМНАЯ ТЕМА
+    //       УПРАВЛЕНИЕ И СИНХРОНИЗАЦИЯ ТЕМ
     // ==========================================
-    function enforceDarkTheme() {
+    function setThemeMode(mode) {
+        currentThemeMode = mode;
+        setSetting(STORAGE_KEYS.THEME_MODE, mode);
+        isColorSwapEnabled = (mode === 'snow_black');
+
+        const isLight = mode === 'light';
+        const vkuiTheme = isLight ? 'bright_light' : 'space_gray';
+        const vkTheme = isLight ? 'light' : 'dark';
+
         try {
-            if (localStorage.getItem('vkui_theme') !== 'space_gray') {
-                localStorage.setItem('vkui_theme', 'space_gray');
-            }
-            if (localStorage.getItem('vk_theme') !== 'dark') {
-                localStorage.setItem('vk_theme', 'dark');
-            }
-            if (localStorage.getItem('theme') !== 'dark') {
-                localStorage.setItem('theme', 'dark');
-            }
-            if (localStorage.getItem('scheme') !== 'space_gray') {
-                localStorage.setItem('scheme', 'space_gray');
-            }
+            localStorage.setItem('vkui_theme', vkuiTheme);
+            localStorage.setItem('vk_theme', vkTheme);
+            localStorage.setItem('theme', vkTheme);
+            localStorage.setItem('scheme', vkuiTheme);
+            localStorage.setItem('vkui-theme', vkuiTheme);
         } catch (e) {}
 
+        const html = document.documentElement;
+        const body = document.body;
+        if (html) {
+            html.setAttribute('scheme', vkuiTheme);
+            html.setAttribute('data-theme', vkTheme);
+            html.setAttribute('data-vkui-theme', vkuiTheme);
+        }
+        if (body) {
+            body.setAttribute('scheme', vkuiTheme);
+            body.setAttribute('data-theme', vkTheme);
+            body.setAttribute('data-vkui-theme', vkuiTheme);
+        }
+
+        applyStyles();
+
+        // Синхронизируем с нативными переключателями VK, если есть
         const lightRadio = document.querySelector(
             'input[type="radio"][value*="light"], input[type="radio"][value*="bright_light"], input[type="radio"][value="1"], input[type="radio"][id*="light"]'
         );
@@ -980,21 +1203,41 @@
             'input[type="radio"][value*="dark"], input[type="radio"][value*="space_gray"], input[type="radio"][value="2"], input[type="radio"][id*="dark"]'
         );
 
-        if (lightRadio && lightRadio.checked && darkRadio) {
+        if (isLight && lightRadio && !lightRadio.checked) {
+            lightRadio.checked = true;
+            lightRadio.click();
+        } else if (!isLight && darkRadio && !darkRadio.checked) {
             darkRadio.checked = true;
             darkRadio.click();
         }
+    }
 
-        const systemSwitch = document.querySelector(
-            'input[name*="system"], [class*="Switch"][aria-label*="системн" i], input[type="checkbox"][id*="system"]'
-        );
-        if (systemSwitch) {
-            const input = systemSwitch.tagName === 'INPUT' ? systemSwitch : systemSwitch.querySelector('input');
-            if (input && input.checked) {
-                input.click();
+    function syncCurrentTheme() {
+        const isLight = currentThemeMode === 'light';
+        const vkuiTheme = isLight ? 'bright_light' : 'space_gray';
+        const vkTheme = isLight ? 'light' : 'dark';
+
+        try {
+            if (localStorage.getItem('vkui_theme') !== vkuiTheme) {
+                localStorage.setItem('vkui_theme', vkuiTheme);
             }
+            if (localStorage.getItem('vk_theme') !== vkTheme) {
+                localStorage.setItem('vk_theme', vkTheme);
+            }
+            if (localStorage.getItem('scheme') !== vkuiTheme) {
+                localStorage.setItem('scheme', vkuiTheme);
+            }
+        } catch (e) {}
+
+        const html = document.documentElement;
+        if (html && html.getAttribute('scheme') !== vkuiTheme) {
+            html.setAttribute('scheme', vkuiTheme);
+            html.setAttribute('data-theme', vkTheme);
+            html.setAttribute('data-vkui-theme', vkuiTheme);
         }
     }
+
+    syncCurrentTheme();
 
     function updateSettingsVisibility() {
         const isAppearance = isAppearancePage();
@@ -1049,14 +1292,13 @@
 
         const card = document.createElement('div');
         card.id = SETTINGS_UI_ID;
-        card.className = 'vkuiGroup vkuiGroup--mode-card';
+        card.className = 'vkuiGroup vkuiGroup--mode-none vkuiGroup--padding-m';
         card.style.cssText = `
-            margin: 80px 12px 32px !important;
-            background: var(--vkui--color_background_content, var(--background_content, #222222)) !important;
-            border-radius: 14px !important;
-            overflow: hidden !important;
-            border: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08)) !important;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+            margin: 54px 0 24px 0 !important;
+            padding: 0 !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
             font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", sans-serif) !important;
             display: block !important;
             position: relative !important;
@@ -1065,38 +1307,24 @@
 
         const header = document.createElement('div');
         header.style.cssText = `
-            padding: 14px 16px 8px !important;
-            font-weight: 700 !important;
+            padding: 12px 16px 6px !important;
             font-size: 13px !important;
+            font-weight: 500 !important;
             text-transform: uppercase !important;
-            letter-spacing: 0.6px !important;
+            letter-spacing: 0.5px !important;
             color: var(--vkui--color_text_subhead, #888888) !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            border-bottom: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08)) !important;
         `;
-        header.innerHTML = `
-            <span>🚀 VK Mobile Upgrade</span>
-            <span style="font-size: 11px; font-weight: 600; opacity: 0.8; background: rgba(255, 255, 255, 0.1); padding: 2px 6px; border-radius: 6px;">v2.8.9</span>
-        `;
+        header.textContent = 'Настройки интерфейса';
         card.appendChild(header);
 
-        // Тумблер 1: Тема Snow Black
-        const row1 = createSwitchRow(
-            'Тема Snow Black',
-            'Заменяет темную тему на кастомную',
-            isColorSwapEnabled,
-            (checked) => {
-                isColorSwapEnabled = checked;
-                setSetting(STORAGE_KEYS.COLOR_SWAP, isColorSwapEnabled);
-                applyStyles();
-            }
-        );
-        card.appendChild(row1);
+        // 1. Выбор темы (Светлая / Тёмная / Snow Black)
+        const rowTheme = createThemeSelectRow(currentThemeMode, (mode) => {
+            setThemeMode(mode);
+        });
+        card.appendChild(rowTheme);
 
-        // Тумблер 2: Скрыть подписи на нижней панели
-        const row2 = createSwitchRow(
+        // 2. Скрыть подписи на нижней панели
+        const rowLabels = createSwitchRow(
             'Скрыть подписи на нижней панели',
             'Оставлять только иконки (Главная, Поиск, Мессенджер, Клипы, Ещё)',
             isHideLabelsEnabled,
@@ -1106,10 +1334,10 @@
                 applyStyles();
             }
         );
-        card.appendChild(row2);
+        card.appendChild(rowLabels);
 
-        // Тумблер 3: Скрыть панель папок / категорий
-        const row3 = createSwitchRow(
+        // 3. Скрыть панель папок / категорий
+        const rowFolders = createSwitchRow(
             'Скрыть вкладки папок в мессенджере',
             'Убирает панель категорий (Все, Каналы, Бизнес, Чаты) и лишние отступы',
             isHideFoldersEnabled,
@@ -1119,8 +1347,34 @@
                 applyStyles();
             }
         );
-        row3.style.borderBottom = 'none';
-        card.appendChild(row3);
+        card.appendChild(rowFolders);
+
+        // 4. Отключить звонки в чатах
+        const rowCalls = createSwitchRow(
+            'Отключить звонки в чатах',
+            'Скрывает кнопку звонка из шапки диалогов',
+            isHideCallsEnabled,
+            (checked) => {
+                isHideCallsEnabled = checked;
+                setSetting(STORAGE_KEYS.HIDE_CALLS, isHideCallsEnabled);
+                applyStyles();
+            }
+        );
+        card.appendChild(rowCalls);
+
+        // 5. Отключить видеосообщения (кружки)
+        const rowVideo = createSwitchRow(
+            'Отключить видеосообщения (кружки)',
+            'Скрывает кнопку записи кружков в строке ввода сообщений',
+            isHideVideoMsgsEnabled,
+            (checked) => {
+                isHideVideoMsgsEnabled = checked;
+                setSetting(STORAGE_KEYS.HIDE_VIDEO_MSGS, isHideVideoMsgsEnabled);
+                applyStyles();
+            }
+        );
+        rowVideo.style.borderBottom = 'none';
+        card.appendChild(rowVideo);
 
         if (target.parentElement && target !== document.body) {
             target.insertAdjacentElement('afterend', card);
@@ -1166,6 +1420,34 @@
         }
     }
 
+    function interceptActionButtons(e) {
+        // Блокировка звонков при включенной опции
+        if (isHideCallsEnabled) {
+            const callBtn = e.target && e.target.closest && e.target.closest(
+                'a[href*="call"], [aria-label*="звон" i], [aria-label*="Звон" i], [aria-label*="вызов" i], [aria-label*="Вызов" i], [aria-label*="позвонить" i], [aria-label*="Позвонить" i], [data-testid*="call" i], [class*="ChatHeader__call"], [class*="Icon--phone"], [class*="Icon--videocam"], [class*="Icon--call"]'
+            );
+            if (callBtn && callBtn.closest('.vkuiPanelHeader, [class*="PanelHeader"], [class*="ChatHeader"]')) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                return;
+            }
+        }
+
+        // Блокировка кружков (видеосообщений) при включенной опции
+        if (isHideVideoMsgsEnabled) {
+            const videoBtn = e.target && e.target.closest && e.target.closest(
+                '[aria-label*="видеосообщен" i], [aria-label*="Видеосообщен" i], [aria-label*="кружоч" i], [aria-label*="кружок" i], [aria-label*="Кружок" i], [data-testid*="video-message" i], [class*="Icon--video_message"], [class*="Icon--video_circle"], [class*="Icon--camera_circle"]'
+            );
+            if (videoBtn && videoBtn.closest('[class*="WriteBar"], [class*="writeBar"], [class*="im-chat-input"]')) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                return;
+            }
+        }
+    }
+
     function blockMorePointer(e) {
         const moreBtn = isMoreTrigger(e.target);
         if (moreBtn) {
@@ -1204,6 +1486,7 @@
     }
 
     document.addEventListener('click', interceptChatMoreActions, true);
+    document.addEventListener('click', interceptActionButtons, true);
     document.addEventListener('pointerdown', blockMorePointer, true);
     document.addEventListener('touchstart', blockMorePointer, true);
     document.addEventListener('mousedown', blockMorePointer, true);
@@ -1220,7 +1503,7 @@
         try {
             updatePageBodyClasses();
             applyStyles();
-            enforceDarkTheme();
+            syncCurrentTheme();
             updateSettingsVisibility();
             handleUnreadFilter();
             hideChatListActions();
