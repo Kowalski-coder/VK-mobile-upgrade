@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.17.0
+// @version      2.18.0
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -386,16 +386,12 @@
             color: var(--vkui--color_icon_accent, var(--vkui--color_text_accent, var(--color_icon_accent, #FF5C5C))) !important;
         }
 
-        .vkuiTabbarItem.vkuiTabbarItem--selected [class*="TabbarItem__in"],
-        .vkuiTabbarItem.vkuiTabbarItem--selected [class*="TabbarItem__icon"],
+        .vkuiTabbarItem.vkuiTabbarItem--selected [class*="TabbarItem__icon"] > svg,
         .vkuiTabbarItem.vkuiTabbarItem--selected [class*="TabbarItem__text"],
         .vkuiTabbarItem.vkuiTabbarItem--selected [class*="TabbarItem__children"],
-        .vkuiTabbarItem.vkuiTabbarItem--selected svg,
-        .vmu-tab-selected [class*="TabbarItem__in"],
-        .vmu-tab-selected [class*="TabbarItem__icon"],
+        .vmu-tab-selected [class*="TabbarItem__icon"] > svg,
         .vmu-tab-selected [class*="TabbarItem__text"],
-        .vmu-tab-selected [class*="TabbarItem__children"],
-        .vmu-tab-selected svg {
+        .vmu-tab-selected [class*="TabbarItem__children"] {
             color: var(--vkui--color_icon_accent, var(--vkui--color_text_accent, var(--color_icon_accent, #FF5C5C))) !important;
             fill: currentColor !important;
         }
@@ -405,16 +401,12 @@
             color: var(--vkui--color_icon_secondary, var(--vkui--color_text_secondary, #828282)) !important;
         }
 
-        .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected) [class*="TabbarItem__in"],
-        .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected) [class*="TabbarItem__icon"],
+        .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected) [class*="TabbarItem__icon"] > svg,
         .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected) [class*="TabbarItem__text"],
         .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected) [class*="TabbarItem__children"],
-        .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected) svg,
-        .vmu-tab-unselected [class*="TabbarItem__in"],
-        .vmu-tab-unselected [class*="TabbarItem__icon"],
+        .vmu-tab-unselected [class*="TabbarItem__icon"] > svg,
         .vmu-tab-unselected [class*="TabbarItem__text"],
-        .vmu-tab-unselected [class*="TabbarItem__children"],
-        .vmu-tab-unselected svg {
+        .vmu-tab-unselected [class*="TabbarItem__children"] {
             color: var(--vkui--color_icon_secondary, var(--vkui--color_text_secondary, #828282)) !important;
             fill: currentColor !important;
         }
@@ -1614,18 +1606,6 @@
             z-index: 1 !important;
         `;
 
-        const header = document.createElement('div');
-        header.style.cssText = `
-            padding: 12px 16px 6px !important;
-            font-size: 13px !important;
-            font-weight: 500 !important;
-            text-transform: uppercase !important;
-            letter-spacing: 0.5px !important;
-            color: var(--vkui--color_text_subhead, #888888) !important;
-        `;
-        header.textContent = 'Настройки интерфейса';
-        card.appendChild(header);
-
         // 1. Выбор темы (Светлая / Тёмная / Snow Black)
         const rowTheme = createSelectRow(
             'Тема',
@@ -2095,29 +2075,30 @@
                     searchItem.classList.remove('vmu-tab-unselected');
                     searchItem.setAttribute('aria-selected', 'true');
 
-                    // 2. Снимаем подсветку с вкладки «Ещё» (Menu)
-                    if (menuItem && !currentPath.startsWith('/menu')) {
-                        menuItem.classList.remove('vkuiTabbarItem--selected', 'vmu-tab-selected', 'bottom_nav__item--active');
-                        menuItem.classList.add('vmu-tab-unselected');
-                        menuItem.setAttribute('aria-selected', 'false');
+                    // 2. Снимаем подсветку со ВСЕХ остальных вкладок на панели (Главная, Мессенджер, Клипы, Ещё)
+                    for (let i = 0; i < items.length; i++) {
+                        if (i !== 1) {
+                            items[i].classList.remove('vkuiTabbarItem--selected', 'vmu-tab-selected', 'bottom_nav__item--active');
+                            items[i].classList.add('vmu-tab-unselected');
+                            items[i].setAttribute('aria-selected', 'false');
+                        }
                     }
                 } else {
                     searchItem.classList.remove('vmu-tab-selected', 'vkuiTabbarItem--selected');
                     searchItem.setAttribute('aria-selected', 'false');
-                    if (menuItem) {
-                        menuItem.classList.remove('vmu-tab-unselected');
-                        if (currentPath.startsWith('/menu')) {
-                            menuItem.classList.add('vkuiTabbarItem--selected');
-                            menuItem.setAttribute('aria-selected', 'true');
+                    for (let i = 0; i < items.length; i++) {
+                        if (i !== 1) {
+                            items[i].classList.remove('vmu-tab-unselected');
                         }
                     }
                 }
             }
         } else {
             searchItem.classList.remove('vmu-tab-selected');
-            const menuItem = items[items.length - 1];
-            if (menuItem) {
-                menuItem.classList.remove('vmu-tab-unselected');
+            for (let i = 0; i < items.length; i++) {
+                if (i !== 1) {
+                    items[i].classList.remove('vmu-tab-unselected');
+                }
             }
         }
     }
