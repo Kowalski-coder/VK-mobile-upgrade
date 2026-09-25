@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.13.0
+// @version      2.14.0
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -91,7 +91,7 @@
         search: {
             label: 'Поиск',
             href: '/discover',
-            matchPaths: ['/discover', '/search', '/feed?section=search'],
+            matchPaths: ['/discover', '/search', '/feed?section=search', '/discover_search'],
             svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--search_outline_28"><path fill-rule="evenodd" clip-rule="evenodd" d="M12.5 3.5a9 9 0 105.7 15.98l4.41 4.41a1 1 0 001.42-1.42l-4.41-4.41A9 9 0 0012.5 3.5zM5.5 12.5a7 7 0 1114 0 7 7 0 01-14 0z" fill="currentColor"/></svg>`
         },
         friends: {
@@ -103,19 +103,19 @@
         groups: {
             label: 'Сообщества',
             href: '/groups',
-            matchPaths: ['/groups'],
+            matchPaths: ['/groups', '/communities', '/groups_list'],
             svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--community_outline_28"><path fill-rule="evenodd" clip-rule="evenodd" d="M14 4a5 5 0 100 10 5 5 0 000-10zM11 9a3 3 0 116 0 3 3 0 01-6 0zm-3 7a6 6 0 00-6 6 1 1 0 001 1h16a1 1 0 001-1 6 6 0 00-6-6H8zm-3.9 5c.5-2.8 2.5-4 4.9-4h6c2.4 0 4.4 1.2 4.9 4H4.1z" fill="currentColor"/></svg>`
         },
         music: {
             label: 'Музыка',
             href: '/audio',
-            matchPaths: ['/audio', '/audios', '/music'],
+            matchPaths: ['/audio', '/audios', '/music', '/audio_feed'],
             svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--music_outline_28"><path fill-rule="evenodd" clip-rule="evenodd" d="M20 4.14a1 1 0 011 .98v11.38a4.5 4.5 0 11-2-3.74V7.64l-8 2.29v8.57a4.5 4.5 0 11-2-3.74V7a1 1 0 01.73-.96l10-2.86a1 1 0 01.27-.04zM9 16.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5zm10-2a2.5 2.5 0 100 5 2.5 2.5 0 000-5zm0-8.38l-8 2.29v-1.9l8-2.29v1.9z" fill="currentColor"/></svg>`
         },
         video: {
             label: 'Видео',
             href: '/video',
-            matchPaths: ['/video', '/videos'],
+            matchPaths: ['/video', '/videos', '/vk_video'],
             svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--video_outline_28"><path fill-rule="evenodd" clip-rule="evenodd" d="M4 6a3 3 0 00-3 3v10a3 3 0 003 3h13a3 3 0 003-3v-2.09l4.15 2.49A1.5 1.5 0 0026 18.1V9.9a1.5 1.5 0 00-1.85-1.46L20 10.93V9a3 3 0 00-3-3H4zm14 3a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h13a1 1 0 001-1V9zm2 3.27l4-2.4v8.26l-4-2.4v-3.46z" fill="currentColor"/></svg>`
         },
         bookmarks: {
@@ -346,6 +346,27 @@
         #vk-mobile-upgrade-settings-card {
             z-index: 5 !important;
             position: relative !important;
+        }
+
+        /* 9. КАСТОМНАЯ ПОДСВЕТКА АКТИВНОЙ ВКЛАДКИ ПРИ ЗАМЕНЕ ПОИСКА */
+        .vmu-tab-selected,
+        .vmu-tab-selected [class*="TabbarItem__in"],
+        .vmu-tab-selected [class*="TabbarItem__icon"],
+        .vmu-tab-selected [class*="TabbarItem__text"],
+        .vmu-tab-selected [class*="TabbarItem__children"],
+        .vmu-tab-selected svg {
+            color: var(--vkui--color_icon_accent, var(--vkui--color_text_accent, var(--color_icon_accent, #FF5C5C))) !important;
+            fill: currentColor !important;
+        }
+
+        .vmu-tab-unselected,
+        .vmu-tab-unselected [class*="TabbarItem__in"],
+        .vmu-tab-unselected [class*="TabbarItem__icon"],
+        .vmu-tab-unselected [class*="TabbarItem__text"],
+        .vmu-tab-unselected [class*="TabbarItem__children"],
+        .vmu-tab-unselected svg {
+            color: var(--vkui--color_icon_secondary, var(--vkui--color_text_secondary, #828282)) !important;
+            fill: currentColor !important;
         }
     `;
 
@@ -1895,14 +1916,6 @@
             }
         }
 
-        // 5. Подсветка активного состояния
-        const currentPath = window.location.pathname.toLowerCase();
-        const isCurrentActive = def.matchPaths.some(p => currentPath.startsWith(p));
-        if (isCurrentActive) {
-            if (!item.classList.contains('vkuiTabbarItem--selected') && !item.className.includes('selected')) {
-                item.classList.add('vkuiTabbarItem--selected');
-            }
-        }
     }
 
     function updateCustomTabs() {
@@ -1917,10 +1930,48 @@
             }
         }
 
-        const searchItem = getBottomSearchTab();
-        if (searchItem) {
-            searchItem.dataset.vmuSlot = 'search';
-            applySearchTabCustomization(searchItem);
+        if (items.length < 2) return;
+
+        const searchItem = items[1];
+        searchItem.dataset.vmuSlot = 'search';
+        applySearchTabCustomization(searchItem);
+
+        // Управление активным состоянием табов при кастомизации
+        if (currentTabSearch !== 'search') {
+            const def = TAB_DEFINITIONS[currentTabSearch];
+            if (def) {
+                const currentPath = window.location.pathname.toLowerCase();
+                const currentSearch = window.location.search.toLowerCase();
+                const fullUrl = currentPath + currentSearch;
+                const isCustomTabActive = def.matchPaths.some(p => fullUrl.startsWith(p) || fullUrl.includes(p));
+
+                const menuItem = items[items.length - 1];
+
+                if (isCustomTabActive) {
+                    // 1. Подсвечиваем замененную кнопку (items[1]) как активную
+                    searchItem.classList.add('vkuiTabbarItem--selected', 'vmu-tab-selected');
+                    searchItem.classList.remove('vmu-tab-unselected');
+                    searchItem.setAttribute('aria-selected', 'true');
+
+                    // 2. Снимаем подсветку с вкладки «Ещё» (Menu)
+                    if (menuItem && !currentPath.startsWith('/menu')) {
+                        menuItem.classList.remove('vkuiTabbarItem--selected', 'vmu-tab-selected', 'bottom_nav__item--active');
+                        menuItem.classList.add('vmu-tab-unselected');
+                        menuItem.setAttribute('aria-selected', 'false');
+                    }
+                } else {
+                    searchItem.classList.remove('vmu-tab-selected');
+                    if (menuItem) {
+                        menuItem.classList.remove('vmu-tab-unselected');
+                    }
+                }
+            }
+        } else {
+            searchItem.classList.remove('vmu-tab-selected', 'vmu-tab-unselected');
+            const menuItem = items[items.length - 1];
+            if (menuItem) {
+                menuItem.classList.remove('vmu-tab-unselected');
+            }
         }
     }
 
