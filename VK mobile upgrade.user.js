@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.16.0
+// @version      2.17.0
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -1611,7 +1611,7 @@
             font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", sans-serif) !important;
             display: block !important;
             position: relative !important;
-            z-index: 10 !important;
+            z-index: 1 !important;
         `;
 
         const header = document.createElement('div');
@@ -1991,11 +1991,34 @@
             innerLinks[l].setAttribute('title', def.label);
         }
 
-        // 3. Текстовая подпись
+        // 3. Текстовая подпись - глубокий поиск и обновление всех текстовых узлов
+        const walker = document.createTreeWalker(item, NodeFilter.SHOW_TEXT, {
+            acceptNode(node) {
+                const p = node.parentElement;
+                if (!p) return NodeFilter.FILTER_REJECT;
+                if (p.closest('.vkuiTabbarItem__icon, [class*="TabbarItem__icon"], [class*="Counter"], [class*="Badge"], [class*="Indicator"], [class*="badge"], [class*="counter"]')) {
+                    return NodeFilter.FILTER_REJECT;
+                }
+                if (node.textContent.trim().length > 0) {
+                    return NodeFilter.FILTER_ACCEPT;
+                }
+                return NodeFilter.FILTER_REJECT;
+            }
+        });
+
+        let foundTextNode = false;
+        let textNode;
+        while ((textNode = walker.nextNode())) {
+            if (textNode.textContent.trim() !== def.label) {
+                textNode.textContent = def.label;
+            }
+            foundTextNode = true;
+        }
+
         let textEl = item.querySelector(
             '.vkuiTabbarItem__text, .vkuiTabbarItem__children, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], .bottom_nav__text, .bottom_nav__label'
         );
-        if (!textEl) {
+        if (!textEl && !foundTextNode) {
             const inContainer = item.querySelector('.vkuiTabbarItem__in, [class*="TabbarItem__in"]') || item;
             const spans = inContainer.querySelectorAll('span');
             for (let s = 0; s < spans.length; s++) {
@@ -2005,7 +2028,7 @@
                 }
             }
         }
-        if (textEl && textEl.textContent !== def.label) {
+        if (textEl && textEl.textContent.trim() !== def.label) {
             textEl.textContent = def.label;
         }
 
@@ -2115,7 +2138,17 @@
                 e.stopImmediatePropagation();
                 if (e.type === 'click' || e.type === 'touchend') {
                     if (window.location.pathname !== def.href) {
-                        window.location.href = def.href;
+                        try {
+                            const a = document.createElement('a');
+                            a.href = def.href;
+                            a.style.display = 'none';
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                        } catch (err) {
+                            window.location.href = def.href;
+                        }
+                        runAllFixes();
                     }
                 }
             }
