@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.21.0
+// @version      2.22.0
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -98,25 +98,25 @@
             label: 'Друзья',
             href: '/friends',
             matchPaths: ['/friends'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_outline_28"><path fill="currentColor" fill-rule="evenodd" d="M12 5a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM9.5 5a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM20.5 7.5a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Zm-2.5 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM7.5 14c-3.038 0-5.5 2.462-5.5 5.5v.75a1.75 1.75 0 0 0 1.75 1.75h11.5A1.75 1.75 0 0 0 17 20.25v-.75c0-3.038-2.462-5.5-5.5-5.5Zm-3 5.5c0-1.657 1.343-3 3-3s3 1.343 3 3v.75a.25.25 0 0 1-.25.25H4.75a.25.25 0 0 1-.25-.25v-.75Zm14.5-3.415c1.472.482 2.5 1.83 2.5 3.415v.75a1.75 1.75 0 0 1-1.75 1.75h-1.5a1 1 0 0 1 0-2h1.5a.25.25 0 0 0 .25-.25v-.75c0-.966-.784-1.75-1.75-1.75h-.5a1 1 0 1 1 0-2h.5c.264 0 .52.04.75.115Z" clip-rule="evenodd"/></svg>`
+            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_outline_28"><path fill="currentColor" fill-rule="evenodd" d="M10.5 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM8.5 8a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm9.5-2a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM16 9.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM10.5 14c-3.3 0-6 2.46-6 5.5v.5a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-.5c0-3.04-2.7-5.5-6-5.5Zm-4 5c.42-1.93 2.04-3.5 4-3.5s3.58 1.57 4 3.5h-8Zm11.5-2.5c1.6 0 3 1.12 3 2.5v.5a1 1 0 0 1-1 1h-2a1 1 0 1 1 0-2h1.15c-.2-.48-.6-1-1.15-1a1 1 0 0 1 0-2h1z" clip-rule="evenodd"/></svg>`
         },
         groups: {
             label: 'Сообщества',
             href: '/groups',
             matchPaths: ['/groups', '/communities', '/groups_list'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_3_outline_28"><path fill="currentColor" fill-rule="evenodd" d="M14 3.5a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12.5 7.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM6 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM5.5 10a1 1 0 1 1 2 0 1 1 0 0 1-2 0ZM22 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm-1.5 3a1 1 0 1 1 2 0 1 1 0 0 1-2 0ZM14 13.5c-3.175 0-5.75 2.575-5.75 5.75v1a1.75 1.75 0 0 0 1.75 1.75h8a1.75 1.75 0 0 0 1.75-1.75v-1c0-3.175-2.575-5.75-5.75-5.75Zm-3.25 5.75c0-1.795 1.455-3.25 3.25-3.25s3.25 1.455 3.25 3.25v1a.25.25 0 0 1-.25.25H11a.25.25 0 0 1-.25-.25v-1ZM6 15.5c1.47 0 2.768.618 3.682 1.608a1 1 0 0 1-1.464 1.362A3.242 3.242 0 0 0 6 17.5a.25.25 0 0 0-.25.25v.75a1 1 0 0 1-2 0v-.75C3.75 16.284 4.784 15.5 6 15.5Zm16 0c1.216 0 2.25.784 2.25 2.25v.75a1 1 0 1 1-2 0v-.75a.25.25 0 0 0-.25-.25 3.242 3.242 0 0 0-2.218.97 1 1 0 1 1-1.464-1.362A5.228 5.228 0 0 1 22 15.5Z" clip-rule="evenodd"/></svg>`
+            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_3_outline_28"><path fill="currentColor" fill-rule="evenodd" d="M14 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2 4a2 2 0 1 1 4 0 2 2 0 0 1-4 0ZM5.5 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm-1 3a1 1 0 1 1 2 0 1 1 0 0 1-2 0ZM22.5 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm-1 3a1 1 0 1 1 2 0 1 1 0 0 1-2 0ZM14 13.5c-3.1 0-5.75 2.35-5.75 5.25v.75a1 1 0 0 0 1 1h9.5a1 1 0 0 0 1-1v-.75c0-2.9-2.65-5.25-5.75-5.25Zm-3.75 5c.42-1.79 1.95-3.25 3.75-3.25s3.33 1.46 3.75 3.25h-7.5Zm-4.5-2.5c1.35 0 2.5.95 2.8 2.25a1 1 0 1 1-1.95.44.98.98 0 0 0-.85-.69H4.75a1 1 0 0 1-1-1v-.25c0-1.52 1.34-2.75 3-2.75Zm16.5 0c1.66 0 3 1.23 3 2.75v.25a1 1 0 0 1-1 1h-1a1 1 0 1 1 0-2h.2c-.32-.47-.73-.83-1.2-.95a1 1 0 0 1 0-1.05z" clip-rule="evenodd"/></svg>`
         },
         music: {
             label: 'Музыка',
             href: '/audio',
             matchPaths: ['/audio', '/audios', '/music', '/audio_feed'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--music_outline_28"><path fill="currentColor" fill-rule="evenodd" d="M19.75 4a1 1 0 0 1 .993.883L20.75 5v10.75a4.75 4.75 0 1 1-2-3.873V7.618l-8.5 2.125V17.75a4.75 4.75 0 1 1-2-3.873V6a1 1 0 0 1 .757-.97l11.5-2.875A1 1 0 0 1 19.75 4ZM6.25 18.5a2.75 2.75 0 1 0 5.5 0 2.75 2.75 0 0 0-5.5 0Zm10-2a2.75 2.75 0 1 0 5.5 0 2.75 2.75 0 0 0-5.5 0Zm2.5-8.882L10.25 9.743V7.07l8.5-2.125v2.673Z" clip-rule="evenodd"/></svg>`
+            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--music_outline_28"><path fill="currentColor" fill-rule="evenodd" d="M18.5 4a1 1 0 0 1 1 1v10.5a4.25 4.25 0 1 1-2-3.62V7.7l-7.5 1.88v7.92a4.25 4.25 0 1 1-2-3.62V6a1 1 0 0 1 .76-.97l9.5-2.38a1 1 0 0 1 .24-.03ZM7.5 17.5a2.25 2.25 0 1 0 4.5 0 2.25 2.25 0 0 0-4.5 0Zm9-2a2.25 2.25 0 1 0 4.5 0 2.25 2.25 0 0 0-4.5 0Zm2-7.85l-7.5 1.88V7.5l7.5-1.88v1.86Z" clip-rule="evenodd"/></svg>`
         },
         video: {
             label: 'Видео',
             href: '/video',
             matchPaths: ['/video', '/videos', '/vk_video'],
-            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--video_outline_28"><path fill="currentColor" fill-rule="evenodd" d="M4.75 6A2.75 2.75 0 0 0 2 8.75v10.5A2.75 2.75 0 0 0 4.75 22h12.5A2.75 2.75 0 0 0 20 19.25V17.7l4.135 2.481A1.75 1.75 0 0 0 26.75 18.68V9.32a1.75 1.75 0 0 0-2.615-1.501L20 10.3V8.75A2.75 2.75 0 0 0 17.25 6H4.75Zm13.25 4.75v6.5a.75.75 0 0 1-.75.75H4.75a.75.75 0 0 1-.75-.75V8.75a.75.75 0 0 1 .75-.75h12.5a.75.75 0 0 1 .75.75v2Zm2 4.148 4.75 2.85v-7.496l-4.75 2.85v1.796Z" clip-rule="evenodd"/></svg>`
+            svg: `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--video_outline_28"><path fill="currentColor" fill-rule="evenodd" d="M5 6a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3v-1.8l4.15 2.49A1.5 1.5 0 0 0 26.5 18.4V9.6a1.5 1.5 0 0 0-2.35-1.29L20 10.8V9a3 3 0 0 0-3-3H5Zm13 4.2v7.6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v1.2Zm2 4.07l4.5 2.7V9.73l-4.5 2.7v1.84Z" clip-rule="evenodd"/></svg>`
         },
         bookmarks: {
             label: 'Закладки',
@@ -416,6 +416,13 @@
         [class*="TabbarItem"],
         [class*="TabBarItem"] {
             font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", sans-serif) !important;
+        }
+
+        .vkuiTabbarItem__icon svg,
+        [class*="TabbarItem__icon"] svg,
+        [class*="TabBarItem__icon"] svg {
+            display: block !important;
+            margin: 0 auto !important;
         }
 
         .vkuiTabbarItem__text,
@@ -1979,12 +1986,12 @@
             temp.innerHTML = def.svg.trim();
             const newSvg = temp.firstElementChild;
             newSvg.dataset.vmuSvg = targetKey;
+            newSvg.style.cssText = 'display: block !important; margin: 0 auto !important;';
 
             if (existingSvg) {
-                if (existingSvg.className && existingSvg.className.baseVal) {
-                    newSvg.className.baseVal = existingSvg.className.baseVal;
-                } else if (existingSvg.getAttribute('class')) {
-                    newSvg.setAttribute('class', existingSvg.getAttribute('class'));
+                const origClass = existingSvg.getAttribute('class');
+                if (origClass) {
+                    newSvg.setAttribute('class', origClass);
                 }
                 existingSvg.replaceWith(newSvg);
             } else {
