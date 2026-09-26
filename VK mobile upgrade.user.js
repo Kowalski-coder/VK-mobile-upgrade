@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.26.7
+// @version      2.26.8
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), «Своё оформление» чатов (фон из галереи + свой цвет сообщений с интерактивным предпросмотром), раздел Мессенджер в настройках, кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -720,17 +720,11 @@
             background-position: center center !important;
             background-repeat: no-repeat !important;
             background-attachment: fixed !important;
-            display: none;
+            display: none !important;
         }
 
         body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat #vmu-chat-custom-wallpaper,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat #vmu-chat-panel-wallpaper,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg:has([class*="WriteBar"]) #vmu-chat-custom-wallpaper,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg:has([class*="WriteBar"]) #vmu-chat-panel-wallpaper,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg:has([class*="ChatHistory"]) #vmu-chat-custom-wallpaper,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg:has([class*="ChatHistory"]) #vmu-chat-panel-wallpaper,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg:has(.vkmChat) #vmu-chat-custom-wallpaper,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg:has(.vkmChat) #vmu-chat-panel-wallpaper {
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat #vmu-chat-panel-wallpaper {
             display: block !important;
             opacity: 1 !important;
             visibility: visible !important;
@@ -1424,11 +1418,35 @@
     function isChatPage() {
         const path = window.location.pathname.toLowerCase();
         const search = window.location.search.toLowerCase();
-        if (path.startsWith('/mail') && (search.includes('act=show') || search.includes('peer') || search.includes('chat') || search.includes('sel'))) return true;
-        if (path.startsWith('/im') && (search.includes('sel') || search.includes('peer') || search.includes('chat') || path.includes('/convo/') || path.includes('/chat/'))) return true;
+
+        // 1. Страницы, которые гарантированно НЕ являются чатом
+        if (path.startsWith('/feed') || path.startsWith('/news') || path.startsWith('/wall') ||
+            path.startsWith('/menu') || path.startsWith('/more') || path.startsWith('/friends') ||
+            path.startsWith('/groups') || path.startsWith('/audios') || path.startsWith('/video') ||
+            path.startsWith('/bookmarks') || path.startsWith('/fave') || path.startsWith('/clips') ||
+            path.startsWith('/clip-') || path.startsWith('/settings')) {
+            return false;
+        }
+
+        // 2. Главная страница списка диалогов (m.vk.ru/mail без выбранного чата)
+        if (isMainMailListPage()) {
+            return false;
+        }
+
+        // 3. Страница конкретного открытого диалога по URL
+        if (path.startsWith('/mail') && (search.includes('peer') || search.includes('sel') || search.includes('chat') || search.includes('act=show'))) return true;
+        if (path.startsWith('/im') && (search.includes('peer') || search.includes('sel') || search.includes('chat') || path.includes('/convo/') || path.includes('/chat/'))) return true;
         if (path.includes('/convo/') || path.includes('/chat/')) return true;
         if (path.startsWith('/write')) return true;
-        if (document.querySelector && document.querySelector('[class*="WriteBar"], [class*="writeBar"], [class*="ChatHistory"], [class*="MessagesList"], .vkmChat, [class*="ChatView"], [class*="im-page--chat"], [class*="ChatLayout"], [class*="im-chat-input"], .vkmAudioMessage, [class*="Chat__content"], [class*="MessageStack"], [class*="vkmMessage"], [class*="ChatWallpaper"], .vkmChatWallpaper, [class*="ChatHeader"], .vkmChatHeader')) return true;
+
+        // 4. По активной видимой строке ввода сообщения в текущей панели
+        const activeWriteBar = document.querySelector(
+            '.vkuiPanel:not([class*="hidden"]):not([style*="display: none"]):not([style*="display:none"]) [class*="WriteBar"], .vkuiPanel:not([class*="hidden"]):not([style*="display: none"]):not([style*="display:none"]) [class*="writeBar"], .vkuiPanel:not([class*="hidden"]):not([style*="display: none"]):not([style*="display:none"]) .vkuiWriteBar'
+        );
+        if (activeWriteBar && activeWriteBar.offsetParent !== null) {
+            return true;
+        }
+
         return false;
     }
 
@@ -1467,6 +1485,17 @@
             }
         }
 
+        const inChat = isChatPage();
+        if (inChat) {
+            if (!document.body.classList.contains('vmu-in-chat')) {
+                document.body.classList.add('vmu-in-chat');
+            }
+        } else {
+            if (document.body.classList.contains('vmu-in-chat')) {
+                document.body.classList.remove('vmu-in-chat');
+            }
+        }
+
         const isScriptMenu = isScriptMenuPage();
         if (isScriptMenu) {
             document.body.classList.add('vmu-page-script-menu');
@@ -1490,17 +1519,6 @@
             document.body.classList.add('vmu-page-mail-settings');
         } else {
             document.body.classList.remove('vmu-page-mail-settings');
-        }
-
-        const inChat = isChatPage();
-        if (inChat) {
-            if (!document.body.classList.contains('vmu-in-chat')) {
-                document.body.classList.add('vmu-in-chat');
-            }
-        } else {
-            if (document.body.classList.contains('vmu-in-chat')) {
-                document.body.classList.remove('vmu-in-chat');
-            }
         }
     }
 
@@ -3602,8 +3620,16 @@
                 (document.head || document.documentElement).appendChild(bgStyleTag);
             }
             bgStyleTag.textContent = `
-                body.vmu-theme-custom-active.vmu-has-custom-chat-bg #vmu-chat-custom-wallpaper,
-                body.vmu-theme-custom-active.vmu-has-custom-chat-bg #vmu-chat-panel-wallpaper {
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat #vmu-chat-custom-wallpaper,
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat #vmu-chat-panel-wallpaper,
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiPanel:not([class*="hidden"]) .vkmChat,
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiPanel:not([class*="hidden"]) .vkuiPanel__in,
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiPanel:not([class*="hidden"]) .vkmChatWallpaper,
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiPanel:not([class*="hidden"]) [class*="ChatWallpaper"],
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiPanel:not([class*="hidden"]) [class*="Wallpaper"],
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiPanel:not([class*="hidden"]) [class*="wallpaper"],
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiPanel:not([class*="hidden"]) [class*="ChatBackground"],
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiPanel:not([class*="hidden"]) [class*="ChatTheme"] {
                     background-image: url("${customBg}") !important;
                     background-size: cover !important;
                     background-position: center center !important;
@@ -3687,64 +3713,64 @@
 
         const inChat = isChatPage();
 
-        // 1. Подавление любых фоновых картинок нативной темы VK по всему DOM
-        const allImages = document.querySelectorAll('img, picture, svg, canvas, video');
-        for (let i = 0; i < allImages.length; i++) {
-            const img = allImages[i];
-            if (img.closest('.vkuiAvatar, [class*="Avatar"], [class*="avatar"], .vkmMessage__sticker, [class*="Sticker"], [class*="sticker"], .vkmMessage__attachment, [class*="attachment" i], [class*="Attachment"], [class*="PhotoCard"], [class*="VideoCard"], [class*="Snippet"], [class*="WallPost"], .vkmMessage__bubble, .Message__bubble, [class*="MessageBubble"], .vkuiPanelHeader, [class*="PanelHeader"], .vkmChatHeader, [class*="WriteBar"], [class*="writeBar"]')) {
-                continue;
-            }
-            const src = (img.getAttribute('src') || img.src || '').toLowerCase();
-            const cls = (img.className && typeof img.className === 'string') ? img.className.toLowerCase() : '';
-            const isInsideChat = !!img.closest('.vkmChat, [class*="ChatHistory"], .vkuiPanel:has([class*="WriteBar"]), .vkuiPanel__in:has([class*="WriteBar"]), [class*="im-page"], [class*="Wallpaper"], [class*="wallpaper"], [class*="ChatBackground"], [class*="ChatTheme"]');
-            const isNativeThemeImg = isInsideChat || src.includes('im_theme') || src.includes('im-theme') || src.includes('im/theme') ||
-                                     src.includes('wallpaper') || src.includes('theme_wallpaper') ||
-                                     cls.includes('wallpaper') || cls.includes('chatbackground') || cls.includes('chattheme');
-
-            if (isNativeThemeImg) {
-                img.dataset.vmuHiddenMedia = 'true';
-                img.style.setProperty('display', 'none', 'important');
-                img.style.setProperty('opacity', '0', 'important');
-                img.style.setProperty('visibility', 'hidden', 'important');
-                img.style.setProperty('width', '0px', 'important');
-                img.style.setProperty('height', '0px', 'important');
-            }
-        }
-
-        // Подавление элементов с инлайн-стилями нативных тем VK (background-image с CDN ссылками)
-        const allStyledEls = document.querySelectorAll('[style*="background"], [style*="background-image"]');
-        for (let i = 0; i < allStyledEls.length; i++) {
-            const el = allStyledEls[i];
-            if (el.id === 'vmu-chat-custom-wallpaper' || el.id === 'vmu-chat-panel-wallpaper' || el.id === 'vmu-custom-theme-card' || el.closest('#vmu-custom-theme-card') || el.closest('#vmu-live-chat-preview')) {
-                continue;
-            }
-            if (el.closest('.vkuiAvatar, [class*="Avatar"], [class*="avatar"], .vkmMessage__sticker, [class*="Sticker"], [class*="sticker"], .vkmMessage__attachment, [class*="attachment" i], [class*="Attachment"], [class*="PhotoCard"], [class*="VideoCard"], [class*="Snippet"], [class*="WallPost"], .vkuiPanelHeader, [class*="PanelHeader"], [class*="WriteBar"]')) {
-                continue;
-            }
-            const bgInline = (el.getAttribute('style') || '').toLowerCase();
-            if (bgInline.includes('url(')) {
-                if (el.closest('.vkmChat, [class*="ChatHistory"], .vkuiPanel:has([class*="WriteBar"]), [class*="im-page"], [class*="Wallpaper"], [class*="wallpaper"], [class*="ChatTheme"], [class*="ChatBackground"], #root, body, .vkuiView')) {
-                    el.dataset.vmuCustomModified = 'true';
-                    el.style.setProperty('background-image', 'none', 'important');
-                }
-            }
-        }
-
         // 2. Управление обоями в чате
         if (inChat) {
             document.body.classList.add('vmu-in-chat');
 
+            // 1. Подавление любых фоновых картинок нативной темы VK по всему DOM
+            const allImages = document.querySelectorAll('img, picture, svg, canvas, video');
+            for (let i = 0; i < allImages.length; i++) {
+                const img = allImages[i];
+                if (img.closest('.vkuiAvatar, [class*="Avatar"], [class*="avatar"], .vkmMessage__sticker, [class*="Sticker"], [class*="sticker"], .vkmMessage__attachment, [class*="attachment" i], [class*="Attachment"], [class*="PhotoCard"], [class*="VideoCard"], [class*="Snippet"], [class*="WallPost"], .vkmMessage__bubble, .Message__bubble, [class*="MessageBubble"], .vkuiPanelHeader, [class*="PanelHeader"], .vkmChatHeader, [class*="WriteBar"], [class*="writeBar"]')) {
+                    continue;
+                }
+                const src = (img.getAttribute('src') || img.src || '').toLowerCase();
+                const cls = (img.className && typeof img.className === 'string') ? img.className.toLowerCase() : '';
+                const isInsideChat = !!img.closest('.vkmChat, [class*="ChatHistory"], .vkuiPanel:has([class*="WriteBar"]), .vkuiPanel__in:has([class*="WriteBar"]), [class*="im-page"], [class*="Wallpaper"], [class*="wallpaper"], [class*="ChatBackground"], [class*="ChatTheme"]');
+                const isNativeThemeImg = isInsideChat || src.includes('im_theme') || src.includes('im-theme') || src.includes('im/theme') ||
+                                         src.includes('wallpaper') || src.includes('theme_wallpaper') ||
+                                         cls.includes('wallpaper') || cls.includes('chatbackground') || cls.includes('chattheme');
+
+                if (isNativeThemeImg) {
+                    img.dataset.vmuHiddenMedia = 'true';
+                    img.style.setProperty('display', 'none', 'important');
+                    img.style.setProperty('opacity', '0', 'important');
+                    img.style.setProperty('visibility', 'hidden', 'important');
+                    img.style.setProperty('width', '0px', 'important');
+                    img.style.setProperty('height', '0px', 'important');
+                }
+            }
+
+            // Находим все нативные контейнеры обоев и подавляем/заменяем их
             const nativeWallpapers = document.querySelectorAll(
                 '.vkmChatWallpaper, [class*="ChatWallpaper"], [class*="Wallpaper"], [class*="wallpaper"], [class*="ChatBackground"], [class*="ChatTheme"], [class*="Chat__wallpaper"], [class*="im-chat-wallpaper"], [data-testid*="wallpaper"], [data-testid*="chat-wallpaper"], [class*="ChatBackground__image"]'
             );
             for (let i = 0; i < nativeWallpapers.length; i++) {
                 const wp = nativeWallpapers[i];
                 wp.dataset.vmuCustomModified = 'true';
-                wp.style.setProperty('display', 'none', 'important');
-                wp.style.setProperty('opacity', '0', 'important');
-                wp.style.setProperty('visibility', 'hidden', 'important');
-                wp.style.setProperty('background-image', 'none', 'important');
-                wp.style.setProperty('z-index', '-9999', 'important');
+                const innerImgs = wp.querySelectorAll('img, picture, svg, canvas, video');
+                for (let m = 0; m < innerImgs.length; m++) {
+                    innerImgs[m].dataset.vmuHiddenMedia = 'true';
+                    innerImgs[m].style.setProperty('display', 'none', 'important');
+                    innerImgs[m].style.setProperty('opacity', '0', 'important');
+                    innerImgs[m].style.setProperty('visibility', 'hidden', 'important');
+                }
+                if (customBg) {
+                    wp.style.setProperty('display', 'block', 'important');
+                    wp.style.setProperty('opacity', '1', 'important');
+                    wp.style.setProperty('visibility', 'visible', 'important');
+                    wp.style.setProperty('background-image', `url("${customBg}")`, 'important');
+                    wp.style.setProperty('background-size', 'cover', 'important');
+                    wp.style.setProperty('background-position', 'center center', 'important');
+                    wp.style.setProperty('background-repeat', 'no-repeat', 'important');
+                    wp.style.setProperty('background-attachment', 'fixed', 'important');
+                } else {
+                    wp.style.setProperty('display', 'none', 'important');
+                    wp.style.setProperty('opacity', '0', 'important');
+                    wp.style.setProperty('visibility', 'hidden', 'important');
+                    wp.style.setProperty('background-image', 'none', 'important');
+                    wp.style.setProperty('z-index', '-9999', 'important');
+                }
             }
 
             if (customBg) {
@@ -3760,21 +3786,34 @@
                 bgLayer.style.setProperty('visibility', 'visible', 'important');
                 bgLayer.style.setProperty('z-index', '5', 'important');
 
-                // Б. Локальный фоновый слой внутри контейнеров панели чата
-                const chatPanels = document.querySelectorAll('.vkmChat, .vkuiPanel:has([class*="WriteBar"]), .vkuiPanel__in:has([class*="WriteBar"]), [class*="im-page--chat"], [class*="ChatView"]');
-                for (let p = 0; p < chatPanels.length; p++) {
-                    const panel = chatPanels[p];
-                    let localWp = panel.querySelector('#vmu-chat-panel-wallpaper');
-                    if (!localWp) {
-                        localWp = document.createElement('div');
-                        localWp.id = 'vmu-chat-panel-wallpaper';
-                        panel.insertBefore(localWp, panel.firstChild);
+                // Б. Локальный фоновый слой внутри контейнеров активной панели чата
+                const activePanels = document.querySelectorAll('.vkuiPanel:not([class*="hidden"]):not([style*="display: none"]):not([style*="display:none"])');
+                for (let p = 0; p < activePanels.length; p++) {
+                    const panel = activePanels[p];
+                    if (panel.querySelector('[class*="WriteBar"], [class*="writeBar"], .vkuiWriteBar, .vkmChat, [class*="ChatHistory"]')) {
+                        const chatRoots = panel.querySelectorAll('.vkmChat, .vkuiPanel__in, [class*="im-page--chat"], [class*="ChatView"]');
+                        for (let r = 0; r < chatRoots.length; r++) {
+                            const root = chatRoots[r];
+                            root.dataset.vmuCustomModified = 'true';
+                            root.style.setProperty('background-image', `url("${customBg}")`, 'important');
+                            root.style.setProperty('background-size', 'cover', 'important');
+                            root.style.setProperty('background-position', 'center center', 'important');
+                            root.style.setProperty('background-repeat', 'no-repeat', 'important');
+                            root.style.setProperty('background-attachment', 'fixed', 'important');
+                        }
+
+                        let localWp = panel.querySelector('#vmu-chat-panel-wallpaper');
+                        if (!localWp) {
+                            localWp = document.createElement('div');
+                            localWp.id = 'vmu-chat-panel-wallpaper';
+                            panel.insertBefore(localWp, panel.firstChild);
+                        }
+                        localWp.style.setProperty('background-image', `url("${customBg}")`, 'important');
+                        localWp.style.setProperty('display', 'block', 'important');
+                        localWp.style.setProperty('opacity', '1', 'important');
+                        localWp.style.setProperty('visibility', 'visible', 'important');
+                        localWp.style.setProperty('z-index', '5', 'important');
                     }
-                    localWp.style.setProperty('background-image', `url("${customBg}")`, 'important');
-                    localWp.style.setProperty('display', 'block', 'important');
-                    localWp.style.setProperty('opacity', '1', 'important');
-                    localWp.style.setProperty('visibility', 'visible', 'important');
-                    localWp.style.setProperty('z-index', '5', 'important');
                 }
 
                 // В. Очищаем фон внутренних списков сообщений и поднимаем их над фоном
@@ -3801,7 +3840,7 @@
         } else {
             document.body.classList.remove('vmu-in-chat');
             if (bgLayer) {
-                bgLayer.style.setProperty('display', 'none', 'important');
+                bgLayer.remove();
             }
             const panelWallpapers = document.querySelectorAll('#vmu-chat-panel-wallpaper');
             for (let i = 0; i < panelWallpapers.length; i++) {
