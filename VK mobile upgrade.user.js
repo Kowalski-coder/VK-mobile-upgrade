@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.25.3
+// @version      2.25.4
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), «Своё оформление» чатов (фон из галереи + свой цвет сообщений с интерактивным предпросмотром), раздел Мессенджер в настройках, кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -660,16 +660,24 @@
         }
 
         /* Визуальное отключение активного состояния стандартных тем при выборе «Своё» */
-        body.vmu-theme-custom-active .vkuiRadio--checked:not(#vmu-custom-theme-card) [class*="Radio__icon"],
-        body.vmu-theme-custom-active .vkuiRadio--checked:not(#vmu-custom-theme-card) [class*="icon"],
-        body.vmu-theme-custom-active .vkuiRadio--checked:not(#vmu-custom-theme-card) [class*="checked"],
-        body.vmu-theme-custom-active [role="radio"][aria-checked="true"]:not(#vmu-custom-theme-card) [class*="icon"],
-        body.vmu-theme-custom-active [role="radio"][aria-checked="true"]:not(#vmu-custom-theme-card) svg {
+        body.vmu-theme-custom-active [class*="HorizontalScroll"] [class*="Radio"]:not(#vmu-custom-theme-card) [class*="icon" i],
+        body.vmu-theme-custom-active [class*="HorizontalScroll"] [class*="Radio"]:not(#vmu-custom-theme-card) [class*="check" i],
+        body.vmu-theme-custom-active [class*="HorizontalScroll"] [class*="Radio"]:not(#vmu-custom-theme-card) [class*="badge" i],
+        body.vmu-theme-custom-active [class*="HorizontalScroll"] [class*="Radio"]:not(#vmu-custom-theme-card) svg,
+        body.vmu-theme-custom-active [class*="HorizontalScroll"] [role="radio"]:not(#vmu-custom-theme-card) [class*="icon" i],
+        body.vmu-theme-custom-active [class*="HorizontalScroll"] [role="radio"]:not(#vmu-custom-theme-card) [class*="check" i],
+        body.vmu-theme-custom-active [class*="HorizontalScroll"] [role="radio"]:not(#vmu-custom-theme-card) [class*="badge" i],
+        body.vmu-theme-custom-active [class*="HorizontalScroll"] [role="radio"]:not(#vmu-custom-theme-card) svg,
+        body.vmu-theme-custom-active [class*="HorizontalScroll"] label:not(#vmu-custom-theme-card) svg,
+        body.vmu-theme-custom-active [class*="HorizontalScroll"] div:not(#vmu-custom-theme-card):not(#vmu-live-chat-preview) > div > svg {
             display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
         }
 
-        body.vmu-theme-custom-active .vkuiRadio--checked:not(#vmu-custom-theme-card) [class*="Radio__content"],
-        body.vmu-theme-custom-active [role="radio"][aria-checked="true"]:not(#vmu-custom-theme-card) > div {
+        body.vmu-theme-custom-active [class*="HorizontalScroll"] [class*="Radio"]:not(#vmu-custom-theme-card) [class*="Radio__content"],
+        body.vmu-theme-custom-active [class*="HorizontalScroll"] [role="radio"]:not(#vmu-custom-theme-card) > div,
+        body.vmu-theme-custom-active [class*="HorizontalScroll"] [class*="Radio"]:not(#vmu-custom-theme-card) > div {
             border-color: rgba(255, 255, 255, 0.12) !important;
         }
 
@@ -2628,7 +2636,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.25.3</div>
+            <div>• <b>Script Version:</b> v2.25.4</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>Hide Labels:</b> ${isHideLabelsEnabled}</div>
@@ -2797,28 +2805,7 @@
             <div style="font-size: 13px; color: ${isCustomActive ? 'var(--vkui--color_text_accent, #FF5C5C)' : 'var(--vkui--color_text_primary, #ffffff)'}; font-weight: ${isCustomActive ? '600' : '400'}; margin-top: 6px; text-align: center;">Своё</div>
         `;
 
-        // Скрываем активные галочки со стандартных карточек, если выбрано «Своё»
-        if (isCustomActive) {
-            carouselRow.querySelectorAll('.vkuiRadio, [class*="Radio"], [role="radio"], label').forEach(item => {
-                if (item.id !== 'vmu-custom-theme-card' && !item.closest('#vmu-custom-theme-card')) {
-                    item.classList.remove('vkuiRadio--checked');
-                    item.removeAttribute('checked');
-                    if (item.querySelector('input[type="radio"]')) {
-                        item.querySelector('input[type="radio"]').checked = false;
-                    }
-                    const icons = item.querySelectorAll('[class*="icon" i], [class*="Icon"], [class*="checked" i], [class*="check" i], svg, [class*="badge" i]');
-                    icons.forEach(ic => {
-                        ic.style.setProperty('display', 'none', 'important');
-                        ic.style.setProperty('visibility', 'hidden', 'important');
-                        ic.style.setProperty('opacity', '0', 'important');
-                    });
-                    const borderEl = item.querySelector('[class*="content" i], div');
-                    if (borderEl) {
-                        borderEl.style.setProperty('border-color', 'rgba(255, 255, 255, 0.12)', 'important');
-                    }
-                }
-            });
-        }
+        clearNativeThemeCheckmarks();
 
         customCard.onclick = (e) => {
             e.preventDefault();
@@ -2826,6 +2813,7 @@
             currentChatPreset = 'custom';
             setSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'custom');
             applyCustomChatBackground();
+            clearNativeThemeCheckmarks();
             injectCustomThemeOptionInCarousel();
             window.history.pushState(null, '', '/mail/settings/theme?act=vmu_custom_theme');
             renderCustomThemeEditorPage();
@@ -2854,6 +2842,51 @@
                     });
                 }
             }, false);
+        }
+    }
+
+    function clearNativeThemeCheckmarks() {
+        if (currentChatPreset !== 'custom') return;
+        const carouselRow = findThemesCarouselRow();
+        if (!carouselRow) return;
+
+        const cards = carouselRow.children;
+        for (let i = 0; i < cards.length; i++) {
+            const card = cards[i];
+            if (card.id === 'vmu-custom-theme-card' || card.contains(document.getElementById('vmu-custom-theme-card'))) {
+                continue;
+            }
+
+            card.classList.remove('vkuiRadio--checked');
+            card.removeAttribute('checked');
+            card.setAttribute('aria-checked', 'false');
+            const radioInput = card.querySelector('input[type="radio"]');
+            if (radioInput) radioInput.checked = false;
+
+            const allChildren = card.querySelectorAll('*');
+            for (let j = 0; j < allChildren.length; j++) {
+                const el = allChildren[j];
+                if (el.textContent && el.textContent.trim() === '✓') {
+                    el.style.setProperty('display', 'none', 'important');
+                    el.style.setProperty('visibility', 'hidden', 'important');
+                    el.style.setProperty('opacity', '0', 'important');
+                }
+                if (el.tagName && el.tagName.toLowerCase() === 'svg') {
+                    el.style.setProperty('display', 'none', 'important');
+                    el.style.setProperty('visibility', 'hidden', 'important');
+                    el.style.setProperty('opacity', '0', 'important');
+                }
+                const cls = (el.className && typeof el.className === 'string') ? el.className.toLowerCase() : '';
+                if (cls.includes('icon') || cls.includes('check') || cls.includes('badge') || cls.includes('indicator')) {
+                    el.style.setProperty('display', 'none', 'important');
+                    el.style.setProperty('visibility', 'hidden', 'important');
+                    el.style.setProperty('opacity', '0', 'important');
+                }
+            }
+            const borderEl = card.querySelector('[class*="content" i], div');
+            if (borderEl) {
+                borderEl.style.setProperty('border-color', 'rgba(255, 255, 255, 0.12)', 'important');
+            }
         }
     }
 
@@ -4255,6 +4288,7 @@
             try { applyStyles(); } catch (e) {}
             try { syncCurrentTheme(); } catch (e) {}
             try { applyCustomChatBackground(); } catch (e) {}
+            try { clearNativeThemeCheckmarks(); } catch (e) {}
             try { fixChatElementsDirectly(); } catch (e) {}
             try { hideMailSettingsAppearanceItem(); } catch (e) {}
             try { updateSettingsVisibility(); } catch (e) {}
