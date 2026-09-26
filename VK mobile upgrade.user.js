@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.25.4
+// @version      2.25.5
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), «Своё оформление» чатов (фон из галереи + свой цвет сообщений с интерактивным предпросмотром), раздел Мессенджер в настройках, кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -591,72 +591,138 @@
         :root {
             --vmu-custom-chat-bg: none;
             --vmu-custom-chat-bubble: #2c2d2e;
+            --vmu-custom-chat-bubble-gradient: none;
+            --vmu-custom-chat-bubble-color: #2c2d2e;
         }
 
-        body.vmu-theme-custom-active {
+        /* Глобальные и локальные CSS-переменные для исходящих сообщений в кастомной теме */
+        body.vmu-theme-custom-active,
+        body.vmu-theme-custom-active *,
+        body.vmu-theme-custom-active [class*="Panel"],
+        body.vmu-theme-custom-active [class*="Chat"],
+        body.vmu-theme-custom-active [class*="Root"],
+        body.vmu-theme-custom-active [class*="Theme"],
+        body.vmu-theme-custom-active [class*="View"],
+        body.vmu-theme-custom-active [class*="SplitCol"] {
             --vkui--color_im_bubble_outgoing: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
             --vkui--color_im_bubble_outgoing_alternate: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
+            --vkui--color_im_bubble_outgoing_highlighted: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
+            --vkui--color_background_accent: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
+            --vkui--color_background_accent_themed: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
+            --vkui--color_accent_themed: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
+            --im-bubble-outgoing-background: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
+            --im_bubble_outgoing: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
             --color_im_bubble_outgoing: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
             --color_im_bubble_outgoing_alternate: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
-            --im-bubble-outgoing-background: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
+            --chat-bubble-outgoing-background: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
         }
 
-        /* Скрытие стандартных картинок и слоев обоев VK при активной кастомной теме */
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatWallpaper"] img,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkmChatWallpaper img,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatWallpaper"] svg,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="Wallpaper__image"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatWallpaper__image"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatWallpaper"] [style*="background-image"] {
-            opacity: 0 !important;
+        /* Полное скрытие ВСЕХ нативных обоев, картинок, узоров и фонов оригинальных тем VK */
+        body.vmu-theme-custom-active [class*="Wallpaper"],
+        body.vmu-theme-custom-active [class*="wallpaper"],
+        body.vmu-theme-custom-active .vkmChatWallpaper,
+        body.vmu-theme-custom-active [class*="ChatBackground"],
+        body.vmu-theme-custom-active [class*="ChatTheme"],
+        body.vmu-theme-custom-active [class*="Chat__wallpaper"],
+        body.vmu-theme-custom-active [class*="im-chat-wallpaper"],
+        body.vmu-theme-custom-active [data-testid*="wallpaper"],
+        body.vmu-theme-custom-active [data-testid*="chat-wallpaper"] {
             display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            background: transparent !important;
+            background-image: none !important;
         }
 
-        /* Применение кастомного фона чата */
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkmChat,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatHistory"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="MessagesList"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="im-page--chat"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatWallpaper"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkmChatWallpaper,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="im-history"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatContainer"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg main:has([class*="WriteBar"]),
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .layout:has([class*="WriteBar"]) {
-            background-image: var(--vmu-custom-chat-bg) !important;
-            background-size: cover !important;
-            background-position: center center !important;
-            background-repeat: no-repeat !important;
-            background-attachment: fixed !important;
-            background-color: #111112 !important;
+        body.vmu-theme-custom-active [class*="Wallpaper"] *,
+        body.vmu-theme-custom-active [class*="wallpaper"] *,
+        body.vmu-theme-custom-active .vkmChatWallpaper * {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
         }
 
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkmChat > div,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatHistory"] > div,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="MessagesList"] > div,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatHistory"] [class*="Stack"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="MessagesList"] [class*="Stack"] {
+        /* Делаем все контейнеры чата прозрачными, чтобы наш фон лежал статично позади сообщений */
+        body.vmu-theme-custom-active .vkmChat,
+        body.vmu-theme-custom-active [class*="ChatHistory"],
+        body.vmu-theme-custom-active [class*="MessagesList"],
+        body.vmu-theme-custom-active [class*="im-page--chat"],
+        body.vmu-theme-custom-active [class*="im-history"],
+        body.vmu-theme-custom-active [class*="ChatContainer"],
+        body.vmu-theme-custom-active [class*="ChatView"],
+        body.vmu-theme-custom-active [class*="ChatLayout"],
+        body.vmu-theme-custom-active [class*="ChatRoot"],
+        body.vmu-theme-custom-active [class*="Chat__content"],
+        body.vmu-theme-custom-active [class*="Conversation"],
+        body.vmu-theme-custom-active [class*="conversation"] {
+            background: transparent !important;
+            background-color: transparent !important;
+            background-image: none !important;
+        }
+
+        body.vmu-theme-custom-active .vkmChat > div,
+        body.vmu-theme-custom-active [class*="ChatHistory"] > div,
+        body.vmu-theme-custom-active [class*="MessagesList"] > div,
+        body.vmu-theme-custom-active [class*="ChatHistory"] [class*="Stack"],
+        body.vmu-theme-custom-active [class*="MessagesList"] [class*="Stack"] {
             background: transparent !important;
             background-color: transparent !important;
         }
 
+        /* Статичный независимый слой фоновой картинки чата */
+        #vmu-chat-custom-bg-layer {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 0 !important;
+            pointer-events: none !important;
+            background-size: cover !important;
+            background-position: center center !important;
+            background-repeat: no-repeat !important;
+            display: none !important;
+        }
+
+        body.vmu-theme-custom-active.vmu-in-chat.vmu-has-custom-chat-bg #vmu-chat-custom-bg-layer,
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg:has([class*="WriteBar"]) #vmu-chat-custom-bg-layer,
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg:has([class*="ChatHistory"]) #vmu-chat-custom-bg-layer,
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg:has(.vkmChat) #vmu-chat-custom-bg-layer {
+            display: block !important;
+        }
+
         /* Применение цвета исходящих сообщений */
+        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"],
+        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"] [class*="MessageBubble__bubble"],
+        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"] [class*="MessageBubble__in"],
+        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"] [class*="MessageBubble__content"],
+        body.vmu-theme-custom-active [class*="MessageBubble--out"],
+        body.vmu-theme-custom-active [class*="MessageBubble--out"] [class*="MessageBubble__bubble"],
+        body.vmu-theme-custom-active [class*="MessageBubble--out"] [class*="MessageBubble__in"],
+        body.vmu-theme-custom-active [class*="Message--outgoing"] [class*="Message__bubble"],
+        body.vmu-theme-custom-active [class*="Message--outgoing"] [class*="MessageBubble"],
+        body.vmu-theme-custom-active [class*="Message--outgoing"] [class*="im-mess--bubble"],
         body.vmu-theme-custom-active [class*="im-mess_out"] [class*="im-mess--bubble"],
         body.vmu-theme-custom-active [class*="im-mess_out"] [class*="im-mess__bubble"],
         body.vmu-theme-custom-active [class*="im-mess_out"] [class*="im-mess-stack"],
-        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"],
-        body.vmu-theme-custom-active [class*="MessageBubble--out"],
-        body.vmu-theme-custom-active [class*="Message--outgoing"] [class*="Message__bubble"],
-        body.vmu-theme-custom-active [class*="Message--outgoing"] [class*="im-mess--bubble"],
-        body.vmu-theme-custom-active [class*="Message--outgoing"] [class*="MessageBubble"],
-        body.vmu-theme-custom-active [class*="Message--outgoing"],
         body.vmu-theme-custom-active [data-testid="message-bubble-outgoing"],
-        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"] [class*="MessageBubble__bubble"],
-        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"] [class*="MessageBubble__in"],
-        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"] > div {
+        body.vmu-theme-custom-active [data-testid="message-bubble-outgoing"] > div,
+        body.vmu-theme-custom-active [class*="vkmMessage--outgoing"] [class*="vkmMessage__bubble"],
+        body.vmu-theme-custom-active [class*="vkmMessage--outgoing"] [class*="Bubble"],
+        body.vmu-theme-custom-active [class*="Message--outgoing"] [class*="bubble"] {
             background: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
-            background-color: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
+            background-color: var(--vmu-custom-chat-bubble-color, #2c2d2e) !important;
+            background-image: var(--vmu-custom-chat-bubble-gradient, none) !important;
             color: #ffffff !important;
+        }
+
+        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"] svg path,
+        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"] [class*="Tail"] path,
+        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"] [class*="tail"] path,
+        body.vmu-theme-custom-active [class*="Message--outgoing"] svg path {
+            fill: var(--vmu-custom-chat-bubble-color, #2c2d2e) !important;
         }
 
         /* Визуальное отключение активного состояния стандартных тем при выборе «Своё» */
@@ -1288,6 +1354,16 @@
         return (path.startsWith('/mail/settings') || path.startsWith('/im/settings')) && !path.includes('/mail/settings/theme');
     }
 
+    function isChatPage() {
+        const path = window.location.pathname.toLowerCase();
+        const search = window.location.search.toLowerCase();
+        if (path.startsWith('/mail') && (search.includes('act=show') || search.includes('peer') || search.includes('chat') || search.includes('sel'))) return true;
+        if (path.startsWith('/im') && (search.includes('sel') || path.includes('/convo/') || path.includes('/chat/'))) return true;
+        if (path.startsWith('/write')) return true;
+        if (document.querySelector && document.querySelector('[class*="WriteBar"], [class*="ChatHistory"], [class*="MessagesList"], .vkmChat, [class*="ChatView"], [class*="im-page--chat"], [class*="ChatLayout"]')) return true;
+        return false;
+    }
+
     function updatePageBodyClasses() {
         if (!document.body) return;
         const isMail = isMainMailListPage();
@@ -1346,6 +1422,17 @@
             document.body.classList.add('vmu-page-mail-settings');
         } else {
             document.body.classList.remove('vmu-page-mail-settings');
+        }
+
+        const inChat = isChatPage();
+        if (inChat) {
+            if (!document.body.classList.contains('vmu-in-chat')) {
+                document.body.classList.add('vmu-in-chat');
+            }
+        } else {
+            if (document.body.classList.contains('vmu-in-chat')) {
+                document.body.classList.remove('vmu-in-chat');
+            }
         }
     }
 
@@ -3392,6 +3479,7 @@
     }
 
     function applyCustomChatBackground() {
+        currentChatPreset = getStringSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'classic');
         const isCustom = (currentChatPreset === 'custom');
         let customBg = null;
         let customColor = getStringSetting(STORAGE_KEYS.CUSTOM_CHAT_COLOR, '#2c2d2e');
@@ -3404,6 +3492,8 @@
         if (html) {
             html.style.setProperty('--vmu-custom-chat-bg', customBg ? `url("${customBg}")` : 'none');
             html.style.setProperty('--vmu-custom-chat-bubble', customColor);
+            html.style.setProperty('--vmu-custom-chat-bubble-gradient', customColor.startsWith('linear-gradient') ? customColor : 'none');
+            html.style.setProperty('--vmu-custom-chat-bubble-color', customColor.startsWith('linear-gradient') ? '#2c2d2e' : customColor);
         }
 
         if (document.body) {
@@ -3416,9 +3506,24 @@
                 } else {
                     document.body.classList.remove('vmu-has-custom-chat-bg');
                 }
+
+                // Управление постоянным фиксированным слоем кастомного фона
+                let bgLayer = document.getElementById('vmu-chat-custom-bg-layer');
+                if (customBg) {
+                    if (!bgLayer) {
+                        bgLayer = document.createElement('div');
+                        bgLayer.id = 'vmu-chat-custom-bg-layer';
+                        document.body.prepend(bgLayer);
+                    }
+                    bgLayer.style.setProperty('background-image', `url("${customBg}")`, 'important');
+                } else {
+                    if (bgLayer) bgLayer.remove();
+                }
             } else {
                 document.body.classList.remove('vmu-theme-custom-active');
                 document.body.classList.remove('vmu-has-custom-chat-bg');
+                const bgLayer = document.getElementById('vmu-chat-custom-bg-layer');
+                if (bgLayer) bgLayer.remove();
             }
         }
 
@@ -3426,6 +3531,7 @@
     }
 
     function fixChatElementsDirectly() {
+        currentChatPreset = getStringSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'classic');
         const isCustom = (currentChatPreset === 'custom');
         if (!isCustom) return;
 
@@ -3435,54 +3541,56 @@
             customBg = localStorage.getItem(STORAGE_KEYS.CUSTOM_CHAT_BG);
         } catch(e) {}
 
-        // 1. Подавление нативных картинок/обоев VK внутри чата
-        const wallpaperEls = document.querySelectorAll(
-            '.vkmChatWallpaper, [class*="ChatWallpaper"], [class*="Wallpaper"]'
+        // 1. Полное подавление любых нативных обоев, картинок и узоров темы VK
+        const nativeWallpapers = document.querySelectorAll(
+            '.vkmChatWallpaper, [class*="ChatWallpaper"], [class*="Wallpaper"], [class*="ChatBackground"], [class*="ChatTheme"], [class*="Chat__wallpaper"], [class*="im-chat-wallpaper"], [data-testid*="wallpaper"], [data-testid*="chat-wallpaper"]'
         );
-        for (let i = 0; i < wallpaperEls.length; i++) {
-            const wp = wallpaperEls[i];
-            const imgs = wp.querySelectorAll('img, svg, picture, video, canvas');
-            for (let j = 0; j < imgs.length; j++) {
-                imgs[j].style.setProperty('display', 'none', 'important');
-                imgs[j].style.setProperty('opacity', '0', 'important');
-            }
-            if (customBg) {
-                wp.style.setProperty('background-image', `url("${customBg}")`, 'important');
-                wp.style.setProperty('background-size', 'cover', 'important');
-                wp.style.setProperty('background-position', 'center center', 'important');
-                wp.style.setProperty('background-repeat', 'no-repeat', 'important');
-                wp.style.setProperty('background-attachment', 'fixed', 'important');
-            } else {
-                wp.style.setProperty('background-image', 'none', 'important');
-                wp.style.setProperty('background', '#111112', 'important');
+        for (let i = 0; i < nativeWallpapers.length; i++) {
+            const wp = nativeWallpapers[i];
+            wp.style.setProperty('display', 'none', 'important');
+            wp.style.setProperty('opacity', '0', 'important');
+            wp.style.setProperty('visibility', 'hidden', 'important');
+            wp.style.setProperty('background-image', 'none', 'important');
+            const innerMedia = wp.querySelectorAll('img, svg, picture, video, canvas, div');
+            for (let j = 0; j < innerMedia.length; j++) {
+                innerMedia[j].style.setProperty('display', 'none', 'important');
+                innerMedia[j].style.setProperty('opacity', '0', 'important');
+                innerMedia[j].style.setProperty('visibility', 'hidden', 'important');
             }
         }
 
-        // 2. Установка фона на сам чат и историю сообщений
+        // 2. Делаем контейнеры чата прозрачными, чтобы не перекрывали статичный фон
         const chatContainers = document.querySelectorAll(
-            '.vkmChat, [class*="ChatHistory"], [class*="MessagesList"], [class*="im-page--chat"], [class*="im-chat"], [class*="ChatContainer"], [class*="ChatView"]'
+            '.vkmChat, [class*="ChatHistory"], [class*="MessagesList"], [class*="im-page--chat"], [class*="im-chat"], [class*="ChatContainer"], [class*="ChatView"], [class*="ChatLayout"], [class*="ChatRoot"], [class*="Chat__content"], [class*="Conversation"], [class*="conversation"]'
         );
         for (let i = 0; i < chatContainers.length; i++) {
             const cc = chatContainers[i];
-            if (customBg) {
-                cc.style.setProperty('background-image', `url("${customBg}")`, 'important');
-                cc.style.setProperty('background-size', 'cover', 'important');
-                cc.style.setProperty('background-position', 'center center', 'important');
-                cc.style.setProperty('background-repeat', 'no-repeat', 'important');
-                cc.style.setProperty('background-attachment', 'fixed', 'important');
-            }
+            cc.style.setProperty('background-image', 'none', 'important');
+            cc.style.setProperty('background-color', 'transparent', 'important');
+            cc.style.setProperty('background', 'transparent', 'important');
         }
 
-        // 3. Перекрашивание исходящих облачков сообщений
+        // 3. Динамическая покраска исходящих сообщений
+        const isGrad = customColor.startsWith('linear-gradient');
         const outBubbles = document.querySelectorAll(
-            '[class*="MessageBubble--outgoing"], [class*="MessageBubble--out"], [class*="Message--outgoing"] [class*="Message__bubble"], [class*="Message--outgoing"] [class*="im-mess--bubble"], [class*="im-mess_out"] [class*="im-mess--bubble"], [data-testid="message-bubble-outgoing"], [class*="MessageBubble--outgoing"] [class*="MessageBubble__bubble"], [class*="MessageBubble--outgoing"] [class*="MessageBubble__in"], [class*="MessageBubble--outgoing"]'
+            '[class*="MessageBubble--outgoing"], [class*="MessageBubble--out"], [class*="Message--outgoing"] [class*="Message__bubble"], [class*="Message--outgoing"] [class*="MessageBubble"], [class*="Message--outgoing"] [class*="im-mess--bubble"], [class*="im-mess_out"] [class*="im-mess--bubble"], [class*="im-mess_out"] [class*="im-mess__bubble"], [class*="im-mess_out"] [class*="im-mess-stack"], [data-testid="message-bubble-outgoing"], [data-testid="message-bubble-outgoing"] > div, [class*="MessageBubble--outgoing"] [class*="MessageBubble__bubble"], [class*="MessageBubble--outgoing"] [class*="MessageBubble__in"], [class*="MessageBubble--outgoing"] [class*="MessageBubble__content"], [class*="MessageBubble--outgoing"], [class*="vkmMessage--outgoing"] [class*="vkmMessage__bubble"], [class*="vkmMessage--outgoing"] [class*="Bubble"], [class*="Message--outgoing"] [class*="bubble"]'
         );
         for (let i = 0; i < outBubbles.length; i++) {
             const b = outBubbles[i];
-            b.style.setProperty('background', customColor, 'important');
-            b.style.setProperty('background-color', customColor, 'important');
-            b.style.setProperty('background-image', 'none', 'important');
+            if (isGrad) {
+                b.style.setProperty('background', customColor, 'important');
+                b.style.setProperty('background-image', customColor, 'important');
+            } else {
+                b.style.setProperty('background', customColor, 'important');
+                b.style.setProperty('background-color', customColor, 'important');
+                b.style.setProperty('background-image', 'none', 'important');
+            }
             b.style.setProperty('color', '#ffffff', 'important');
+
+            const paths = b.querySelectorAll('svg path, [class*="Tail"] path, [class*="tail"] path');
+            for (let p = 0; p < paths.length; p++) {
+                paths[p].style.setProperty('fill', isGrad ? '#2c2d2e' : customColor, 'important');
+            }
         }
     }
 
