@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.25.8
+// @version      2.25.9
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), «Своё оформление» чатов (фон из галереи + свой цвет сообщений с интерактивным предпросмотром), раздел Мессенджер в настройках, кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -595,26 +595,40 @@
             --vmu-custom-chat-bubble-color: #2c2d2e;
         }
 
-        /* Полное скрытие ВСЕХ нативных обоев, картинок, узоров и фонов оригинальных тем VK */
-        body.vmu-theme-custom-active [class*="Wallpaper"],
-        body.vmu-theme-custom-active [class*="wallpaper"],
-        body.vmu-theme-custom-active .vkmChatWallpaper,
-        body.vmu-theme-custom-active [class*="ChatBackground"],
-        body.vmu-theme-custom-active [class*="ChatTheme"],
-        body.vmu-theme-custom-active [class*="Chat__wallpaper"],
-        body.vmu-theme-custom-active [class*="im-chat-wallpaper"],
-        body.vmu-theme-custom-active [data-testid*="wallpaper"],
-        body.vmu-theme-custom-active [data-testid*="chat-wallpaper"] {
+        /* Скрытие внутренних нативных картинок/svg обоев VK */
+        body.vmu-theme-custom-active [class*="Wallpaper"] img,
+        body.vmu-theme-custom-active [class*="wallpaper"] img,
+        body.vmu-theme-custom-active .vkmChatWallpaper img,
+        body.vmu-theme-custom-active [class*="Wallpaper"] svg,
+        body.vmu-theme-custom-active [class*="wallpaper"] svg,
+        body.vmu-theme-custom-active .vkmChatWallpaper svg,
+        body.vmu-theme-custom-active [class*="Wallpaper"] canvas,
+        body.vmu-theme-custom-active [class*="wallpaper"] canvas,
+        body.vmu-theme-custom-active .vkmChatWallpaper canvas {
             display: none !important;
             opacity: 0 !important;
             visibility: hidden !important;
-            background: transparent !important;
-            background-image: none !important;
         }
 
-        body.vmu-theme-custom-active [class*="Wallpaper"] *,
-        body.vmu-theme-custom-active [class*="wallpaper"] *,
-        body.vmu-theme-custom-active .vkmChatWallpaper * {
+        /* Применение кастомных обоев на нативные контейнеры обоев VK */
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="Wallpaper"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="wallpaper"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkmChatWallpaper,
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatBackground"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatTheme"] {
+            display: block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            background-image: var(--vmu-custom-chat-bg) !important;
+            background-size: cover !important;
+            background-position: center center !important;
+            background-repeat: no-repeat !important;
+            background-attachment: fixed !important;
+        }
+
+        body.vmu-theme-custom-active:not(.vmu-has-custom-chat-bg) [class*="Wallpaper"],
+        body.vmu-theme-custom-active:not(.vmu-has-custom-chat-bg) [class*="wallpaper"],
+        body.vmu-theme-custom-active:not(.vmu-has-custom-chat-bg) .vkmChatWallpaper {
             display: none !important;
             opacity: 0 !important;
             visibility: hidden !important;
@@ -645,6 +659,14 @@
             background-image: none !important;
         }
 
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat {
+            background-image: var(--vmu-custom-chat-bg) !important;
+            background-size: cover !important;
+            background-position: center center !important;
+            background-repeat: no-repeat !important;
+            background-attachment: fixed !important;
+        }
+
         /* Статичный слой кастомного фона */
         #vmu-chat-custom-wallpaper {
             position: fixed !important;
@@ -654,7 +676,7 @@
             bottom: 0 !important;
             width: 100vw !important;
             height: 100vh !important;
-            z-index: -1 !important;
+            z-index: 0 !important;
             pointer-events: none !important;
             background-size: cover !important;
             background-position: center center !important;
@@ -662,26 +684,26 @@
             display: none;
         }
 
-        body.vmu-theme-custom-active.vmu-in-chat.vmu-has-custom-chat-bg #vmu-chat-custom-wallpaper,
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat #vmu-chat-custom-wallpaper,
         body.vmu-theme-custom-active.vmu-has-custom-chat-bg:has([class*="WriteBar"]) #vmu-chat-custom-wallpaper,
         body.vmu-theme-custom-active.vmu-has-custom-chat-bg:has([class*="ChatHistory"]) #vmu-chat-custom-wallpaper,
         body.vmu-theme-custom-active.vmu-has-custom-chat-bg:has(.vkmChat) #vmu-chat-custom-wallpaper {
             display: block !important;
         }
 
-        /* 1. Фон накладывается ТОЛЬКО на сам пузырь обычного текстового сообщения */
-        body.vmu-theme-custom-active .vkmMessage--out:not(.vkmMessage--media):not(.vkmMessage--has-attach) > .vkmMessage__bubble,
-        body.vmu-theme-custom-active .vkmMessage--out:not(.vkmMessage--media):not(.vkmMessage--has-attach) .vkmMessage__bubble,
-        body.vmu-theme-custom-active .vkmMessage_out:not(.vkmMessage--media):not(.vkmMessage--has-attach) .vkmMessage__bubble,
-        body.vmu-theme-custom-active [class*="vkmMessage--out"]:not([class*="--media"]):not([class*="--has-attach"]) > [class*="vkmMessage__bubble"],
-        body.vmu-theme-custom-active [class*="vkmMessage--out"]:not([class*="--media"]):not([class*="--has-attach"]) .vkmMessage__bubble,
-        body.vmu-theme-custom-active [class*="vkmMessage_out"]:not([class*="--media"]):not([class*="--has-attach"]) .vkmMessage__bubble,
-        body.vmu-theme-custom-active [class*="Message--out"]:not([class*="--media"]):not([class*="--has-attach"]) > [class*="Message__bubble"],
-        body.vmu-theme-custom-active [class*="Message--out"]:not([class*="--media"]):not([class*="--has-attach"]) .Message__bubble,
-        body.vmu-theme-custom-active .im-mess_out:not(.im-mess--media) .im-mess--bubble,
-        body.vmu-theme-custom-active [class*="im-mess_out"]:not([class*="--media"]) .im-mess--bubble,
-        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"]:not([class*="--media"]),
-        body.vmu-theme-custom-active [class*="MessageBubble--out"]:not([class*="--media"]) {
+        /* 1. Фон накладывается на пузыри исходящих текстовых и голосовых сообщений */
+        body.vmu-theme-custom-active .vkmMessage--out:not([class*="--video"]):not([class*="--photo"]) > .vkmMessage__bubble,
+        body.vmu-theme-custom-active .vkmMessage--out:not([class*="--video"]):not([class*="--photo"]) .vkmMessage__bubble,
+        body.vmu-theme-custom-active .vkmMessage_out:not([class*="--video"]):not([class*="--photo"]) .vkmMessage__bubble,
+        body.vmu-theme-custom-active [class*="vkmMessage--out"]:not([class*="--video"]):not([class*="--photo"]) > [class*="vkmMessage__bubble"],
+        body.vmu-theme-custom-active [class*="vkmMessage--out"]:not([class*="--video"]):not([class*="--photo"]) .vkmMessage__bubble,
+        body.vmu-theme-custom-active [class*="vkmMessage_out"]:not([class*="--video"]):not([class*="--photo"]) .vkmMessage__bubble,
+        body.vmu-theme-custom-active [class*="Message--out"]:not([class*="--video"]):not([class*="--photo"]) > [class*="Message__bubble"],
+        body.vmu-theme-custom-active [class*="Message--out"]:not([class*="--video"]):not([class*="--photo"]) .Message__bubble,
+        body.vmu-theme-custom-active .im-mess_out:not([class*="--video"]):not([class*="--photo"]) .im-mess--bubble,
+        body.vmu-theme-custom-active [class*="im-mess_out"]:not([class*="--video"]):not([class*="--photo"]) .im-mess--bubble,
+        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"]:not([class*="--video"]):not([class*="--photo"]),
+        body.vmu-theme-custom-active [class*="MessageBubble--out"]:not([class*="--video"]):not([class*="--photo"]) {
             background: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
             background-color: var(--vmu-custom-chat-bubble-color, #2c2d2e) !important;
             background-image: var(--vmu-custom-chat-bubble-gradient, none) !important;
@@ -1360,7 +1382,7 @@
         if (path.startsWith('/mail') && (search.includes('act=show') || search.includes('peer') || search.includes('chat') || search.includes('sel'))) return true;
         if (path.startsWith('/im') && (search.includes('sel') || path.includes('/convo/') || path.includes('/chat/'))) return true;
         if (path.startsWith('/write')) return true;
-        if (document.querySelector && document.querySelector('[class*="WriteBar"], [class*="ChatHistory"], [class*="MessagesList"], .vkmChat, [class*="ChatView"], [class*="im-page--chat"], [class*="ChatLayout"]')) return true;
+        if (document.querySelector && document.querySelector('[class*="WriteBar"], [class*="ChatHistory"], [class*="MessagesList"], .vkmChat, [class*="ChatView"], [class*="im-page--chat"], [class*="ChatLayout"], [class*="im-chat-input"], .vkmAudioMessage')) return true;
         return false;
     }
 
@@ -3596,9 +3618,10 @@
         for (let i = 0; i < outRows.length; i++) {
             const row = outRows[i];
 
-            // Проверяем, является ли сообщение чистым медиа-вложением (видео/фото без текста)
-            const hasMediaAttach = !!row.querySelector('.vkmMessage__attachment, [class*="attachment" i], [class*="VideoCard" i], [class*="Snippet" i], [class*="WallPost" i], video, iframe');
+            // Проверяем типы сообщения
+            const isAudioMsg = !!row.querySelector('[class*="AudioMessage" i], .vkmAudioMessage, [class*="audio" i], [class*="voice" i], [class*="waveform" i]');
             const hasText = !!(row.querySelector('.vkmMessage__text, [class*="text" i]') && row.querySelector('.vkmMessage__text, [class*="text" i]').textContent.trim());
+            const isStandaloneMedia = !hasText && !isAudioMsg && !!row.querySelector('[class*="VideoCard" i], [class*="Photo" i], video, iframe, [class*="Snippet" i], [class*="WallPost" i]');
 
             // Очищаем кнопку действий «...» слева от пузыря
             const actions = row.querySelectorAll('[class*="actions" i], [class*="action" i], [class*="tools" i]');
@@ -3623,13 +3646,13 @@
             }
 
             if (bubble) {
-                if (hasMediaAttach && !hasText) {
+                if (isStandaloneMedia) {
                     // Чистое медиа-вложение: не красим фон пузыря
                     bubble.style.setProperty('background', 'transparent', 'important');
                     bubble.style.setProperty('background-color', 'transparent', 'important');
                     bubble.style.setProperty('background-image', 'none', 'important');
                 } else {
-                    // Обычное текстовое сообщение: красим пузырь
+                    // Обычное текстовое или голосовое сообщение: красим пузырь
                     if (isGrad) {
                         bubble.style.setProperty('background', customColor, 'important');
                         bubble.style.setProperty('background-image', customColor, 'important');
@@ -3640,13 +3663,17 @@
                     }
                     bubble.style.setProperty('color', '#ffffff', 'important');
 
-                    // Очищаем внутренний текст/контент, чтобы не было вложенного прямоугольника
+                    // Очищаем внутренний текст/контент, чтобы не было вложенного прямоугольника (не трогая аудиоплеер)
                     const innerContents = bubble.querySelectorAll('.vkmMessage__text, .vkmMessage__content, .vkmMessage__in, [class*="content" i], [class*="text" i]');
                     for (let ic = 0; ic < innerContents.length; ic++) {
-                        innerContents[ic].style.setProperty('background', 'transparent', 'important');
-                        innerContents[ic].style.setProperty('background-color', 'transparent', 'important');
-                        innerContents[ic].style.setProperty('background-image', 'none', 'important');
-                        innerContents[ic].style.setProperty('color', '#ffffff', 'important');
+                        const icEl = innerContents[ic];
+                        if (icEl.matches && (icEl.matches('[class*="AudioMessage" i]') || icEl.matches('.vkmAudioMessage') || icEl.matches('[class*="waveform" i]'))) {
+                            continue;
+                        }
+                        icEl.style.setProperty('background', 'transparent', 'important');
+                        icEl.style.setProperty('background-color', 'transparent', 'important');
+                        icEl.style.setProperty('background-image', 'none', 'important');
+                        icEl.style.setProperty('color', '#ffffff', 'important');
                     }
                 }
             }
