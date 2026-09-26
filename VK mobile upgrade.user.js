@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.26.1
+// @version      2.26.2
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), «Своё оформление» чатов (фон из галереи + свой цвет сообщений с интерактивным предпросмотром), раздел Мессенджер в настройках, кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -667,6 +667,36 @@
             background: transparent !important;
             background-color: transparent !important;
             background-image: none !important;
+        }
+
+        /* Гарантированное замещение любых фонов с CDN VK на наш кастомный фон */
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [style*="userapi"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [style*="sun9-"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [style*="sun1-"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [style*="sun6-"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [style*="vk.me"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [style*="im_theme"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [style*="wallpaper"] {
+            background-image: var(--vmu-custom-chat-bg) !important;
+            background-size: cover !important;
+            background-position: center center !important;
+            background-repeat: no-repeat !important;
+            background-attachment: fixed !important;
+        }
+
+        /* Сохранение непрозрачного фона шапки и строки ввода */
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkuiPanelHeader,
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="PanelHeader"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkmChatHeader,
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="vkmChatHeader"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatHeader"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="WriteBar"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="writeBar"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkuiWriteBar,
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="im-chat-input"] {
+            background-image: none !important;
+            background-color: var(--vkui--color_background_content, #19191a) !important;
+            background: var(--vkui--color_background_content, #19191a) !important;
         }
 
         /* Статичный слой кастомного фона */
@@ -2924,7 +2954,27 @@
             e.stopPropagation();
             currentChatPreset = 'custom';
             setSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'custom');
+
+            // Программно сбрасываем тему VK на стандартную классическую (без картинок обоев)
+            try {
+                const cards = carouselRow.children;
+                for (let i = 0; i < cards.length; i++) {
+                    const c = cards[i];
+                    if (c.id !== 'vmu-custom-theme-card' && !c.contains(customCard)) {
+                        const input = c.querySelector('input[type="radio"]') || c;
+                        if (input) {
+                            input.click();
+                            break;
+                        }
+                    }
+                }
+            } catch(err) {}
+
             applyCustomChatBackground();
+            setTimeout(() => {
+                clearNativeThemeCheckmarks();
+                injectCustomThemeOptionInCarousel();
+            }, 60);
             clearNativeThemeCheckmarks();
             injectCustomThemeOptionInCarousel();
             window.history.pushState(null, '', '/mail/settings/theme?act=vmu_custom_theme');
