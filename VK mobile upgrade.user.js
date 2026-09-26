@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.25.6
+// @version      2.25.7
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), «Своё оформление» чатов (фон из галереи + свой цвет сообщений с интерактивным предпросмотром), раздел Мессенджер в настройках, кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -696,36 +696,57 @@
             display: block !important;
         }
 
-        /* Применение цвета к исходящим сообщениям */
+        /* 1. Фон накладывается ТОЛЬКО на сам пузырь сообщения */
+        body.vmu-theme-custom-active .vkmMessage--out > .vkmMessage__bubble,
+        body.vmu-theme-custom-active .vkmMessage--out .vkmMessage__bubble,
+        body.vmu-theme-custom-active .vkmMessage_out .vkmMessage__bubble,
+        body.vmu-theme-custom-active [class*="vkmMessage--out"] > [class*="vkmMessage__bubble"],
         body.vmu-theme-custom-active [class*="vkmMessage--out"] .vkmMessage__bubble,
-        body.vmu-theme-custom-active [class*="vkmMessage--out"] .vkmMessage__content,
-        body.vmu-theme-custom-active [class*="vkmMessage--out"] .vkmMessage__in,
-        body.vmu-theme-custom-active [class*="vkmMessage--out"] [class*="bubble" i],
-        body.vmu-theme-custom-active [class*="vkmMessage--out"] [class*="Bubble" i],
-        body.vmu-theme-custom-active [class*="vkmMessage_out"] [class*="bubble" i],
         body.vmu-theme-custom-active [class*="vkmMessage_out"] .vkmMessage__bubble,
-        body.vmu-theme-custom-active [class*="Message--out"] [class*="bubble" i],
-        body.vmu-theme-custom-active [class*="Message--out"] [class*="content" i],
-        body.vmu-theme-custom-active [class*="Message_out"] [class*="bubble" i],
+        body.vmu-theme-custom-active [class*="Message--out"] > [class*="Message__bubble"],
+        body.vmu-theme-custom-active [class*="Message--out"] .Message__bubble,
+        body.vmu-theme-custom-active .im-mess_out .im-mess--bubble,
         body.vmu-theme-custom-active [class*="im-mess_out"] .im-mess--bubble,
-        body.vmu-theme-custom-active [class*="im-mess_out"] [class*="bubble" i],
-        body.vmu-theme-custom-active [class*="im-mess_out"] [class*="content" i],
-        body.vmu-theme-custom-active [class*="im-mess--out"] [class*="bubble" i],
         body.vmu-theme-custom-active [class*="MessageBubble--outgoing"],
         body.vmu-theme-custom-active [class*="MessageBubble--out"],
-        body.vmu-theme-custom-active [class*="Message--outgoing"] [class*="Message__bubble"],
-        body.vmu-theme-custom-active [class*="Message--outgoing"] [class*="bubble" i],
-        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"] [class*="MessageBubble__bubble"],
-        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"] [class*="MessageBubble__in"],
-        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"] [class*="MessageBubble__content"],
-        body.vmu-theme-custom-active [data-testid="message-bubble-outgoing"],
-        body.vmu-theme-custom-active [data-testid="message-bubble-outgoing"] > div {
+        body.vmu-theme-custom-active [class*="Message--outgoing"] > [class*="Message__bubble"],
+        body.vmu-theme-custom-active [class*="Message--outgoing"] .Message__bubble,
+        body.vmu-theme-custom-active [data-testid="message-bubble-outgoing"] {
             background: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
             background-color: var(--vmu-custom-chat-bubble-color, #2c2d2e) !important;
             background-image: var(--vmu-custom-chat-bubble-gradient, none) !important;
             color: #ffffff !important;
         }
 
+        /* 2. Все внутренние контейнеры текста, контента и вложений ДОЛЖНЫ быть прозрачными */
+        body.vmu-theme-custom-active .vkmMessage--out .vkmMessage__content,
+        body.vmu-theme-custom-active .vkmMessage--out .vkmMessage__text,
+        body.vmu-theme-custom-active .vkmMessage--out .vkmMessage__in,
+        body.vmu-theme-custom-active [class*="vkmMessage--out"] [class*="content" i],
+        body.vmu-theme-custom-active [class*="vkmMessage--out"] [class*="text" i],
+        body.vmu-theme-custom-active [class*="Message--out"] [class*="content" i],
+        body.vmu-theme-custom-active [class*="Message--out"] [class*="text" i],
+        body.vmu-theme-custom-active [class*="im-mess_out"] [class*="content" i],
+        body.vmu-theme-custom-active [class*="im-mess_out"] [class*="text" i] {
+            background: transparent !important;
+            background-color: transparent !important;
+            background-image: none !important;
+            color: #ffffff !important;
+        }
+
+        /* 3. Кнопка действий «...» слева от сообщения НЕ должна перекрашиваться */
+        body.vmu-theme-custom-active .vkmMessage__actions,
+        body.vmu-theme-custom-active [class*="vkmMessage__actions"],
+        body.vmu-theme-custom-active [class*="vkmMessage__action"],
+        body.vmu-theme-custom-active [class*="Message__actions"],
+        body.vmu-theme-custom-active [class*="im-mess__actions"] {
+            background: transparent !important;
+            background-color: transparent !important;
+            background-image: none !important;
+        }
+
+        /* 4. Время и статус доставки сообщения */
+        body.vmu-theme-custom-active .vkmMessage--out .vkmMessage__time,
         body.vmu-theme-custom-active [class*="vkmMessage--out"] [class*="time" i],
         body.vmu-theme-custom-active [class*="vkmMessage--out"] [class*="date" i],
         body.vmu-theme-custom-active [class*="vkmMessage_out"] [class*="time" i],
@@ -733,9 +754,12 @@
         body.vmu-theme-custom-active [class*="im-mess_out"] [class*="time" i],
         body.vmu-theme-custom-active [class*="Message--outgoing"] [class*="time" i],
         body.vmu-theme-custom-active [class*="MessageBubble--outgoing"] [class*="time" i] {
+            background: transparent !important;
+            background-color: transparent !important;
             color: rgba(255, 255, 255, 0.75) !important;
         }
 
+        body.vmu-theme-custom-active .vkmMessage--out .vkmMessage__time svg,
         body.vmu-theme-custom-active [class*="vkmMessage--out"] [class*="time" i] svg,
         body.vmu-theme-custom-active [class*="vkmMessage--out"] [class*="time" i] svg path,
         body.vmu-theme-custom-active [class*="vkmMessage_out"] [class*="time" i] svg,
@@ -3620,47 +3644,60 @@
         );
         for (let i = 0; i < outRows.length; i++) {
             const row = outRows[i];
-            const bubbles = row.querySelectorAll(
-                '.vkmMessage__bubble, .vkmMessage__content, .vkmMessage__in, .im-mess--bubble, .im-mess__content, .Message__bubble, [class*="bubble" i], [class*="content" i], [class*="in" i], [class*="Bubble" i]'
-            );
-            if (bubbles.length === 0) {
-                if (isGrad) {
-                    row.style.setProperty('background', customColor, 'important');
-                    row.style.setProperty('background-image', customColor, 'important');
-                } else {
-                    row.style.setProperty('background', customColor, 'important');
-                    row.style.setProperty('background-color', customColor, 'important');
-                    row.style.setProperty('background-image', 'none', 'important');
-                }
-                row.style.setProperty('color', '#ffffff', 'important');
-            } else {
-                for (let j = 0; j < bubbles.length; j++) {
-                    const b = bubbles[j];
-                    const cls = (b.className && typeof b.className === 'string') ? b.className.toLowerCase() : '';
-                    if (cls.includes('time') || cls.includes('date') || cls.includes('status') || cls.includes('avatar') || cls.includes('author') || cls.includes('icon') || cls.includes('unread') || cls.includes('check')) {
-                        continue;
+
+            // 1. Очищаем кнопку действий «...» слева от пузыря
+            const actions = row.querySelectorAll('[class*="actions" i], [class*="action" i], [class*="tools" i]');
+            for (let a = 0; a < actions.length; a++) {
+                actions[a].style.setProperty('background', 'transparent', 'important');
+                actions[a].style.setProperty('background-color', 'transparent', 'important');
+                actions[a].style.setProperty('background-image', 'none', 'important');
+            }
+
+            // 2. Находим ТОЛЬКО главный пузырь сообщения
+            let bubble = row.querySelector('.vkmMessage__bubble, .im-mess--bubble, .Message__bubble, [class*="MessageBubble"]');
+            if (!bubble) {
+                const children = row.children;
+                for (let c = 0; c < children.length; c++) {
+                    const ch = children[c];
+                    const cls = (ch.className && typeof ch.className === 'string') ? ch.className.toLowerCase() : '';
+                    if (!cls.includes('action') && !cls.includes('tool') && !cls.includes('avatar') && !cls.includes('author')) {
+                        bubble = ch;
+                        break;
                     }
-                    if (isGrad) {
-                        b.style.setProperty('background', customColor, 'important');
-                        b.style.setProperty('background-image', customColor, 'important');
-                    } else {
-                        b.style.setProperty('background', customColor, 'important');
-                        b.style.setProperty('background-color', customColor, 'important');
-                        b.style.setProperty('background-image', 'none', 'important');
-                    }
-                    b.style.setProperty('color', '#ffffff', 'important');
                 }
             }
 
-            // Хвостики SVG
+            if (bubble) {
+                if (isGrad) {
+                    bubble.style.setProperty('background', customColor, 'important');
+                    bubble.style.setProperty('background-image', customColor, 'important');
+                } else {
+                    bubble.style.setProperty('background', customColor, 'important');
+                    bubble.style.setProperty('background-color', customColor, 'important');
+                    bubble.style.setProperty('background-image', 'none', 'important');
+                }
+                bubble.style.setProperty('color', '#ffffff', 'important');
+
+                // Очищаем внутренний текст/контент, чтобы не было вложенного прямоугольника
+                const innerContents = bubble.querySelectorAll('.vkmMessage__text, .vkmMessage__content, .vkmMessage__in, [class*="content" i], [class*="text" i]');
+                for (let ic = 0; ic < innerContents.length; ic++) {
+                    innerContents[ic].style.setProperty('background', 'transparent', 'important');
+                    innerContents[ic].style.setProperty('background-color', 'transparent', 'important');
+                    innerContents[ic].style.setProperty('background-image', 'none', 'important');
+                    innerContents[ic].style.setProperty('color', '#ffffff', 'important');
+                }
+            }
+
+            // 3. Хвостики SVG
             const paths = row.querySelectorAll('svg path, [class*="Tail"] path, [class*="tail"] path');
             for (let p = 0; p < paths.length; p++) {
                 paths[p].style.setProperty('fill', isGrad ? '#2c2d2e' : customColor, 'important');
             }
 
-            // Время и галочки внутри исходящего сообщения
+            // 4. Время и галочки внутри исходящего сообщения
             const timeEls = row.querySelectorAll('[class*="time" i], [class*="date" i], [class*="status" i]');
             for (let t = 0; t < timeEls.length; t++) {
+                timeEls[t].style.setProperty('background', 'transparent', 'important');
                 timeEls[t].style.setProperty('color', 'rgba(255, 255, 255, 0.75)', 'important');
                 const svgs = timeEls[t].querySelectorAll('svg, path');
                 for (let s = 0; s < svgs.length; s++) {
