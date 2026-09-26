@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.23.8
-// @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
+// @version      2.23.9
+// @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -1953,15 +1953,15 @@
             return;
         }
 
-        // 1. Создаем пункт "Меню скрипта" с центрированной иконкой шестерёнки
+        // 1. Создаем пункт "Меню скрипта" с контурной иконкой шестерёнки
         const itemMenu = appearanceCell.cloneNode(true);
         itemMenu.id = 'vmu-settings-item-menu';
         itemMenu.classList.add('vmu-custom-settings-item');
         itemMenu.setAttribute('href', '/settings?act=vmu_menu');
 
         const iconContainerMenu = itemMenu.querySelector('.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]') || itemMenu;
-        iconContainerMenu.style.cssText = 'display: flex !important; align-items: center !important; justify-content: center !important; width: 28px !important; min-width: 28px !important; height: 28px !important; flex-shrink: 0 !important; box-sizing: content-box !important; margin-right: 12px !important;';
-        const gearSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="currentColor" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28 vkuiIcon--settings_outline_28" style="display: block !important; width: 28px !important; height: 28px !important; min-width: 28px !important; min-height: 28px !important; max-width: 28px !important; max-height: 28px !important; color: var(--vkui--color_icon_accent, #FF5C5C) !important; flex-shrink: 0 !important; margin: 0 auto !important;"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M13.882 2.308a1.2 1.2 0 0 1 1.196.994l.216 1.27a.64.64 0 0 0 .61.536c.21 0 .416-.07.575-.198l1.016-.81a1.2 1.2 0 0 1 1.547.098l1.378 1.378a1.2 1.2 0 0 1 .098 1.547l-.81 1.016a.9.9 0 0 0 .338 1.185l1.27.216a1.2 1.2 0 0 1 .994 1.196v1.948a1.2 1.2 0 0 1-.994 1.196l-1.27.216a.9.9 0 0 0-.338 1.185l.81 1.016a1.2 1.2 0 0 1-.098 1.547l-1.378 1.378a1.2 1.2 0 0 1-1.547.098l-1.016-.81a.9.9 0 0 0-1.185.338l-.216 1.27a1.2 1.2 0 0 1-1.196.994h-1.948a1.2 1.2 0 0 1-1.196-.994l-.216-1.27a.9.9 0 0 0-1.185-.338l-1.016.81a1.2 1.2 0 0 1-1.547-.098l-1.378-1.378a1.2 1.2 0 0 1-.098-1.547l.81-1.016a.9.9 0 0 0-.338-1.185l-1.27-.216a1.2 1.2 0 0 1-.994-1.196v-1.948a1.2 1.2 0 0 1 .994-1.196l1.27-.216a.9.9 0 0 0 .338-1.185l-.81-1.016a1.2 1.2 0 0 1 .098-1.547l1.378-1.378a1.2 1.2 0 0 1 1.547-.098l1.016.81c.36.29.866.214 1.185-.338l.216-1.27a1.2 1.2 0 0 1 1.196-.994h1.948zm-.208 2.008h-1.532l-.187 1.096a2.7 2.7 0 0 1-3.555 1.014l-.877-.7-1.084 1.084.7.877a2.7 2.7 0 0 1-1.014 3.555l-1.096.187v1.532l1.096.187a2.7 2.7 0 0 1 1.014 3.555l-.7.877 1.084 1.084.877-.7a2.7 2.7 0 0 1 3.555 1.014l.187 1.096h1.532l.187-1.096a2.7 2.7 0 0 1 3.555-1.014l.877.7 1.084-1.084-.7-.877a2.7 2.7 0 0 1 1.014-3.555l1.096-.187v-1.532l-1.096-.187a2.7 2.7 0 0 1-1.014-3.555l.7-.877-1.084-1.084-.877.7a2.7 2.7 0 0 1-3.555-1.014l-.187-1.096zM14 10a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>`;
+        iconContainerMenu.style.cssText = 'display: flex !important; align-items: center !important; justify-content: center !important; width: 28px !important; min-width: 28px !important; height: 28px !important; flex-shrink: 0 !important;';
+        const gearSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; min-width: 28px !important; min-height: 28px !important; color: var(--vkui--color_icon_accent, #FF5C5C) !important; flex-shrink: 0 !important;"><circle cx="14" cy="14" r="3.6" stroke="currentColor" stroke-width="2"/><path d="M12.7 3.5a1.5 1.5 0 0 1 2.6 0l.5 1a2 2 0 0 0 2.2.9l1.1-.3a1.5 1.5 0 0 1 1.8 1.8l-.3 1.1a2 2 0 0 0 .9 2.2l1 .5a1.5 1.5 0 0 1 0 2.6l-1 .5a2 2 0 0 0-.9 2.2l.3 1.1a1.5 1.5 0 0 1-1.8 1.8l-1.1-.3a2 2 0 0 0-2.2.9l-.5 1a1.5 1.5 0 0 1-2.6 0l-.5-1a2 2 0 0 0-2.2-.9l-1.1.3a1.5 1.5 0 0 1-1.8-1.8l.3-1.1a2 2 0 0 0-.9-2.2l-1-.5a1.5 1.5 0 0 1 0-2.6l1-.5a2 2 0 0 0 .9-2.2l-.3-1.1a1.5 1.5 0 0 1 1.8-1.8l1.1.3a2 2 0 0 0 2.2-.9l.5-1Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
         iconContainerMenu.innerHTML = gearSvg;
 
         const textElMenu = itemMenu.querySelector('.vkuiSimpleCell__text, [class*="SimpleCell__text"], [class*="Cell__text"], [class*="SimpleCell__children"], [class*="Cell__children"]') || itemMenu;
@@ -1985,15 +1985,15 @@
             scheduleFixes();
         };
 
-        // 2. Создаем пункт "Debug script" с центрированной иконкой жука
+        // 2. Создаем пункт "Debug script" с контурной иконкой жука (как в Баг-трекере)
         const itemDebug = appearanceCell.cloneNode(true);
         itemDebug.id = 'vmu-settings-item-debug';
         itemDebug.classList.add('vmu-custom-settings-item');
         itemDebug.setAttribute('href', '/settings?act=vmu_debug');
 
         const iconContainerDebug = itemDebug.querySelector('.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]') || itemDebug;
-        iconContainerDebug.style.cssText = 'display: flex !important; align-items: center !important; justify-content: center !important; width: 28px !important; min-width: 28px !important; height: 28px !important; flex-shrink: 0 !important; box-sizing: content-box !important; margin-right: 12px !important;';
-        const bugSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="currentColor" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28 vkuiIcon--bug_outline_28" style="display: block !important; width: 28px !important; height: 28px !important; min-width: 28px !important; min-height: 28px !important; max-width: 28px !important; max-height: 28px !important; color: var(--vkui--color_icon_accent, #FF5C5C) !important; flex-shrink: 0 !important; margin: 0 auto !important;"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M14 2.5a5.5 5.5 0 0 0-5.5 5.5v.5H7a1 1 0 0 0-1 1v.25a1 1 0 0 0-.02.2l-2.45.82a1 1 0 1 0 .64 1.9l2.83-.95V13.5l-3.37 1.68a1 1 0 0 0 .9 1.78l2.47-1.24v2.53l-2.73 2.05a1 1 0 1 0 1.2 1.6l2.09-1.57A6.5 6.5 0 0 0 20.44 21l2.09 1.57a1 1 0 1 0 1.2-1.6l-2.73-2.05v-2.53l2.47 1.24a1 1 0 0 0 .9-1.78L21 14.22v-2.28l2.83.95a1 1 0 0 0 .64-1.9l-2.45-.82a1 1 0 0 0-.02-.2V9.5a1 1 0 0 0-1-1h-1.5V8a5.5 5.5 0 0 0-5.5-5.5zm-3.5 6a3.5 3.5 0 0 1 7 0v.5h-7V8.5zm-2 3.5h11v5.5a5.5 5.5 0 0 1-11 0V12zm2 2v3.5a3.5 3.5 0 0 0 7 0V14h-7z"/></svg>`;
+        iconContainerDebug.style.cssText = 'display: flex !important; align-items: center !important; justify-content: center !important; width: 28px !important; min-width: 28px !important; height: 28px !important; flex-shrink: 0 !important;';
+        const bugSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; min-width: 28px !important; min-height: 28px !important; color: var(--vkui--color_icon_accent, #FF5C5C) !important; flex-shrink: 0 !important;"><path d="M9.5 4.5L11 7M18.5 4.5L17 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="9.5" y="7.5" width="9" height="12" rx="4.5" stroke="currentColor" stroke-width="2"/><path d="M5.5 10.5h4M5.5 13.5h4M5.5 16.5h4M18.5 10.5h4M18.5 13.5h4M18.5 16.5h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 11.5v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
         iconContainerDebug.innerHTML = bugSvg;
 
         const textElDebug = itemDebug.querySelector('.vkuiSimpleCell__text, [class*="SimpleCell__text"], [class*="Cell__text"], [class*="SimpleCell__children"], [class*="Cell__children"]') || itemDebug;
@@ -2025,7 +2025,7 @@
         const existingPage = document.getElementById(SCRIPT_MENU_UI_ID);
         if (existingPage) return;
 
-        const groups = document.querySelectorAll('.vkuiGroup, [class*="Group"], .vkuiPanel__in > div');
+        const groups = document.querySelectorAll('.vkuiGroup, [class*="Group"], .vkuiPanel__in > div, .vkuiBanner, [class*="Banner"], .vkuiFormStatus--mode-error, [class*="FormStatus--error"], [class*="Snackbar"], .vkuiSnackbar, [class*="FormStatus"]');
         for (let i = 0; i < groups.length; i++) {
             if (groups[i].id !== SCRIPT_MENU_UI_ID && groups[i].id !== DEBUG_SCRIPT_UI_ID && groups[i].id !== SETTINGS_UI_ID) {
                 groups[i].style.setProperty('display', 'none', 'important');
@@ -2038,7 +2038,7 @@
         card.id = SCRIPT_MENU_UI_ID;
         card.className = 'vkuiGroup vkuiGroup--mode-none vkuiGroup--padding-m';
         card.style.cssText = `
-            margin: 10px 0 90px 0 !important;
+            margin: 48px 0 90px 0 !important;
             padding: 0 0 20px 0 !important;
             background: transparent !important;
             border: none !important;
@@ -2111,7 +2111,7 @@
             <div style="font-size: 26px; line-height: 1;">⚙️</div>
             <div>
                 <div style="font-size: 15px; font-weight: 600; color: var(--vkui--color_text_primary, #fff);">VK Mobile Upgrade</div>
-                <div style="font-size: 13px; color: var(--vkui--color_text_secondary, #999); margin-top: 2px;">Версия v2.23.8 • Меню настроек скрипта</div>
+                <div style="font-size: 13px; color: var(--vkui--color_text_secondary, #999); margin-top: 2px;">Версия v2.23.9 • Меню настроек скрипта</div>
             </div>
         `;
         card.appendChild(banner);
@@ -2188,7 +2188,7 @@
         const existingPage = document.getElementById(DEBUG_SCRIPT_UI_ID);
         if (existingPage) return;
 
-        const groups = document.querySelectorAll('.vkuiGroup, [class*="Group"], .vkuiPanel__in > div');
+        const groups = document.querySelectorAll('.vkuiGroup, [class*="Group"], .vkuiPanel__in > div, .vkuiBanner, [class*="Banner"], .vkuiFormStatus--mode-error, [class*="FormStatus--error"], [class*="Snackbar"], .vkuiSnackbar, [class*="FormStatus"]');
         for (let i = 0; i < groups.length; i++) {
             if (groups[i].id !== SCRIPT_MENU_UI_ID && groups[i].id !== DEBUG_SCRIPT_UI_ID && groups[i].id !== SETTINGS_UI_ID) {
                 groups[i].style.setProperty('display', 'none', 'important');
@@ -2201,7 +2201,7 @@
         card.id = DEBUG_SCRIPT_UI_ID;
         card.className = 'vkuiGroup vkuiGroup--mode-none vkuiGroup--padding-m';
         card.style.cssText = `
-            margin: 10px 0 90px 0 !important;
+            margin: 48px 0 90px 0 !important;
             padding: 0 0 20px 0 !important;
             background: transparent !important;
             border: none !important;
@@ -2282,7 +2282,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.23.8</div>
+            <div>• <b>Script Version:</b> v2.23.9</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>Hide Labels:</b> ${isHideLabelsEnabled}</div>
@@ -2436,7 +2436,7 @@
         card.id = SETTINGS_UI_ID;
         card.className = 'vkuiGroup vkuiGroup--mode-none vkuiGroup--padding-m';
         card.style.cssText = `
-            margin: 20px 0 90px 0 !important;
+            margin: 58px 0 90px 0 !important;
             padding: 0 0 20px 0 !important;
             background: transparent !important;
             border: none !important;
