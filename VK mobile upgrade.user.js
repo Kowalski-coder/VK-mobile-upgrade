@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.23.10
+// @version      2.23.11
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -483,6 +483,44 @@
         }
 
         /* 11. СКРЫТИЕ ОШИБОК И ЛИШНИХ БАННЕРОВ ВК НА КАСТОМНЫХ СТРАНИЦАХ СКРИПТА */
+        .vmu-page-script-menu .vkuiBanner,
+        .vmu-page-script-menu [class*="Banner"],
+        .vmu-page-script-menu [class*="FormStatus"],
+        .vmu-page-script-menu [class*="Placeholder"],
+        .vmu-page-script-menu [class*="Snackbar"],
+        .vmu-page-script-menu .vkuiSnackbar,
+        .vmu-page-script-menu [role="alert"],
+        .vmu-page-script-menu .vkuiAlert,
+        .vmu-page-script-menu [class*="Alert"],
+        .vmu-page-script-menu [class*="Error"],
+        .vmu-page-script-menu [class*="error"],
+        .vmu-page-script-menu .vkuiModalCard,
+        .vmu-page-script-menu [class*="ModalCard"],
+        .vmu-page-script-menu .vkuiPopoutWrapper,
+        .vmu-page-script-menu [class*="PopoutWrapper"],
+        .vmu-page-script-menu .vkuiAppRoot__popout,
+        .vmu-page-script-menu [class*="AppRoot__popout"],
+        .vmu-page-script-menu .vkuiRoot__popout,
+        .vmu-page-script-menu [class*="Root__popout"],
+        .vmu-page-debug-script .vkuiBanner,
+        .vmu-page-debug-script [class*="Banner"],
+        .vmu-page-debug-script [class*="FormStatus"],
+        .vmu-page-debug-script [class*="Placeholder"],
+        .vmu-page-debug-script [class*="Snackbar"],
+        .vmu-page-debug-script .vkuiSnackbar,
+        .vmu-page-debug-script [role="alert"],
+        .vmu-page-debug-script .vkuiAlert,
+        .vmu-page-debug-script [class*="Alert"],
+        .vmu-page-debug-script [class*="Error"],
+        .vmu-page-debug-script [class*="error"],
+        .vmu-page-debug-script .vkuiModalCard,
+        .vmu-page-debug-script [class*="ModalCard"],
+        .vmu-page-debug-script .vkuiPopoutWrapper,
+        .vmu-page-debug-script [class*="PopoutWrapper"],
+        .vmu-page-debug-script .vkuiAppRoot__popout,
+        .vmu-page-debug-script [class*="AppRoot__popout"],
+        .vmu-page-debug-script .vkuiRoot__popout,
+        .vmu-page-debug-script [class*="Root__popout"],
         body:has(#vmu-script-menu-card) .vkuiBanner,
         body:has(#vmu-script-menu-card) [class*="Banner"],
         body:has(#vmu-script-menu-card) [class*="FormStatus"],
@@ -492,6 +530,8 @@
         body:has(#vmu-script-menu-card) [role="alert"],
         body:has(#vmu-script-menu-card) .vkuiAlert,
         body:has(#vmu-script-menu-card) [class*="Alert"],
+        body:has(#vmu-script-menu-card) .vkuiPopoutWrapper,
+        body:has(#vmu-script-menu-card) [class*="PopoutWrapper"],
         body:has(#vmu-debug-script-card) .vkuiBanner,
         body:has(#vmu-debug-script-card) [class*="Banner"],
         body:has(#vmu-debug-script-card) [class*="FormStatus"],
@@ -500,14 +540,18 @@
         body:has(#vmu-debug-script-card) .vkuiSnackbar,
         body:has(#vmu-debug-script-card) [role="alert"],
         body:has(#vmu-debug-script-card) .vkuiAlert,
-        body:has(#vmu-debug-script-card) [class*="Alert"] {
+        body:has(#vmu-debug-script-card) [class*="Alert"],
+        body:has(#vmu-debug-script-card) .vkuiPopoutWrapper,
+        body:has(#vmu-debug-script-card) [class*="PopoutWrapper"] {
             display: none !important;
             visibility: hidden !important;
             height: 0 !important;
+            max-height: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
             opacity: 0 !important;
             pointer-events: none !important;
+            overflow: hidden !important;
         }
     `;
 
@@ -1110,6 +1154,24 @@
             if (document.body.classList.contains('vmu-page-clips')) {
                 document.body.classList.remove('vmu-page-clips');
             }
+        }
+
+        const isScriptMenu = isScriptMenuPage();
+        if (isScriptMenu) {
+            document.body.classList.add('vmu-page-script-menu');
+            if (document.documentElement) document.documentElement.classList.add('vmu-page-script-menu');
+        } else {
+            document.body.classList.remove('vmu-page-script-menu');
+            if (document.documentElement) document.documentElement.classList.remove('vmu-page-script-menu');
+        }
+
+        const isDebugScript = isDebugScriptPage();
+        if (isDebugScript) {
+            document.body.classList.add('vmu-page-debug-script');
+            if (document.documentElement) document.documentElement.classList.add('vmu-page-debug-script');
+        } else {
+            document.body.classList.remove('vmu-page-debug-script');
+            if (document.documentElement) document.documentElement.classList.remove('vmu-page-debug-script');
         }
     }
 
@@ -2189,19 +2251,11 @@
                 scheduleFixes();
             }
         );
+        rowVideo.style.borderBottom = 'none';
         card.appendChild(rowVideo);
 
-        // Заглушки (ниже работающих опций)
-        const stub1 = createSwitchRow('Оптимизация анимаций UI', 'Плавные переходы и отключение тяжелых эффектов (Заглушка)', true, () => {});
-        const stub2 = createSwitchRow('Автоматическая синхронизация', 'Синхронизировать настройки скрипта между вкладками (Заглушка)', false, () => {});
-        const stub3 = createSwitchRow('Уведомления об обновлениях', 'Проверять наличие новых версий на GitHub (Заглушка)', true, () => {});
-        stub3.style.borderBottom = 'none';
-
-        card.appendChild(stub1);
-        card.appendChild(stub2);
-        card.appendChild(stub3);
-
         target.appendChild(card);
+        cleanupCustomPageErrors();
     }
 
     function renderDebugScriptPage() {
@@ -2312,7 +2366,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.23.10</div>
+            <div>• <b>Script Version:</b> v2.23.11</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>Hide Labels:</b> ${isHideLabelsEnabled}</div>
@@ -2379,6 +2433,66 @@
         card.appendChild(btnBox);
 
         target.appendChild(card);
+        cleanupCustomPageErrors();
+    }
+
+    function cleanupCustomPageErrors() {
+        if (!isScriptMenuPage() && !isDebugScriptPage()) return;
+
+        // 1. Прячем все соседние блоки VK внутри контейнера страницы
+        const containers = document.querySelectorAll('.vkuiPanel__in, [class*="Panel__in"], .layout, main, .vkuiSplitCol, [class*="SplitCol"]');
+        for (let c = 0; c < containers.length; c++) {
+            const children = containers[c].children;
+            for (let i = 0; i < children.length; i++) {
+                const child = children[i];
+                if (child.id !== SCRIPT_MENU_UI_ID && child.id !== DEBUG_SCRIPT_UI_ID && child.id !== SETTINGS_UI_ID) {
+                    if (!child.contains(document.getElementById(SCRIPT_MENU_UI_ID)) && !child.contains(document.getElementById(DEBUG_SCRIPT_UI_ID))) {
+                        child.style.setProperty('display', 'none', 'important');
+                        child.style.setProperty('visibility', 'hidden', 'important');
+                        child.style.setProperty('height', '0', 'important');
+                        child.style.setProperty('pointer-events', 'none', 'important');
+                    }
+                }
+            }
+        }
+
+        // 2. Ищем и скрываем любые блоки с текстом "Неизвестная ошибка" или "Ошибка"
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        let node;
+        const nodesToHide = [];
+        while ((node = walker.nextNode())) {
+            if (node.nodeValue && (node.nodeValue.includes('Неизвестная ошибка') || node.nodeValue.includes('неизвестная ошибка') || node.nodeValue.includes('Unknown error'))) {
+                nodesToHide.push(node.parentElement);
+            }
+        }
+        for (let i = 0; i < nodesToHide.length; i++) {
+            const parent = nodesToHide[i];
+            if (parent && !parent.closest('#' + SCRIPT_MENU_UI_ID) && !parent.closest('#' + DEBUG_SCRIPT_UI_ID)) {
+                const topBlock = parent.closest('.vkuiSnackbar, [class*="Snackbar"], .vkuiBanner, [class*="Banner"], .vkuiPlaceholder, [class*="Placeholder"], .vkuiFormStatus, [class*="FormStatus"], [role="alert"], .vkuiAlert, [class*="Alert"], .vkuiGroup, [class*="Group"], .vkuiSimpleCell, [class*="SimpleCell"], .vkuiPopoutWrapper, [class*="PopoutWrapper"], .vkuiModalCard, [class*="ModalCard"]') || parent;
+                topBlock.style.setProperty('display', 'none', 'important');
+                topBlock.style.setProperty('visibility', 'hidden', 'important');
+                topBlock.style.setProperty('height', '0', 'important');
+                topBlock.style.setProperty('opacity', '0', 'important');
+                topBlock.style.setProperty('pointer-events', 'none', 'important');
+                try { topBlock.remove(); } catch(e) {}
+            }
+        }
+
+        // 3. Скрываем баннеры, снэкбары и плейсхолдеры
+        const errorCandidates = document.querySelectorAll(
+            '.vkuiBanner, [class*="Banner"], .vkuiFormStatus, [class*="FormStatus"], [class*="Placeholder"], [class*="Snackbar"], .vkuiSnackbar, [role="alert"], .vkuiAlert, [class*="Alert"], .vkuiPopoutWrapper, [class*="PopoutWrapper"], .vkuiModalCard, [class*="ModalCard"]'
+        );
+        for (let i = 0; i < errorCandidates.length; i++) {
+            const el = errorCandidates[i];
+            if (!el.closest('#' + SCRIPT_MENU_UI_ID) && !el.closest('#' + DEBUG_SCRIPT_UI_ID)) {
+                el.style.setProperty('display', 'none', 'important');
+                el.style.setProperty('visibility', 'hidden', 'important');
+                el.style.setProperty('height', '0', 'important');
+                el.style.setProperty('opacity', '0', 'important');
+                el.style.setProperty('pointer-events', 'none', 'important');
+                try { el.remove(); } catch(e) {}
+            }
+        }
     }
 
     function updateSettingsVisibility() {
@@ -3064,6 +3178,7 @@
             try { hideChatListActions(); } catch (e) {}
             try { hideCallsAndVideoMessages(); } catch (e) {}
             try { updateCustomTabs(); } catch (e) {}
+            try { cleanupCustomPageErrors(); } catch (e) {}
         } finally {
             isRunningFixes = false;
         }
