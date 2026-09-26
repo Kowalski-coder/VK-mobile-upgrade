@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.23.5
+// @version      2.23.6
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -35,7 +35,7 @@
         HIDE_FOLDERS_BAR: 'vmu_hide_folders_bar',
         HIDE_CALLS: 'vmu_hide_calls',
         HIDE_VIDEO_MSGS: 'vmu_hide_video_msgs',
-        CUSTOM_ICON_PARAMS: 'vmu_custom_icon_params',
+        CUSTOM_ICON_PARAMS: 'vmu_custom_icon_params_v2',
         CUSTOM_SECTION_OPEN: 'vmu_custom_section_open'
     };
 
@@ -87,10 +87,10 @@
     let isHideVideoMsgsEnabled = getSetting(STORAGE_KEYS.HIDE_VIDEO_MSGS, false);
 
     const DEFAULT_CUSTOM_PARAMS = {
-        friends: { scale: 105, stroke: 1.5 },
-        groups: { scale: 105, stroke: 1.5 },
-        music: { scale: 105, stroke: 1.5 },
-        video: { scale: 105, stroke: 1.5 }
+        friends: { scale: 125, stroke: 1.6 },
+        groups: { scale: 125, stroke: 1.6 },
+        music: { scale: 125, stroke: 1.6 },
+        video: { scale: 125, stroke: 1.6 }
     };
 
     function getCustomIconParams() {
@@ -112,20 +112,20 @@
 
     function getTabSvg(targetKey) {
         const customParams = getCustomIconParams();
-        const p = customParams[targetKey] || { scale: 100, stroke: 1.5 };
-        const s = (p.scale || 100) / 100;
-        const st = (parseFloat(p.stroke) || 1.5).toFixed(1);
+        const p = customParams[targetKey] || { scale: 125, stroke: 1.6 };
+        const s = (p.scale || 125) / 100;
+        const st = (parseFloat(p.stroke) || 1.6).toFixed(1);
         const tx = (14 * (1 - s)).toFixed(2);
         const ty = (14 * (1 - s)).toFixed(2);
         const sStr = s.toFixed(2);
 
         switch (targetKey) {
             case 'friends':
-                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_outline_28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})" fill="none" stroke="currentColor" stroke-width="${st}" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="7.5" r="3.5"/><path d="M4.5 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M17.5 5.5a3 3 0 0 1 0 5"/><path d="M17.5 14.5c2 .5 3.5 2 3.5 4.5"/></g></svg>`;
+                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_outline_28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})" fill="none" stroke="currentColor" stroke-width="${st}" stroke-linecap="round" stroke-linejoin="round"><circle cx="11.75" cy="9" r="3.5"/><path d="M5.75 21.5c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M18.75 7a3 3 0 0 1 0 5"/><path d="M18.75 16c2 .5 3.5 2 3.5 4.5"/></g></svg>`;
             case 'groups':
-                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_3_outline_28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})" fill="none" stroke="currentColor" stroke-width="${st}" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="7.5" r="3.5"/><path d="M7 6.5a2.5 2.5 0 0 0 0 5"/><path d="M21 6.5a2.5 2.5 0 0 1 0 5"/><path d="M8.5 20c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5"/><path d="M4 20c0-2 1.5-3.8 3.5-4.2"/><path d="M24 20c0-2-1.5-3.8-3.5-4.2"/></g></svg>`;
+                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_3_outline_28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})" fill="none" stroke="currentColor" stroke-width="${st}" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="9" r="3.5"/><path d="M7 8a2.5 2.5 0 0 0 0 5"/><path d="M21 8a2.5 2.5 0 0 1 0 5"/><path d="M8.5 21.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5"/><path d="M4 21.5c0-2 1.5-3.8 3.5-4.2"/><path d="M24 21.5c0-2-1.5-3.8-3.5-4.2"/></g></svg>`;
             case 'music':
-                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--music_outline_28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})" fill="none" stroke="currentColor" stroke-width="${st}" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="8.5" cy="17.5" rx="3.5" ry="2.8"/><ellipse cx="18.5" cy="15.2" rx="3.5" ry="2.8"/><path d="M12 17.5V7.5L22 5.2V15.2"/><path d="M12 10.2L22 7.9"/></g></svg>`;
+                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--music_outline_28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})" fill="none" stroke="currentColor" stroke-width="${st}" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="9" cy="18.3" rx="3.5" ry="2.8"/><ellipse cx="19" cy="16" rx="3.5" ry="2.8"/><path d="M12.5 18.3V8.3L22.5 6V16"/><path d="M12.5 11L22.5 8.7"/></g></svg>`;
             case 'video':
                 return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--video_outline_28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})" fill="none" stroke="currentColor" stroke-width="${st}" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="6.5" width="14.5" height="15" rx="3"/><path d="M18 11.5L24.5 7.8v12.4L18 16.5"/></g></svg>`;
             case 'bookmarks':
