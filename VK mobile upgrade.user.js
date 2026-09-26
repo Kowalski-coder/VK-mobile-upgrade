@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.26.2
+// @version      2.26.3
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), «Своё оформление» чатов (фон из галереи + свой цвет сообщений с интерактивным предпросмотром), раздел Мессенджер в настройках, кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -2954,27 +2954,7 @@
             e.stopPropagation();
             currentChatPreset = 'custom';
             setSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'custom');
-
-            // Программно сбрасываем тему VK на стандартную классическую (без картинок обоев)
-            try {
-                const cards = carouselRow.children;
-                for (let i = 0; i < cards.length; i++) {
-                    const c = cards[i];
-                    if (c.id !== 'vmu-custom-theme-card' && !c.contains(customCard)) {
-                        const input = c.querySelector('input[type="radio"]') || c;
-                        if (input) {
-                            input.click();
-                            break;
-                        }
-                    }
-                }
-            } catch(err) {}
-
             applyCustomChatBackground();
-            setTimeout(() => {
-                clearNativeThemeCheckmarks();
-                injectCustomThemeOptionInCarousel();
-            }, 60);
             clearNativeThemeCheckmarks();
             injectCustomThemeOptionInCarousel();
             window.history.pushState(null, '', '/mail/settings/theme?act=vmu_custom_theme');
@@ -2985,29 +2965,23 @@
             carouselRow.dataset.vmuNativeListener = 'true';
             carouselRow.addEventListener('click', (e) => {
                 const target = e.target;
-                if (target && !target.closest('#vmu-custom-theme-card')) {
-                    currentChatPreset = 'native';
-                    setSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'native');
-                    applyCustomChatBackground();
-                    injectCustomThemeOptionInCarousel();
-                    carouselRow.querySelectorAll('.vkuiRadio, [class*="Radio"], [role="radio"], label').forEach(item => {
-                        const icons = item.querySelectorAll('[class*="icon" i], [class*="Icon"], [class*="checked" i], [class*="check" i], svg, [class*="badge" i]');
-                        icons.forEach(ic => {
-                            ic.style.removeProperty('display');
-                            ic.style.removeProperty('visibility');
-                            ic.style.removeProperty('opacity');
-                        });
-                        const borderEl = item.querySelector('[class*="content" i], div');
-                        if (borderEl) {
-                            borderEl.style.removeProperty('border-color');
-                        }
-                    });
+                const clickedCustom = !!(target && target.closest('#vmu-custom-theme-card'));
+                if (!clickedCustom) {
+                    // Проверяем, действительно ли пользователь нажал на карточку стандартной темы
+                    const nativeCard = target && target.closest('.vkuiRadio, [class*="Radio"], [role="radio"], label');
+                    if (nativeCard && nativeCard.id !== 'vmu-custom-theme-card') {
+                        currentChatPreset = 'native';
+                        setSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'native');
+                        applyCustomChatBackground();
+                        injectCustomThemeOptionInCarousel();
+                    }
                 }
             }, false);
         }
     }
 
     function clearNativeThemeCheckmarks() {
+        currentChatPreset = getStringSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'classic');
         if (currentChatPreset !== 'custom') return;
         const carouselRow = findThemesCarouselRow();
         if (!carouselRow) return;
