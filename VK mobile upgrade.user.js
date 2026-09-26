@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.23.11
-// @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
+// @version      2.24.0
+// @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация фона чатов из галереи, раздел Мессенджер в настройках, кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -36,7 +36,10 @@
         HIDE_CALLS: 'vmu_hide_calls',
         HIDE_VIDEO_MSGS: 'vmu_hide_video_msgs',
         CUSTOM_ICON_PARAMS: 'vmu_custom_icon_params_v2',
-        CUSTOM_SECTION_OPEN: 'vmu_custom_section_open'
+        CUSTOM_SECTION_OPEN: 'vmu_custom_section_open',
+        CUSTOM_CHAT_BG: 'vmu_custom_chat_bg',
+        DIFF_CHAT_THEMES: 'vmu_diff_chat_themes',
+        CHAT_THEME_PRESET: 'vmu_chat_theme_preset'
     };
 
     function getSetting(key, defaultValue) {
@@ -85,6 +88,8 @@
     let isHideFoldersEnabled = getSetting(STORAGE_KEYS.HIDE_FOLDERS_BAR, true);
     let isHideCallsEnabled = getSetting(STORAGE_KEYS.HIDE_CALLS, false);
     let isHideVideoMsgsEnabled = getSetting(STORAGE_KEYS.HIDE_VIDEO_MSGS, false);
+    let isDiffChatThemesEnabled = getSetting(STORAGE_KEYS.DIFF_CHAT_THEMES, false);
+    let currentChatPreset = getStringSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'classic');
 
     const DEFAULT_CUSTOM_PARAMS = {
         friends: { scale: 125, stroke: 1.6 },
@@ -521,6 +526,25 @@
         .vmu-page-debug-script [class*="AppRoot__popout"],
         .vmu-page-debug-script .vkuiRoot__popout,
         .vmu-page-debug-script [class*="Root__popout"],
+        .vmu-page-mail-theme .vkuiBanner,
+        .vmu-page-mail-theme [class*="Banner"],
+        .vmu-page-mail-theme [class*="FormStatus"],
+        .vmu-page-mail-theme [class*="Placeholder"],
+        .vmu-page-mail-theme [class*="Snackbar"],
+        .vmu-page-mail-theme .vkuiSnackbar,
+        .vmu-page-mail-theme [role="alert"],
+        .vmu-page-mail-theme .vkuiAlert,
+        .vmu-page-mail-theme [class*="Alert"],
+        .vmu-page-mail-theme [class*="Error"],
+        .vmu-page-mail-theme [class*="error"],
+        .vmu-page-mail-theme .vkuiModalCard,
+        .vmu-page-mail-theme [class*="ModalCard"],
+        .vmu-page-mail-theme .vkuiPopoutWrapper,
+        .vmu-page-mail-theme [class*="PopoutWrapper"],
+        .vmu-page-mail-theme .vkuiAppRoot__popout,
+        .vmu-page-mail-theme [class*="AppRoot__popout"],
+        .vmu-page-mail-theme .vkuiRoot__popout,
+        .vmu-page-mail-theme [class*="Root__popout"],
         body:has(#vmu-script-menu-card) .vkuiBanner,
         body:has(#vmu-script-menu-card) [class*="Banner"],
         body:has(#vmu-script-menu-card) [class*="FormStatus"],
@@ -542,7 +566,18 @@
         body:has(#vmu-debug-script-card) .vkuiAlert,
         body:has(#vmu-debug-script-card) [class*="Alert"],
         body:has(#vmu-debug-script-card) .vkuiPopoutWrapper,
-        body:has(#vmu-debug-script-card) [class*="PopoutWrapper"] {
+        body:has(#vmu-debug-script-card) [class*="PopoutWrapper"],
+        body:has(#vmu-mail-appearance-card) .vkuiBanner,
+        body:has(#vmu-mail-appearance-card) [class*="Banner"],
+        body:has(#vmu-mail-appearance-card) [class*="FormStatus"],
+        body:has(#vmu-mail-appearance-card) [class*="Placeholder"],
+        body:has(#vmu-mail-appearance-card) [class*="Snackbar"],
+        body:has(#vmu-mail-appearance-card) .vkuiSnackbar,
+        body:has(#vmu-mail-appearance-card) [role="alert"],
+        body:has(#vmu-mail-appearance-card) .vkuiAlert,
+        body:has(#vmu-mail-appearance-card) [class*="Alert"],
+        body:has(#vmu-mail-appearance-card) .vkuiPopoutWrapper,
+        body:has(#vmu-mail-appearance-card) [class*="PopoutWrapper"] {
             display: none !important;
             visibility: hidden !important;
             height: 0 !important;
@@ -552,6 +587,20 @@
             opacity: 0 !important;
             pointer-events: none !important;
             overflow: hidden !important;
+        }
+
+        /* 12. СКРЫТИЕ ПУНКТА "ВНЕШНИЙ ВИД" В НАСТРОЙКАХ МЕССЕНДЖЕРА */
+        a[href*="/mail/settings/theme"],
+        a[href*="act=theme"],
+        .vkuiSimpleCell:has(a[href*="settings/theme"]),
+        [class*="SimpleCell"]:has(a[href*="settings/theme"]),
+        .vkuiCell:has(a[href*="settings/theme"]),
+        [class*="Cell"]:has(a[href*="settings/theme"]),
+        .vkuiSimpleCell:has(a[href*="act=theme"]),
+        [class*="SimpleCell"]:has(a[href*="act=theme"]),
+        .vkuiCell:has(a[href*="act=theme"]),
+        [class*="Cell"]:has(a[href*="act=theme"]) {
+            display: none !important;
         }
     `;
 
@@ -1094,7 +1143,7 @@
             return false;
         }
 
-        if (isScriptMenuPage() || isDebugScriptPage()) {
+        if (isScriptMenuPage() || isDebugScriptPage() || isMailAppearancePage()) {
             return false;
         }
 
@@ -1119,6 +1168,14 @@
         const path = window.location.pathname.toLowerCase();
         const search = window.location.search.toLowerCase();
         return (path.startsWith('/settings') && search.includes('act=vmu_debug')) || window.location.hash === '#vmu_debug';
+    }
+
+    function isMailAppearancePage() {
+        const path = window.location.pathname.toLowerCase();
+        const search = window.location.search.toLowerCase();
+        return (path.startsWith('/settings') && (search.includes('act=vmu_mail_theme') || search.includes('act=appearance_im') || search.includes('act=mail_theme'))) ||
+               path.includes('/mail/settings/theme') || path.includes('/settings/appearance/im') ||
+               window.location.hash === '#vmu_mail_theme';
     }
 
     function updatePageBodyClasses() {
@@ -1172,6 +1229,15 @@
         } else {
             document.body.classList.remove('vmu-page-debug-script');
             if (document.documentElement) document.documentElement.classList.remove('vmu-page-debug-script');
+        }
+
+        const isMailApp = isMailAppearancePage();
+        if (isMailApp) {
+            document.body.classList.add('vmu-page-mail-theme');
+            if (document.documentElement) document.documentElement.classList.add('vmu-page-mail-theme');
+        } else {
+            document.body.classList.remove('vmu-page-mail-theme');
+            if (document.documentElement) document.documentElement.classList.remove('vmu-page-mail-theme');
         }
     }
 
@@ -1571,6 +1637,93 @@
         row.appendChild(switchWrapper);
 
         return row;
+    }
+
+    function createNavRow(title, desc, onClick) {
+        const row = document.createElement('div');
+        row.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            cursor: pointer;
+            position: relative;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            border-bottom: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08));
+        `;
+
+        const textCol = document.createElement('div');
+        textCol.style.cssText = 'flex: 1; padding-right: 12px; pointer-events: none;';
+
+        const titleEl = document.createElement('div');
+        titleEl.style.cssText = 'font-size: 16px; font-weight: 400; color: var(--vkui--color_text_primary, #ffffff); line-height: 1.3;';
+        titleEl.textContent = title;
+        textCol.appendChild(titleEl);
+
+        if (desc) {
+            const descEl = document.createElement('div');
+            descEl.style.cssText = 'font-size: 13px; color: var(--vkui--color_text_secondary, #999999); margin-top: 3px; line-height: 1.3;';
+            descEl.textContent = desc;
+            textCol.appendChild(descEl);
+        }
+
+        const rightCol = document.createElement('div');
+        rightCol.style.cssText = 'display: flex; align-items: center; gap: 6px; pointer-events: none;';
+
+        const chevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        chevron.setAttribute('width', '16');
+        chevron.setAttribute('height', '16');
+        chevron.setAttribute('viewBox', '0 0 24 24');
+        chevron.setAttribute('fill', 'none');
+        chevron.setAttribute('stroke', 'currentColor');
+        chevron.style.cssText = 'color: var(--vkui--color_icon_secondary, #828282); flex-shrink: 0; transform: rotate(-90deg);';
+        chevron.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />';
+
+        rightCol.appendChild(chevron);
+        row.appendChild(textCol);
+        row.appendChild(rightCol);
+
+        row.addEventListener('click', (e) => {
+            e.preventDefault();
+            onClick();
+        });
+
+        return row;
+    }
+
+    function processUploadedImage(file, callback) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const maxDim = 1600;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxDim || height > maxDim) {
+                    if (width > height) {
+                        height = Math.round((height * maxDim) / width);
+                        width = maxDim;
+                    } else {
+                        width = Math.round((width * maxDim) / height);
+                        height = maxDim;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                callback(dataUrl);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
     }
 
     function createCustomIconsSection() {
@@ -2014,6 +2167,7 @@
 
     const SCRIPT_MENU_UI_ID = 'vmu-script-menu-card';
     const DEBUG_SCRIPT_UI_ID = 'vmu-debug-script-card';
+    const MAIL_APPEARANCE_UI_ID = 'vmu-mail-appearance-card';
 
     function injectCustomSettingsMenuItems() {
         const path = window.location.pathname.toLowerCase();
@@ -2366,7 +2520,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.23.11</div>
+            <div>• <b>Script Version:</b> v2.24.0</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>Hide Labels:</b> ${isHideLabelsEnabled}</div>
@@ -2436,8 +2590,501 @@
         cleanupCustomPageErrors();
     }
 
+    function renderMailAppearancePage() {
+        const existingPage = document.getElementById(MAIL_APPEARANCE_UI_ID);
+        if (existingPage) {
+            existingPage.remove();
+        }
+
+        const groups = document.querySelectorAll('.vkuiGroup, [class*="Group"], .vkuiPanel__in > div, .vkuiBanner, [class*="Banner"], .vkuiFormStatus--mode-error, [class*="FormStatus--error"], [class*="Snackbar"], .vkuiSnackbar, [class*="FormStatus"], [class*="Placeholder"], [role="alert"], .vkuiAlert');
+        for (let i = 0; i < groups.length; i++) {
+            if (groups[i].id !== SCRIPT_MENU_UI_ID && groups[i].id !== DEBUG_SCRIPT_UI_ID && groups[i].id !== SETTINGS_UI_ID && groups[i].id !== MAIL_APPEARANCE_UI_ID) {
+                groups[i].style.setProperty('display', 'none', 'important');
+            }
+        }
+
+        // Удаление баннеров ошибок VK
+        const errorEls = document.querySelectorAll('.vkuiBanner, [class*="Banner"], .vkuiFormStatus, [class*="FormStatus"], [class*="Placeholder"], [class*="Snackbar"], .vkuiSnackbar, [role="alert"], .vkuiAlert, [class*="Alert"]');
+        for (let i = 0; i < errorEls.length; i++) {
+            const el = errorEls[i];
+            if (!el.closest('#' + SCRIPT_MENU_UI_ID) && !el.closest('#' + DEBUG_SCRIPT_UI_ID) && !el.closest('#' + MAIL_APPEARANCE_UI_ID)) {
+                el.style.setProperty('display', 'none', 'important');
+                try { el.remove(); } catch(e) {}
+            }
+        }
+
+        let target = document.querySelector('.vkuiPanel__in, [class*="Panel__in"], .layout, main') || document.body;
+
+        const card = document.createElement('div');
+        card.id = MAIL_APPEARANCE_UI_ID;
+        card.className = 'vkuiGroup vkuiGroup--mode-none vkuiGroup--padding-m';
+        card.style.cssText = `
+            margin: 0 0 90px 0 !important;
+            padding: 0 0 20px 0 !important;
+            background: transparent !important;
+            border: none !important;
+            font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", sans-serif) !important;
+            display: block !important;
+            position: relative !important;
+            z-index: 1 !important;
+        `;
+
+        const topNav = document.createElement('div');
+        topNav.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08));
+            margin-bottom: 12px;
+        `;
+
+        const backBtn = document.createElement('button');
+        backBtn.style.cssText = `
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            color: var(--vkui--color_text_accent, #71aaeb);
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 6px 8px;
+            margin: -6px -8px;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        `;
+        backBtn.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            <span>Внешний вид</span>
+        `;
+        backBtn.onclick = (e) => {
+            e.preventDefault();
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = '/settings?act=appearance';
+            }
+            setTimeout(scheduleFixes, 50);
+        };
+
+        const pageTitle = document.createElement('div');
+        pageTitle.style.cssText = 'font-size: 18px; font-weight: 600; color: var(--vkui--color_text_primary, #ffffff);';
+        pageTitle.textContent = 'Мессенджер';
+
+        topNav.appendChild(backBtn);
+        topNav.appendChild(pageTitle);
+        card.appendChild(topNav);
+
+        // ==========================================
+        // 1. РАЗДЕЛ: Оформление всех чатов (Пресеты)
+        // ==========================================
+        const presetsSection = document.createElement('div');
+        presetsSection.style.cssText = 'margin-bottom: 16px;';
+
+        const sectionHeader = document.createElement('div');
+        sectionHeader.style.cssText = 'font-size: 15px; font-weight: 600; color: var(--vkui--color_text_primary, #ffffff); margin: 12px 16px 4px 16px;';
+        sectionHeader.textContent = 'Оформление всех чатов';
+
+        const sectionDesc = document.createElement('div');
+        sectionDesc.style.cssText = 'font-size: 13px; color: var(--vkui--color_text_secondary, #999999); margin: 0 16px 12px 16px; line-height: 1.3;';
+        sectionDesc.textContent = 'Выберите готовую тему или установите собственное изображение';
+
+        presetsSection.appendChild(sectionHeader);
+        presetsSection.appendChild(sectionDesc);
+
+        const CHAT_PRESETS = [
+            { id: 'classic', name: 'Классика', preview: '#222222', border: 'rgba(255,255,255,0.2)' },
+            { id: 'sunset', name: 'Закат', preview: 'linear-gradient(135deg, #2d124d 0%, #7b1fa2 50%, #e91e63 100%)', border: 'transparent' },
+            { id: 'sea', name: 'Морская', preview: 'linear-gradient(135deg, #0d1b2a 0%, #1b4965 50%, #62b6cb 100%)', border: 'transparent' },
+            { id: 'space', name: 'Космос', preview: 'linear-gradient(135deg, #0b0c10 0%, #1f2833 40%, #45a29e 100%)', border: 'transparent' },
+            { id: 'emerald', name: 'Изумруд', preview: 'linear-gradient(135deg, #0b2016 0%, #134e35 50%, #208b5e 100%)', border: 'transparent' },
+            { id: 'monochrome', name: 'Монохром', preview: 'linear-gradient(135deg, #121212 0%, #242424 50%, #383838 100%)', border: 'transparent' }
+        ];
+
+        let customBgData = null;
+        try { customBgData = localStorage.getItem(STORAGE_KEYS.CUSTOM_CHAT_BG); } catch(e) {}
+
+        const presetsGrid = document.createElement('div');
+        presetsGrid.style.cssText = `
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 0 16px 14px 16px;
+        `;
+
+        CHAT_PRESETS.forEach(preset => {
+            const pCard = document.createElement('div');
+            const isSelected = (!customBgData && currentChatPreset === preset.id);
+            const accentColor = isColorSwapEnabled ? '#FF5C5C' : '#2787F5';
+
+            pCard.style.cssText = `
+                padding: 8px 6px;
+                border-radius: 12px;
+                border: 2px solid ${isSelected ? accentColor : 'rgba(255, 255, 255, 0.1)'};
+                background: ${isSelected ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.2)'};
+                cursor: pointer;
+                text-align: center;
+                transition: border-color 0.2s ease, transform 0.15s ease;
+                user-select: none;
+                -webkit-tap-highlight-color: transparent;
+                position: relative;
+            `;
+
+            const pPreview = document.createElement('div');
+            pPreview.style.cssText = `
+                height: 48px;
+                border-radius: 8px;
+                background: ${preset.preview};
+                border: 1px solid ${preset.border};
+                margin-bottom: 6px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+
+            if (isSelected) {
+                const checkmark = document.createElement('div');
+                checkmark.style.cssText = `
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 50%;
+                    background: ${accentColor};
+                    color: #fff;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 12px;
+                    font-weight: bold;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+                `;
+                checkmark.innerHTML = '✓';
+                pPreview.appendChild(checkmark);
+            }
+
+            const pName = document.createElement('div');
+            pName.style.cssText = `
+                font-size: 12px;
+                font-weight: ${isSelected ? '600' : '400'};
+                color: ${isSelected ? 'var(--vkui--color_text_primary, #ffffff)' : 'var(--vkui--color_text_secondary, #aaaaaa)'};
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            `;
+            pName.textContent = preset.name;
+
+            pCard.appendChild(pPreview);
+            pCard.appendChild(pName);
+
+            pCard.onclick = (e) => {
+                e.preventDefault();
+                currentChatPreset = preset.id;
+                setSetting(STORAGE_KEYS.CHAT_THEME_PRESET, preset.id);
+                // Если пользователь выбирает готовый пресет, мы отключаем кастомную картинку
+                try { localStorage.removeItem(STORAGE_KEYS.CUSTOM_CHAT_BG); } catch(e) {}
+                applyCustomChatBackground();
+                renderMailAppearancePage();
+            };
+
+            presetsGrid.appendChild(pCard);
+        });
+
+        presetsSection.appendChild(presetsGrid);
+        card.appendChild(presetsSection);
+
+        // ==========================================
+        // 2. РАЗДЕЛ: Фон из галереи
+        // ==========================================
+        const gallerySection = document.createElement('div');
+        gallerySection.style.cssText = `
+            margin: 0 16px 16px 16px;
+            padding: 14px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.1));
+        `;
+
+        const galleryTitle = document.createElement('div');
+        galleryTitle.style.cssText = 'font-size: 15px; font-weight: 500; color: var(--vkui--color_text_primary, #ffffff); margin-bottom: 4px;';
+        galleryTitle.textContent = '🖼️ Фон из галереи';
+
+        const galleryDesc = document.createElement('div');
+        galleryDesc.style.cssText = 'font-size: 13px; color: var(--vkui--color_text_secondary, #999999); margin-bottom: 12px; line-height: 1.3;';
+        galleryDesc.textContent = 'Установите любое фото или картинку с вашего устройства';
+
+        gallerySection.appendChild(galleryTitle);
+        gallerySection.appendChild(galleryDesc);
+
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+        fileInput.style.display = 'none';
+
+        fileInput.onchange = (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (file) {
+                processUploadedImage(file, (dataUrl) => {
+                    try {
+                        localStorage.setItem(STORAGE_KEYS.CUSTOM_CHAT_BG, dataUrl);
+                    } catch(err) {
+                        alert('Превышен лимит размера в памяти браузера. Пожалуйста, выберите другое изображение.');
+                    }
+                    applyCustomChatBackground();
+                    renderMailAppearancePage();
+                });
+            }
+        };
+        gallerySection.appendChild(fileInput);
+
+        if (customBgData) {
+            // Превью загруженного изображения
+            const previewWrap = document.createElement('div');
+            previewWrap.style.cssText = `
+                position: relative;
+                width: 100%;
+                height: 140px;
+                border-radius: 10px;
+                overflow: hidden;
+                margin-bottom: 12px;
+                border: 2px solid ${isColorSwapEnabled ? '#FF5C5C' : '#2787F5'};
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            `;
+
+            const imgEl = document.createElement('img');
+            imgEl.src = customBgData;
+            imgEl.style.cssText = 'width: 100%; height: 100%; object-fit: cover; display: block;';
+            previewWrap.appendChild(imgEl);
+
+            const activeBadge = document.createElement('div');
+            activeBadge.style.cssText = `
+                position: absolute;
+                top: 8px;
+                left: 8px;
+                padding: 3px 8px;
+                border-radius: 6px;
+                background: rgba(0, 0, 0, 0.7);
+                color: #ffffff;
+                font-size: 11px;
+                font-weight: 600;
+                backdrop-filter: blur(4px);
+            `;
+            activeBadge.textContent = '✓ Активный фон';
+            previewWrap.appendChild(activeBadge);
+
+            gallerySection.appendChild(previewWrap);
+
+            const btnRow = document.createElement('div');
+            btnRow.style.cssText = 'display: flex; gap: 8px; align-items: center;';
+
+            const changeBtn = document.createElement('button');
+            changeBtn.textContent = '🔄 Заменить фото';
+            changeBtn.style.cssText = `
+                flex: 1;
+                padding: 10px 14px;
+                border-radius: 8px;
+                border: none;
+                background: var(--vkui--color_background_accent, #2787F5);
+                color: #ffffff;
+                font-size: 13px;
+                font-weight: 500;
+                cursor: pointer;
+                touch-action: manipulation;
+            `;
+            changeBtn.onclick = (e) => {
+                e.preventDefault();
+                fileInput.click();
+            };
+
+            const removeBtn = document.createElement('button');
+            removeBtn.textContent = '🗑️ Удалить';
+            removeBtn.style.cssText = `
+                padding: 10px 14px;
+                border-radius: 8px;
+                border: 1px solid rgba(255, 92, 92, 0.4);
+                background: rgba(255, 92, 92, 0.12);
+                color: #FF5C5C;
+                font-size: 13px;
+                font-weight: 500;
+                cursor: pointer;
+                touch-action: manipulation;
+            `;
+            removeBtn.onclick = (e) => {
+                e.preventDefault();
+                try { localStorage.removeItem(STORAGE_KEYS.CUSTOM_CHAT_BG); } catch(e) {}
+                applyCustomChatBackground();
+                renderMailAppearancePage();
+            };
+
+            btnRow.appendChild(changeBtn);
+            btnRow.appendChild(removeBtn);
+            gallerySection.appendChild(btnRow);
+        } else {
+            // Кнопка выбора изображения
+            const uploadBtn = document.createElement('div');
+            uploadBtn.style.cssText = `
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                border: 2px dashed var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.2));
+                border-radius: 10px;
+                background: rgba(255, 255, 255, 0.03);
+                cursor: pointer;
+                transition: background-color 0.2s ease, border-color 0.2s ease;
+                text-align: center;
+                touch-action: manipulation;
+                -webkit-tap-highlight-color: transparent;
+            `;
+
+            uploadBtn.innerHTML = `
+                <div style="font-size: 24px; margin-bottom: 6px;">📷</div>
+                <div style="font-size: 14px; font-weight: 500; color: var(--vkui--color_text_accent, #71aaeb);">Выбрать фото из галереи</div>
+                <div style="font-size: 12px; color: var(--vkui--color_text_secondary, #888); margin-top: 2px;">PNG, JPG, WebP</div>
+            `;
+
+            uploadBtn.onclick = (e) => {
+                e.preventDefault();
+                fileInput.click();
+            };
+
+            gallerySection.appendChild(uploadBtn);
+        }
+
+        card.appendChild(gallerySection);
+
+        // ==========================================
+        // 3. РАЗДЕЛ: Разное оформление в чатах
+        // ==========================================
+        const rowDiffThemes = createSwitchRow(
+            'Разное оформление в чатах',
+            'Позволяет задавать индивидуальное оформление для каждого отдельного чата',
+            isDiffChatThemesEnabled,
+            (checked) => {
+                isDiffChatThemesEnabled = checked;
+                setSetting(STORAGE_KEYS.DIFF_CHAT_THEMES, isDiffChatThemesEnabled);
+            }
+        );
+        rowDiffThemes.style.borderTop = '1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08))';
+        rowDiffThemes.style.borderBottom = 'none';
+        card.appendChild(rowDiffThemes);
+
+        target.appendChild(card);
+        cleanupCustomPageErrors();
+    }
+
+    function applyCustomChatBackground() {
+        let customBg = null;
+        try {
+            customBg = localStorage.getItem(STORAGE_KEYS.CUSTOM_CHAT_BG);
+        } catch(e) {}
+
+        let style = document.getElementById('vmu-custom-chat-bg-styles');
+
+        let bgCss = '';
+        if (customBg) {
+            bgCss = `
+                body [class*="ChatHistory"],
+                body [class*="MessagesList"],
+                body [class*="im-page--chat"],
+                body .vkmChat,
+                body [class*="vkmChat"],
+                body [class*="History"],
+                body [class*="im-history"] {
+                    background-image: url("${customBg}") !important;
+                    background-size: cover !important;
+                    background-position: center center !important;
+                    background-repeat: no-repeat !important;
+                    background-attachment: fixed !important;
+                }
+                body [class*="ChatHistory"] > div,
+                body [class*="MessagesList"] > div,
+                body .vkmChat > div,
+                body [class*="im-page--chat"] [class*="Panel__in"],
+                body [class*="im-page--chat"] .vkuiPanel__in,
+                body [class*="Chat__in"],
+                body [class*="vkmChat__in"] {
+                    background: transparent !important;
+                    background-color: transparent !important;
+                }
+            `;
+        } else if (currentChatPreset && currentChatPreset !== 'classic') {
+            const presets = {
+                sunset: 'linear-gradient(135deg, #2d124d 0%, #7b1fa2 50%, #e91e63 100%)',
+                sea: 'linear-gradient(135deg, #0d1b2a 0%, #1b4965 50%, #62b6cb 100%)',
+                space: 'linear-gradient(135deg, #0b0c10 0%, #1f2833 40%, #45a29e 100%)',
+                emerald: 'linear-gradient(135deg, #0b2016 0%, #134e35 50%, #208b5e 100%)',
+                monochrome: 'linear-gradient(135deg, #121212 0%, #242424 50%, #383838 100%)'
+            };
+            const grad = presets[currentChatPreset];
+            if (grad) {
+                bgCss = `
+                    body [class*="ChatHistory"],
+                    body [class*="MessagesList"],
+                    body [class*="im-page--chat"],
+                    body .vkmChat,
+                    body [class*="vkmChat"],
+                    body [class*="History"],
+                    body [class*="im-history"] {
+                        background: ${grad} !important;
+                        background-attachment: fixed !important;
+                    }
+                    body [class*="ChatHistory"] > div,
+                    body [class*="MessagesList"] > div,
+                    body .vkmChat > div,
+                    body [class*="im-page--chat"] [class*="Panel__in"],
+                    body [class*="im-page--chat"] .vkuiPanel__in,
+                    body [class*="Chat__in"],
+                    body [class*="vkmChat__in"] {
+                        background: transparent !important;
+                        background-color: transparent !important;
+                    }
+                `;
+            }
+        }
+
+        if (bgCss) {
+            if (!style) {
+                style = document.createElement('style');
+                style.id = 'vmu-custom-chat-bg-styles';
+                style.type = 'text/css';
+                (document.head || document.documentElement).appendChild(style);
+            }
+            if (style.textContent !== bgCss) {
+                style.textContent = bgCss;
+            }
+        } else {
+            if (style) style.remove();
+        }
+    }
+
+    function hideMailSettingsAppearanceItem() {
+        const path = window.location.pathname.toLowerCase();
+        const search = window.location.search.toLowerCase();
+        if (!path.startsWith('/mail/settings') && !search.includes('act=settings')) return;
+
+        const cells = document.querySelectorAll('a[href*="/mail/settings/theme"], a[href*="settings/theme"], a[href*="act=theme"], .vkuiSimpleCell, [class*="SimpleCell"], .vkuiCell, [class*="Cell"], [role="link"]');
+        for (let i = 0; i < cells.length; i++) {
+            const c = cells[i];
+            if (c.href && (c.href.includes('/mail/settings/theme') || c.href.includes('settings/theme') || c.href.includes('act=theme'))) {
+                const row = c.closest('.vkuiSimpleCell, [class*="SimpleCell"], .vkuiCell, [class*="Cell"]') || c;
+                row.style.setProperty('display', 'none', 'important');
+                row.style.setProperty('visibility', 'hidden', 'important');
+                row.style.setProperty('height', '0', 'important');
+                row.style.setProperty('pointer-events', 'none', 'important');
+            } else if (c.textContent && c.textContent.trim().startsWith('Внешний вид') && !c.classList.contains('vmu-custom-settings-item')) {
+                const row = c.closest('.vkuiSimpleCell, [class*="SimpleCell"], .vkuiCell, [class*="Cell"]') || c;
+                row.style.setProperty('display', 'none', 'important');
+                row.style.setProperty('visibility', 'hidden', 'important');
+                row.style.setProperty('height', '0', 'important');
+                row.style.setProperty('pointer-events', 'none', 'important');
+            }
+        }
+    }
+
     function cleanupCustomPageErrors() {
-        if (!isScriptMenuPage() && !isDebugScriptPage()) return;
+        if (!isScriptMenuPage() && !isDebugScriptPage() && !isMailAppearancePage()) return;
 
         // 1. Прячем все соседние блоки VK внутри контейнера страницы
         const containers = document.querySelectorAll('.vkuiPanel__in, [class*="Panel__in"], .layout, main, .vkuiSplitCol, [class*="SplitCol"]');
@@ -2445,8 +3092,8 @@
             const children = containers[c].children;
             for (let i = 0; i < children.length; i++) {
                 const child = children[i];
-                if (child.id !== SCRIPT_MENU_UI_ID && child.id !== DEBUG_SCRIPT_UI_ID && child.id !== SETTINGS_UI_ID) {
-                    if (!child.contains(document.getElementById(SCRIPT_MENU_UI_ID)) && !child.contains(document.getElementById(DEBUG_SCRIPT_UI_ID))) {
+                if (child.id !== SCRIPT_MENU_UI_ID && child.id !== DEBUG_SCRIPT_UI_ID && child.id !== SETTINGS_UI_ID && child.id !== MAIL_APPEARANCE_UI_ID) {
+                    if (!child.contains(document.getElementById(SCRIPT_MENU_UI_ID)) && !child.contains(document.getElementById(DEBUG_SCRIPT_UI_ID)) && !child.contains(document.getElementById(MAIL_APPEARANCE_UI_ID))) {
                         child.style.setProperty('display', 'none', 'important');
                         child.style.setProperty('visibility', 'hidden', 'important');
                         child.style.setProperty('height', '0', 'important');
@@ -2467,7 +3114,7 @@
         }
         for (let i = 0; i < nodesToHide.length; i++) {
             const parent = nodesToHide[i];
-            if (parent && !parent.closest('#' + SCRIPT_MENU_UI_ID) && !parent.closest('#' + DEBUG_SCRIPT_UI_ID)) {
+            if (parent && !parent.closest('#' + SCRIPT_MENU_UI_ID) && !parent.closest('#' + DEBUG_SCRIPT_UI_ID) && !parent.closest('#' + MAIL_APPEARANCE_UI_ID)) {
                 const topBlock = parent.closest('.vkuiSnackbar, [class*="Snackbar"], .vkuiBanner, [class*="Banner"], .vkuiPlaceholder, [class*="Placeholder"], .vkuiFormStatus, [class*="FormStatus"], [role="alert"], .vkuiAlert, [class*="Alert"], .vkuiGroup, [class*="Group"], .vkuiSimpleCell, [class*="SimpleCell"], .vkuiPopoutWrapper, [class*="PopoutWrapper"], .vkuiModalCard, [class*="ModalCard"]') || parent;
                 topBlock.style.setProperty('display', 'none', 'important');
                 topBlock.style.setProperty('visibility', 'hidden', 'important');
@@ -2484,7 +3131,7 @@
         );
         for (let i = 0; i < errorCandidates.length; i++) {
             const el = errorCandidates[i];
-            if (!el.closest('#' + SCRIPT_MENU_UI_ID) && !el.closest('#' + DEBUG_SCRIPT_UI_ID)) {
+            if (!el.closest('#' + SCRIPT_MENU_UI_ID) && !el.closest('#' + DEBUG_SCRIPT_UI_ID) && !el.closest('#' + MAIL_APPEARANCE_UI_ID)) {
                 el.style.setProperty('display', 'none', 'important');
                 el.style.setProperty('visibility', 'hidden', 'important');
                 el.style.setProperty('height', '0', 'important');
@@ -2499,10 +3146,12 @@
         const isAppearance = isAppearancePage();
         const isScriptMenu = isScriptMenuPage();
         const isDebugScript = isDebugScriptPage();
+        const isMailApp = isMailAppearancePage();
 
         const existingCard = document.getElementById(SETTINGS_UI_ID);
         const existingMenuCard = document.getElementById(SCRIPT_MENU_UI_ID);
         const existingDebugCard = document.getElementById(DEBUG_SCRIPT_UI_ID);
+        const existingMailCard = document.getElementById(MAIL_APPEARANCE_UI_ID);
 
         if (!isAppearance && existingCard) {
             existingCard.remove();
@@ -2512,6 +3161,9 @@
         }
         if (!isDebugScript && existingDebugCard) {
             existingDebugCard.remove();
+        }
+        if (!isMailApp && existingMailCard) {
+            existingMailCard.remove();
         }
 
         // Внедряем пункты меню на главной странице настроек
@@ -2524,6 +3176,11 @@
 
         if (isDebugScript) {
             renderDebugScriptPage();
+            return;
+        }
+
+        if (isMailApp) {
+            renderMailAppearancePage();
             return;
         }
 
@@ -2603,7 +3260,18 @@
         );
         card.appendChild(rowTheme);
 
-        // 2. Скрыть подписи на нижней панели
+        // 2. Мессенджер (переход в оформление всех чатов и фон из галереи)
+        const rowMessenger = createNavRow(
+            'Мессенджер',
+            'Оформление всех чатов и фон из галереи',
+            () => {
+                window.history.pushState(null, '', '/settings?act=vmu_mail_theme');
+                scheduleFixes();
+            }
+        );
+        card.appendChild(rowMessenger);
+
+        // 3. Скрыть подписи на нижней панели
         const rowLabels = createSwitchRow(
             'Скрыть подписи на нижней панели',
             'Оставлять только иконки (Главная, Поиск, Мессенджер, Клипы, Ещё)',
@@ -3173,6 +3841,8 @@
             try { updatePageBodyClasses(); } catch (e) {}
             try { applyStyles(); } catch (e) {}
             try { syncCurrentTheme(); } catch (e) {}
+            try { applyCustomChatBackground(); } catch (e) {}
+            try { hideMailSettingsAppearanceItem(); } catch (e) {}
             try { updateSettingsVisibility(); } catch (e) {}
             try { handleUnreadFilter(); } catch (e) {}
             try { hideChatListActions(); } catch (e) {}
