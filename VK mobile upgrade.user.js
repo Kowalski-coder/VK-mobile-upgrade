@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.25.2
+// @version      2.25.3
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), «Своё оформление» чатов (фон из галереи + свой цвет сообщений с интерактивным предпросмотром), раздел Мессенджер в настройках, кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -2628,7 +2628,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.25.2</div>
+            <div>• <b>Script Version:</b> v2.25.3</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>Hide Labels:</b> ${isHideLabelsEnabled}</div>
@@ -2799,10 +2799,23 @@
 
         // Скрываем активные галочки со стандартных карточек, если выбрано «Своё»
         if (isCustomActive) {
-            carouselRow.querySelectorAll('.vkuiRadio, [class*="Radio"], [role="radio"]').forEach(item => {
-                if (item.id !== 'vmu-custom-theme-card') {
-                    const icon = item.querySelector('[class*="Radio__icon"], [class*="icon"], svg');
-                    if (icon) icon.style.setProperty('display', 'none', 'important');
+            carouselRow.querySelectorAll('.vkuiRadio, [class*="Radio"], [role="radio"], label').forEach(item => {
+                if (item.id !== 'vmu-custom-theme-card' && !item.closest('#vmu-custom-theme-card')) {
+                    item.classList.remove('vkuiRadio--checked');
+                    item.removeAttribute('checked');
+                    if (item.querySelector('input[type="radio"]')) {
+                        item.querySelector('input[type="radio"]').checked = false;
+                    }
+                    const icons = item.querySelectorAll('[class*="icon" i], [class*="Icon"], [class*="checked" i], [class*="check" i], svg, [class*="badge" i]');
+                    icons.forEach(ic => {
+                        ic.style.setProperty('display', 'none', 'important');
+                        ic.style.setProperty('visibility', 'hidden', 'important');
+                        ic.style.setProperty('opacity', '0', 'important');
+                    });
+                    const borderEl = item.querySelector('[class*="content" i], div');
+                    if (borderEl) {
+                        borderEl.style.setProperty('border-color', 'rgba(255, 255, 255, 0.12)', 'important');
+                    }
                 }
             });
         }
@@ -2827,9 +2840,17 @@
                     setSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'native');
                     applyCustomChatBackground();
                     injectCustomThemeOptionInCarousel();
-                    carouselRow.querySelectorAll('.vkuiRadio, [class*="Radio"], [role="radio"]').forEach(item => {
-                        const icon = item.querySelector('[class*="Radio__icon"], [class*="icon"], svg');
-                        if (icon) icon.style.removeProperty('display');
+                    carouselRow.querySelectorAll('.vkuiRadio, [class*="Radio"], [role="radio"], label').forEach(item => {
+                        const icons = item.querySelectorAll('[class*="icon" i], [class*="Icon"], [class*="checked" i], [class*="check" i], svg, [class*="badge" i]');
+                        icons.forEach(ic => {
+                            ic.style.removeProperty('display');
+                            ic.style.removeProperty('visibility');
+                            ic.style.removeProperty('opacity');
+                        });
+                        const borderEl = item.querySelector('[class*="content" i], div');
+                        if (borderEl) {
+                            borderEl.style.removeProperty('border-color');
+                        }
                     });
                 }
             }, false);
@@ -3366,6 +3387,69 @@
                 document.body.classList.remove('vmu-theme-custom-active');
                 document.body.classList.remove('vmu-has-custom-chat-bg');
             }
+        }
+
+        try { fixChatElementsDirectly(); } catch (e) {}
+    }
+
+    function fixChatElementsDirectly() {
+        const isCustom = (currentChatPreset === 'custom');
+        if (!isCustom) return;
+
+        let customBg = null;
+        let customColor = getStringSetting(STORAGE_KEYS.CUSTOM_CHAT_COLOR, '#2c2d2e');
+        try {
+            customBg = localStorage.getItem(STORAGE_KEYS.CUSTOM_CHAT_BG);
+        } catch(e) {}
+
+        // 1. Подавление нативных картинок/обоев VK внутри чата
+        const wallpaperEls = document.querySelectorAll(
+            '.vkmChatWallpaper, [class*="ChatWallpaper"], [class*="Wallpaper"]'
+        );
+        for (let i = 0; i < wallpaperEls.length; i++) {
+            const wp = wallpaperEls[i];
+            const imgs = wp.querySelectorAll('img, svg, picture, video, canvas');
+            for (let j = 0; j < imgs.length; j++) {
+                imgs[j].style.setProperty('display', 'none', 'important');
+                imgs[j].style.setProperty('opacity', '0', 'important');
+            }
+            if (customBg) {
+                wp.style.setProperty('background-image', `url("${customBg}")`, 'important');
+                wp.style.setProperty('background-size', 'cover', 'important');
+                wp.style.setProperty('background-position', 'center center', 'important');
+                wp.style.setProperty('background-repeat', 'no-repeat', 'important');
+                wp.style.setProperty('background-attachment', 'fixed', 'important');
+            } else {
+                wp.style.setProperty('background-image', 'none', 'important');
+                wp.style.setProperty('background', '#111112', 'important');
+            }
+        }
+
+        // 2. Установка фона на сам чат и историю сообщений
+        const chatContainers = document.querySelectorAll(
+            '.vkmChat, [class*="ChatHistory"], [class*="MessagesList"], [class*="im-page--chat"], [class*="im-chat"], [class*="ChatContainer"], [class*="ChatView"]'
+        );
+        for (let i = 0; i < chatContainers.length; i++) {
+            const cc = chatContainers[i];
+            if (customBg) {
+                cc.style.setProperty('background-image', `url("${customBg}")`, 'important');
+                cc.style.setProperty('background-size', 'cover', 'important');
+                cc.style.setProperty('background-position', 'center center', 'important');
+                cc.style.setProperty('background-repeat', 'no-repeat', 'important');
+                cc.style.setProperty('background-attachment', 'fixed', 'important');
+            }
+        }
+
+        // 3. Перекрашивание исходящих облачков сообщений
+        const outBubbles = document.querySelectorAll(
+            '[class*="MessageBubble--outgoing"], [class*="MessageBubble--out"], [class*="Message--outgoing"] [class*="Message__bubble"], [class*="Message--outgoing"] [class*="im-mess--bubble"], [class*="im-mess_out"] [class*="im-mess--bubble"], [data-testid="message-bubble-outgoing"], [class*="MessageBubble--outgoing"] [class*="MessageBubble__bubble"], [class*="MessageBubble--outgoing"] [class*="MessageBubble__in"], [class*="MessageBubble--outgoing"]'
+        );
+        for (let i = 0; i < outBubbles.length; i++) {
+            const b = outBubbles[i];
+            b.style.setProperty('background', customColor, 'important');
+            b.style.setProperty('background-color', customColor, 'important');
+            b.style.setProperty('background-image', 'none', 'important');
+            b.style.setProperty('color', '#ffffff', 'important');
         }
     }
 
@@ -4171,6 +4255,7 @@
             try { applyStyles(); } catch (e) {}
             try { syncCurrentTheme(); } catch (e) {}
             try { applyCustomChatBackground(); } catch (e) {}
+            try { fixChatElementsDirectly(); } catch (e) {}
             try { hideMailSettingsAppearanceItem(); } catch (e) {}
             try { updateSettingsVisibility(); } catch (e) {}
             try { handleUnreadFilter(); } catch (e) {}
