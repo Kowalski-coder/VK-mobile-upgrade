@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.23.6
+// @version      2.23.7
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -1022,6 +1022,10 @@
             return false;
         }
 
+        if (isScriptMenuPage() || isDebugScriptPage()) {
+            return false;
+        }
+
         if (search.includes('act=appearance') || path.includes('/settings/appearance')) {
             return true;
         }
@@ -1031,6 +1035,18 @@
         }
 
         return false;
+    }
+
+    function isScriptMenuPage() {
+        const path = window.location.pathname.toLowerCase();
+        const search = window.location.search.toLowerCase();
+        return (path.startsWith('/settings') && (search.includes('act=vmu_menu') || search.includes('act=vmu_script'))) || window.location.hash === '#vmu_menu';
+    }
+
+    function isDebugScriptPage() {
+        const path = window.location.pathname.toLowerCase();
+        const search = window.location.search.toLowerCase();
+        return (path.startsWith('/settings') && search.includes('act=vmu_debug')) || window.location.hash === '#vmu_debug';
     }
 
     function updatePageBodyClasses() {
@@ -1906,14 +1922,415 @@
 
     syncCurrentTheme();
 
+    const SCRIPT_MENU_UI_ID = 'vmu-script-menu-card';
+    const DEBUG_SCRIPT_UI_ID = 'vmu-debug-script-card';
+
+    function injectCustomSettingsMenuItems() {
+        const path = window.location.pathname.toLowerCase();
+        if (!path.startsWith('/settings')) return;
+
+        // Ищем пункт "Внешний вид" в основном списке настроек
+        const cells = document.querySelectorAll('a[href*="act=appearance"], a[href*="/settings/appearance"], .vkuiSimpleCell, [class*="SimpleCell"], [class*="Cell"], [role="link"]');
+        let appearanceCell = null;
+        for (let i = 0; i < cells.length; i++) {
+            const c = cells[i];
+            if (c.textContent.includes('Внешний вид') && !c.classList.contains('vmu-custom-settings-item')) {
+                appearanceCell = c;
+                break;
+            }
+        }
+
+        if (!appearanceCell || !appearanceCell.parentElement) return;
+
+        const existingMenu = document.getElementById('vmu-settings-item-menu');
+        const existingDebug = document.getElementById('vmu-settings-item-debug');
+
+        if (existingMenu && existingDebug) {
+            if (appearanceCell.nextElementSibling !== existingMenu) {
+                appearanceCell.insertAdjacentElement('afterend', existingDebug);
+                appearanceCell.insertAdjacentElement('afterend', existingMenu);
+            }
+            return;
+        }
+
+        // 1. Создаем пункт "Меню скрипта" с иконкой шестерёнки
+        const itemMenu = appearanceCell.cloneNode(true);
+        itemMenu.id = 'vmu-settings-item-menu';
+        itemMenu.classList.add('vmu-custom-settings-item');
+        itemMenu.setAttribute('href', '/settings?act=vmu_menu');
+
+        const iconContainerMenu = itemMenu.querySelector('.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]') || itemMenu;
+        const gearSvg = `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--settings_outline_28" style="color: var(--vkui--color_icon_accent, #FF5C5C) !important;"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M12.04 3.09a2 2 0 0 1 3.92 0l.25 1.54a2 2 0 0 0 1.56 1.56l1.54.25a2 2 0 0 1 1.48 3.58l-1.09 1.12a2 2 0 0 0 0 2.21l1.09 1.12a2 2 0 0 1-1.48 3.58l-1.54.25a2 2 0 0 0-1.56 1.56l-.25 1.54a2 2 0 0 1-3.92 0l-.25-1.54a2 2 0 0 0-1.56-1.56l-1.54-.25a2 2 0 0 1-1.48-3.58l1.09-1.12a2 2 0 0 0 0-2.21l-1.09-1.12a2 2 0 0 1 1.48-3.58l1.54-.25a2 2 0 0 0 1.56-1.56l.25-1.54Zm1.96 6.91a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2 4a2 2 0 1 1 4 0 2 2 0 0 1-4 0Z"/></svg>`;
+        const svgElM = iconContainerMenu.querySelector('svg');
+        if (svgElM) {
+            svgElM.outerHTML = gearSvg;
+        } else {
+            iconContainerMenu.innerHTML = gearSvg;
+        }
+
+        const textElMenu = itemMenu.querySelector('.vkuiSimpleCell__text, [class*="SimpleCell__text"], [class*="Cell__text"], [class*="SimpleCell__children"], [class*="Cell__children"]') || itemMenu;
+        let walkerM = document.createTreeWalker(textElMenu, NodeFilter.SHOW_TEXT);
+        let nodeM;
+        let setM = false;
+        while ((nodeM = walkerM.nextNode())) {
+            if (nodeM.nodeValue.includes('Внешний вид')) {
+                nodeM.nodeValue = 'Меню скрипта';
+                setM = true;
+                break;
+            }
+        }
+        if (!setM) {
+            textElMenu.textContent = 'Меню скрипта';
+        }
+
+        itemMenu.onclick = (e) => {
+            e.preventDefault();
+            window.history.pushState(null, '', '/settings?act=vmu_menu');
+            scheduleFixes();
+        };
+
+        // 2. Создаем пункт "Debug script" с иконкой жука
+        const itemDebug = appearanceCell.cloneNode(true);
+        itemDebug.id = 'vmu-settings-item-debug';
+        itemDebug.classList.add('vmu-custom-settings-item');
+        itemDebug.setAttribute('href', '/settings?act=vmu_debug');
+
+        const iconContainerDebug = itemDebug.querySelector('.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]') || itemDebug;
+        const bugSvg = `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--bug_outline_28" style="color: var(--vkui--color_icon_accent, #FF5C5C) !important;"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M14 3.5a4.5 4.5 0 0 0-4.5 4.5v.5h9V8A4.5 4.5 0 0 0 14 3.5ZM7.5 9.5v.85l-3.23-.8a1 1 0 0 0-.49 1.94l3.72.93v2.16L3.8 15.6a1 1 0 1 0 .62 1.9l3.08-.99v2.17l-3.32 1.33a1 1 0 1 0 .74 1.86l3.58-1.43v.06a5.5 5.5 0 0 0 11 0v-.06l3.58 1.43a1 1 0 1 0 .74-1.86l-3.32-1.33v-2.17l3.08.99a1 1 0 1 0 .62-1.9l-3.7-1.02v-2.16l3.72-.93a1 1 0 0 0-.49-1.94l-3.23.8v-.85H7.5Zm2 2h9v7a3.5 3.5 0 0 1-7 0v-7Z"/></svg>`;
+        const svgElD = iconContainerDebug.querySelector('svg');
+        if (svgElD) {
+            svgElD.outerHTML = bugSvg;
+        } else {
+            iconContainerDebug.innerHTML = bugSvg;
+        }
+
+        const textElDebug = itemDebug.querySelector('.vkuiSimpleCell__text, [class*="SimpleCell__text"], [class*="Cell__text"], [class*="SimpleCell__children"], [class*="Cell__children"]') || itemDebug;
+        let walkerD = document.createTreeWalker(textElDebug, NodeFilter.SHOW_TEXT);
+        let nodeD;
+        let setD = false;
+        while ((nodeD = walkerD.nextNode())) {
+            if (nodeD.nodeValue.includes('Внешний вид')) {
+                nodeD.nodeValue = 'Debug script';
+                setD = true;
+                break;
+            }
+        }
+        if (!setD) {
+            textElDebug.textContent = 'Debug script';
+        }
+
+        itemDebug.onclick = (e) => {
+            e.preventDefault();
+            window.history.pushState(null, '', '/settings?act=vmu_debug');
+            scheduleFixes();
+        };
+
+        appearanceCell.insertAdjacentElement('afterend', itemDebug);
+        appearanceCell.insertAdjacentElement('afterend', itemMenu);
+    }
+
+    function renderScriptMenuPage() {
+        const existingPage = document.getElementById(SCRIPT_MENU_UI_ID);
+        if (existingPage) return;
+
+        const groups = document.querySelectorAll('.vkuiGroup, [class*="Group"], .vkuiPanel__in > div');
+        for (let i = 0; i < groups.length; i++) {
+            if (groups[i].id !== SCRIPT_MENU_UI_ID && groups[i].id !== DEBUG_SCRIPT_UI_ID && groups[i].id !== SETTINGS_UI_ID) {
+                groups[i].style.setProperty('display', 'none', 'important');
+            }
+        }
+
+        let target = document.querySelector('.vkuiPanel__in, [class*="Panel__in"], .layout, main') || document.body;
+
+        const card = document.createElement('div');
+        card.id = SCRIPT_MENU_UI_ID;
+        card.className = 'vkuiGroup vkuiGroup--mode-none vkuiGroup--padding-m';
+        card.style.cssText = `
+            margin: 10px 0 90px 0 !important;
+            padding: 0 0 20px 0 !important;
+            background: transparent !important;
+            border: none !important;
+            font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", sans-serif) !important;
+            display: block !important;
+            position: relative !important;
+            z-index: 1 !important;
+        `;
+
+        const topNav = document.createElement('div');
+        topNav.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08));
+            margin-bottom: 12px;
+        `;
+
+        const backBtn = document.createElement('button');
+        backBtn.style.cssText = `
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            color: var(--vkui--color_text_accent, #71aaeb);
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 6px 8px;
+            margin: -6px -8px;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        `;
+        backBtn.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            <span>Настройки</span>
+        `;
+        backBtn.onclick = (e) => {
+            e.preventDefault();
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = '/settings';
+            }
+            setTimeout(scheduleFixes, 50);
+        };
+
+        const pageTitle = document.createElement('div');
+        pageTitle.style.cssText = 'font-size: 18px; font-weight: 600; color: var(--vkui--color_text_primary, #ffffff);';
+        pageTitle.textContent = 'Меню скрипта';
+
+        topNav.appendChild(backBtn);
+        topNav.appendChild(pageTitle);
+        card.appendChild(topNav);
+
+        const banner = document.createElement('div');
+        banner.style.cssText = `
+            margin: 0 16px 14px 16px;
+            padding: 14px;
+            border-radius: 12px;
+            background: rgba(39, 135, 245, 0.1);
+            border: 1px solid rgba(39, 135, 245, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        `;
+        banner.innerHTML = `
+            <div style="font-size: 26px; line-height: 1;">⚙️</div>
+            <div>
+                <div style="font-size: 15px; font-weight: 600; color: var(--vkui--color_text_primary, #fff);">VK Mobile Upgrade</div>
+                <div style="font-size: 13px; color: var(--vkui--color_text_secondary, #999); margin-top: 2px;">Версия v2.23.7 • Меню настроек скрипта</div>
+            </div>
+        `;
+        card.appendChild(banner);
+
+        const stub1 = createSwitchRow('Оптимизация анимаций UI', 'Плавные переходы и отключение тяжелых эффектов (Заглушка)', true, () => {});
+        const stub2 = createSwitchRow('Автоматическая синхронизация', 'Синхронизировать настройки скрипта между вкладками (Заглушка)', false, () => {});
+        const stub3 = createSwitchRow('Уведомления об обновлениях', 'Проверять наличие новых версий на GitHub (Заглушка)', true, () => {});
+        stub3.style.borderBottom = 'none';
+
+        card.appendChild(stub1);
+        card.appendChild(stub2);
+        card.appendChild(stub3);
+
+        target.appendChild(card);
+    }
+
+    function renderDebugScriptPage() {
+        const existingPage = document.getElementById(DEBUG_SCRIPT_UI_ID);
+        if (existingPage) return;
+
+        const groups = document.querySelectorAll('.vkuiGroup, [class*="Group"], .vkuiPanel__in > div');
+        for (let i = 0; i < groups.length; i++) {
+            if (groups[i].id !== SCRIPT_MENU_UI_ID && groups[i].id !== DEBUG_SCRIPT_UI_ID && groups[i].id !== SETTINGS_UI_ID) {
+                groups[i].style.setProperty('display', 'none', 'important');
+            }
+        }
+
+        let target = document.querySelector('.vkuiPanel__in, [class*="Panel__in"], .layout, main') || document.body;
+
+        const card = document.createElement('div');
+        card.id = DEBUG_SCRIPT_UI_ID;
+        card.className = 'vkuiGroup vkuiGroup--mode-none vkuiGroup--padding-m';
+        card.style.cssText = `
+            margin: 10px 0 90px 0 !important;
+            padding: 0 0 20px 0 !important;
+            background: transparent !important;
+            border: none !important;
+            font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", sans-serif) !important;
+            display: block !important;
+            position: relative !important;
+            z-index: 1 !important;
+        `;
+
+        const topNav = document.createElement('div');
+        topNav.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08));
+            margin-bottom: 12px;
+        `;
+
+        const backBtn = document.createElement('button');
+        backBtn.style.cssText = `
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            color: var(--vkui--color_text_accent, #71aaeb);
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 6px 8px;
+            margin: -6px -8px;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        `;
+        backBtn.innerHTML = `
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            <span>Настройки</span>
+        `;
+        backBtn.onclick = (e) => {
+            e.preventDefault();
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = '/settings';
+            }
+            setTimeout(scheduleFixes, 50);
+        };
+
+        const pageTitle = document.createElement('div');
+        pageTitle.style.cssText = 'font-size: 18px; font-weight: 600; color: var(--vkui--color_text_primary, #ffffff);';
+        pageTitle.textContent = 'Debug script';
+
+        topNav.appendChild(backBtn);
+        topNav.appendChild(pageTitle);
+        card.appendChild(topNav);
+
+        const diagBox = document.createElement('div');
+        diagBox.style.cssText = `
+            margin: 0 16px 14px 16px;
+            padding: 14px;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-family: monospace;
+            font-size: 12px;
+            color: #ddd;
+            line-height: 1.6;
+        `;
+
+        const customP = getCustomIconParams();
+        const tabInfo = `${currentTabSearch} (scale: ${customP[currentTabSearch] ? customP[currentTabSearch].scale : 125}%, stroke: ${customP[currentTabSearch] ? customP[currentTabSearch].stroke : 1.6}px)`;
+
+        diagBox.innerHTML = `
+            <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
+            <div>• <b>Script Version:</b> v2.23.7</div>
+            <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
+            <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
+            <div>• <b>Hide Labels:</b> ${isHideLabelsEnabled}</div>
+            <div>• <b>Hide Folders:</b> ${isHideFoldersEnabled}</div>
+            <div>• <b>Hide Calls / Circles:</b> ${isHideCallsEnabled} / ${isHideVideoMsgsEnabled}</div>
+            <div>• <b>Location:</b> ${window.location.pathname}${window.location.search}</div>
+            <div>• <b>Screen:</b> ${window.innerWidth}x${window.innerHeight} (DPR: ${window.devicePixelRatio || 1})</div>
+        `;
+        card.appendChild(diagBox);
+
+        const btnBox = document.createElement('div');
+        btnBox.style.cssText = 'margin: 0 16px; display: flex; gap: 8px; flex-direction: column;';
+
+        const copyLogBtn = document.createElement('button');
+        copyLogBtn.textContent = '📋 Скопировать Debug Log';
+        copyLogBtn.style.cssText = `
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: none;
+            background: var(--vkui--color_background_accent, #2787F5);
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            touch-action: manipulation;
+        `;
+        copyLogBtn.onclick = (e) => {
+            e.preventDefault();
+            const logText = diagBox.textContent.replace(/\s+/g, ' ').trim();
+            try {
+                navigator.clipboard.writeText(logText).then(() => {
+                    const orig = copyLogBtn.textContent;
+                    copyLogBtn.textContent = '✓ Скопировано в буфер!';
+                    setTimeout(() => { copyLogBtn.textContent = orig; }, 2000);
+                });
+            } catch (err) {
+                copyLogBtn.textContent = '✓ Готово!';
+                setTimeout(() => { copyLogBtn.textContent = '📋 Скопировать Debug Log'; }, 2000);
+            }
+        };
+
+        const clearCacheBtn = document.createElement('button');
+        clearCacheBtn.textContent = '🗑️ Сбросить сохраненный кэш';
+        clearCacheBtn.style.cssText = `
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: transparent;
+            color: var(--vkui--color_text_primary, #ffffff);
+            font-size: 14px;
+            cursor: pointer;
+            touch-action: manipulation;
+        `;
+        clearCacheBtn.onclick = (e) => {
+            e.preventDefault();
+            try {
+                localStorage.removeItem('vmu_cached_unread_count');
+                alert('Кэш счетчиков очищен!');
+            } catch(e) {}
+        };
+
+        btnBox.appendChild(copyLogBtn);
+        btnBox.appendChild(clearCacheBtn);
+        card.appendChild(btnBox);
+
+        target.appendChild(card);
+    }
+
     function updateSettingsVisibility() {
         const isAppearance = isAppearancePage();
+        const isScriptMenu = isScriptMenuPage();
+        const isDebugScript = isDebugScriptPage();
+
         const existingCard = document.getElementById(SETTINGS_UI_ID);
+        const existingMenuCard = document.getElementById(SCRIPT_MENU_UI_ID);
+        const existingDebugCard = document.getElementById(DEBUG_SCRIPT_UI_ID);
+
+        if (!isAppearance && existingCard) {
+            existingCard.remove();
+        }
+        if (!isScriptMenu && existingMenuCard) {
+            existingMenuCard.remove();
+        }
+        if (!isDebugScript && existingDebugCard) {
+            existingDebugCard.remove();
+        }
+
+        // Внедряем пункты меню на главной странице настроек
+        try { injectCustomSettingsMenuItems(); } catch (e) {}
+
+        if (isScriptMenu) {
+            renderScriptMenuPage();
+            return;
+        }
+
+        if (isDebugScript) {
+            renderDebugScriptPage();
+            return;
+        }
 
         if (!isAppearance) {
-            if (existingCard) {
-                existingCard.remove();
-            }
             return;
         }
 
