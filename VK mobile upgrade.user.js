@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.24.2
-// @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация фона чатов из галереи, раздел Мессенджер в настройках, кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
+// @version      2.25.0
+// @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), «Своё оформление» чатов (фон из галереи + свой цвет сообщений с интерактивным предпросмотром), раздел Мессенджер в настройках, кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -38,6 +38,7 @@
         CUSTOM_ICON_PARAMS: 'vmu_custom_icon_params_v2',
         CUSTOM_SECTION_OPEN: 'vmu_custom_section_open',
         CUSTOM_CHAT_BG: 'vmu_custom_chat_bg',
+        CUSTOM_CHAT_COLOR: 'vmu_custom_chat_color',
         DIFF_CHAT_THEMES: 'vmu_diff_chat_themes',
         CHAT_THEME_PRESET: 'vmu_chat_theme_preset'
     };
@@ -90,6 +91,18 @@
     let isHideVideoMsgsEnabled = getSetting(STORAGE_KEYS.HIDE_VIDEO_MSGS, false);
     let isDiffChatThemesEnabled = getSetting(STORAGE_KEYS.DIFF_CHAT_THEMES, false);
     let currentChatPreset = getStringSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'classic');
+    let currentCustomChatColor = getStringSetting(STORAGE_KEYS.CUSTOM_CHAT_COLOR, '#2c2d2e');
+
+    const CHAT_COLOR_PRESETS = [
+        { key: 'classic', label: 'Тёмный', value: '#2c2d2e' },
+        { key: 'blue', label: 'Синий', value: '#2787F5' },
+        { key: 'pink', label: 'Розовый', value: '#E05282' },
+        { key: 'sky', label: 'Голубой', value: '#3F8AE0' },
+        { key: 'green', label: 'Зелёный', value: '#4BB34B' },
+        { key: 'sunset', label: 'Закат', value: 'linear-gradient(135deg, #FF5C77, #F58231)' },
+        { key: 'purple', label: 'Фиолетовый', value: 'linear-gradient(135deg, #7928CA, #FF0080)' },
+        { key: 'ocean', label: 'Океан', value: 'linear-gradient(135deg, #2E86DE, #00D2D3)' }
+    ];
 
     const DEFAULT_CUSTOM_PARAMS = {
         friends: { scale: 125, stroke: 1.6 },
@@ -574,104 +587,53 @@
             display: none !important;
         }
 
-        /* 13. СТАТИЧНЫЙ ФОН ИЗ ГАЛЕРЕИ В ЧАТАХ */
-        #vmu-custom-chat-bg-layer {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
+        /* 13. КАСТОМНОЕ ОФОРМЛЕНИЕ ЧАТОВ («СВОЁ ОФОРМЛЕНИЕ») */
+        :root {
+            --vmu-custom-chat-bg: none;
+            --vmu-custom-chat-bubble: #2c2d2e;
+        }
+
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkmChat,
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatHistory"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="MessagesList"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="im-page--chat"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatWallpaper"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkmChatWallpaper,
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="im-history"] {
+            background-image: var(--vmu-custom-chat-bg) !important;
             background-size: cover !important;
             background-position: center center !important;
             background-repeat: no-repeat !important;
-            pointer-events: none !important;
-            z-index: 1 !important;
-            transform: translate3d(0, 0, 0) !important;
-            will-change: transform !important;
+            background-attachment: fixed !important;
         }
 
-        body.vmu-has-custom-chat-bg,
-        body.vmu-has-custom-chat-bg #root,
-        body.vmu-has-custom-chat-bg #vk_wrap,
-        body.vmu-has-custom-chat-bg #vk_area_wrap,
-        body.vmu-has-custom-chat-bg .vkuiAppRoot,
-        body.vmu-has-custom-chat-bg .vkuiRoot,
-        body.vmu-has-custom-chat-bg .layout,
-        body.vmu-has-custom-chat-bg .layout__in,
-        body.vmu-has-custom-chat-bg .vkuiView,
-        body.vmu-has-custom-chat-bg [class*="View"],
-        body.vmu-has-custom-chat-bg .vkuiPanel,
-        body.vmu-has-custom-chat-bg .vkuiPanel__in,
-        body.vmu-has-custom-chat-bg [class*="Panel"],
-        body.vmu-has-custom-chat-bg [class*="Panel__in"],
-        body.vmu-has-custom-chat-bg [class*="SplitCol"],
-        body.vmu-has-custom-chat-bg [class*="SplitLayout"],
-        body.vmu-has-custom-chat-bg [class*="ChatHistory"],
-        body.vmu-has-custom-chat-bg [class*="MessagesList"],
-        body.vmu-has-custom-chat-bg [class*="im-page--chat"],
-        body.vmu-has-custom-chat-bg .vkmChat,
-        body.vmu-has-custom-chat-bg [class*="vkmChat"],
-        body.vmu-has-custom-chat-bg [class*="History"],
-        body.vmu-has-custom-chat-bg [class*="im-history"],
-        body.vmu-has-custom-chat-bg [class*="im-chat"],
-        body.vmu-has-custom-chat-bg [class*="ScrollContent"],
-        body.vmu-has-custom-chat-bg [class*="ChatHistory"] > div,
-        body.vmu-has-custom-chat-bg [class*="MessagesList"] > div,
-        body.vmu-has-custom-chat-bg .vkmChat > div,
-        body.vmu-has-custom-chat-bg [class*="im-page--chat"] [class*="Panel__in"] {
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkmChat > div,
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatHistory"] > div,
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="MessagesList"] > div {
             background: transparent !important;
             background-color: transparent !important;
         }
 
-        body.vmu-has-custom-chat-bg [class*="Wallpaper"],
-        body.vmu-has-custom-chat-bg [class*="wallpaper"],
-        body.vmu-has-custom-chat-bg [class*="ChatWallpaper"],
-        body.vmu-has-custom-chat-bg .vkmChatWallpaper {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
+        body.vmu-theme-custom-active [class*="im-mess_out"] [class*="im-mess--bubble"],
+        body.vmu-theme-custom-active [class*="im-mess_out"] [class*="im-mess__bubble"],
+        body.vmu-theme-custom-active [class*="im-mess_out"] [class*="im-mess-stack"],
+        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"],
+        body.vmu-theme-custom-active [class*="MessageBubble--out"],
+        body.vmu-theme-custom-active [class*="Message--outgoing"] [class*="Message__bubble"],
+        body.vmu-theme-custom-active [class*="Message--outgoing"] [class*="im-mess--bubble"],
+        body.vmu-theme-custom-active [data-testid="message-bubble-outgoing"],
+        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"] [class*="MessageBubble__bubble"] {
+            background: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
+            background-color: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
+            color: #ffffff !important;
         }
 
-        body.vmu-has-custom-chat-bg [class*="MessageBubble"],
-        body.vmu-has-custom-chat-bg [class*="messageBubble"],
-        body.vmu-has-custom-chat-bg [class*="im-mess--bubble"],
-        body.vmu-has-custom-chat-bg [class*="im-mess__bubble"],
-        body.vmu-has-custom-chat-bg [class*="im-mess-stack"],
-        body.vmu-has-custom-chat-bg [class*="im-mess_in"],
-        body.vmu-has-custom-chat-bg [class*="im-mess_out"],
-        body.vmu-has-custom-chat-bg [class*="MessageStack"],
-        body.vmu-has-custom-chat-bg [class*="im-mess"],
-        body.vmu-has-custom-chat-bg [class*="Message"] {
-            position: relative !important;
-            z-index: 5 !important;
+        /* Предотвращение мигания карточек в карусели */
+        .vmu-custom-theme-carousel-item {
+            transition: transform 0.15s ease, opacity 0.15s ease;
         }
-
-        body.vmu-has-custom-chat-bg .vkuiPanelHeader,
-        body.vmu-has-custom-chat-bg [class*="PanelHeader"],
-        body.vmu-has-custom-chat-bg .vkmChatHeader,
-        body.vmu-has-custom-chat-bg [class*="ChatHeader"],
-        body.vmu-has-custom-chat-bg [class*="WriteBar"],
-        body.vmu-has-custom-chat-bg [class*="im-chat-input"],
-        body.vmu-has-custom-chat-bg .vkuiWriteBar {
-            z-index: 800 !important;
-            background: var(--vkui--color_background_content, #19191a) !important;
-            background-color: var(--vkui--color_background_content, #19191a) !important;
-        }
-
-        html[data-theme="light"] body.vmu-has-custom-chat-bg .vkuiPanelHeader,
-        html[scheme="bright_light"] body.vmu-has-custom-chat-bg .vkuiPanelHeader,
-        html[data-theme="light"] body.vmu-has-custom-chat-bg [class*="PanelHeader"],
-        html[data-theme="light"] body.vmu-has-custom-chat-bg .vkmChatHeader,
-        html[data-theme="light"] body.vmu-has-custom-chat-bg [class*="ChatHeader"],
-        html[data-theme="light"] body.vmu-has-custom-chat-bg [class*="WriteBar"],
-        html[scheme="bright_light"] body.vmu-has-custom-chat-bg [class*="WriteBar"],
-        html[data-theme="light"] body.vmu-has-custom-chat-bg [class*="im-chat-input"],
-        html[data-theme="light"] body.vmu-has-custom-chat-bg .vkuiWriteBar {
-            background: #ffffff !important;
-            background-color: #ffffff !important;
+        .vmu-custom-theme-carousel-item:active {
+            transform: scale(0.96);
         }
     `;
 
@@ -1255,10 +1217,17 @@
         return (path.startsWith('/settings') && search.includes('act=vmu_debug')) || window.location.hash === '#vmu_debug';
     }
 
+    function isCustomThemeEditorPage() {
+        const path = window.location.pathname.toLowerCase();
+        const search = window.location.search.toLowerCase();
+        const hash = window.location.hash.toLowerCase();
+        return (path.includes('/mail/settings/theme') || path.includes('/settings')) && (search.includes('act=vmu_custom_theme') || hash === '#vmu_custom_theme');
+    }
+
     function isMailAppearancePage() {
         const path = window.location.pathname.toLowerCase();
         const search = window.location.search.toLowerCase();
-        return path.includes('/mail/settings/theme') || path.includes('/settings/appearance/im') || search.includes('act=vmu_mail_theme');
+        return (path.includes('/mail/settings/theme') || path.includes('/settings/appearance/im') || search.includes('act=vmu_mail_theme')) && !isCustomThemeEditorPage();
     }
 
     function isMailSettingsPage() {
@@ -2614,7 +2583,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.24.2</div>
+            <div>• <b>Script Version:</b> v2.25.0</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>Hide Labels:</b> ${isHideLabelsEnabled}</div>
@@ -2684,10 +2653,597 @@
         cleanupCustomPageErrors();
     }
 
+    const CUSTOM_THEME_EDITOR_UI_ID = 'vmu-custom-theme-editor-card';
+
+    function injectCustomThemeOptionInCarousel() {
+        if (!isMailAppearancePage()) return;
+
+        // Ищем контейнер с каруселью тем оформления
+        const scrollContainers = document.querySelectorAll(
+            '.vkuiHorizontalScroll__in, [class*="HorizontalScroll__in"], [class*="HorizontalScroll"] > div, [class*="Carousel"], [class*="HorizontalScroll"]'
+        );
+        let carousel = null;
+        for (let i = 0; i < scrollContainers.length; i++) {
+            const c = scrollContainers[i];
+            if (c.textContent.includes('Чёрный') || c.textContent.includes('Ковёр') || c.textContent.includes('Пиксели') || c.textContent.includes('Классический') || c.querySelector('[class*="Radio"], input[type="radio"], [role="radio"]')) {
+                carousel = c;
+                break;
+            }
+        }
+
+        if (!carousel) {
+            const groups = document.querySelectorAll('.vkuiGroup, [class*="Group"]');
+            for (let i = 0; i < groups.length; i++) {
+                const g = groups[i];
+                if (g.textContent.includes('ОФОРМЛЕНИЕ ВСЕХ ЧАТОВ') || g.textContent.includes('Оформление всех чатов')) {
+                    const scroll = g.querySelector('.vkuiHorizontalScroll__in, [class*="HorizontalScroll__in"], [class*="HorizontalScroll"] > div') || g.querySelector('[class*="HorizontalScroll"]');
+                    if (scroll) {
+                        carousel = scroll;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!carousel) return;
+
+        let customCard = document.getElementById('vmu-custom-theme-card');
+        const isCustomActive = (currentChatPreset === 'custom');
+        let customBg = null;
+        try { customBg = localStorage.getItem(STORAGE_KEYS.CUSTOM_CHAT_BG); } catch(e) {}
+        let customColor = getStringSetting(STORAGE_KEYS.CUSTOM_CHAT_COLOR, '#2c2d2e');
+
+        if (!customCard) {
+            customCard = document.createElement('div');
+            customCard.id = 'vmu-custom-theme-card';
+            customCard.className = 'vmu-custom-theme-carousel-item';
+            carousel.prepend(customCard);
+        } else {
+            if (carousel.firstElementChild !== customCard) {
+                carousel.prepend(customCard);
+            }
+        }
+
+        const bgStyle = customBg ? `background-image: url("${customBg}"); background-size: cover; background-position: center;` : `background: #19191a;`;
+
+        customCard.style.cssText = `
+            display: inline-flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            margin-right: 12px !important;
+            cursor: pointer !important;
+            user-select: none !important;
+            flex-shrink: 0 !important;
+            -webkit-tap-highlight-color: transparent !important;
+        `;
+
+        customCard.innerHTML = `
+            <div style="position: relative; width: 84px; height: 84px; border-radius: 14px; overflow: hidden; border: ${isCustomActive ? '2.5px solid var(--vkui--color_text_accent, #FF5C5C)' : '1px solid rgba(255,255,255,0.12)'}; ${bgStyle}; box-shadow: 0 4px 12px rgba(0,0,0,0.3); box-sizing: border-box;">
+                <div style="position: absolute; right: 8px; top: 18px; width: 44px; height: 16px; border-radius: 8px; background: ${customColor}; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>
+                <div style="position: absolute; left: 8px; bottom: 18px; width: 48px; height: 16px; border-radius: 8px; background: rgba(255,255,255,0.22); box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>
+                ${isCustomActive ? `
+                    <div style="position: absolute; top: 6px; left: 6px; width: 22px; height: 22px; border-radius: 50%; background: #ffffff; color: #000000; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; box-shadow: 0 2px 6px rgba(0,0,0,0.4);">✓</div>
+                ` : ''}
+            </div>
+            <div style="font-size: 13px; color: ${isCustomActive ? 'var(--vkui--color_text_accent, #FF5C5C)' : 'var(--vkui--color_text_primary, #ffffff)'}; font-weight: ${isCustomActive ? '600' : '400'}; margin-top: 6px; text-align: center;">Своё</div>
+        `;
+
+        customCard.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            currentChatPreset = 'custom';
+            setSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'custom');
+            applyCustomChatBackground();
+            window.history.pushState(null, '', '/mail/settings/theme?act=vmu_custom_theme');
+            scheduleFixes();
+        };
+
+        if (!carousel.dataset.vmuNativeListener) {
+            carousel.dataset.vmuNativeListener = 'true';
+            carousel.addEventListener('click', (e) => {
+                const target = e.target;
+                if (target && !target.closest('#vmu-custom-theme-card')) {
+                    currentChatPreset = 'native';
+                    setSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'native');
+                    applyCustomChatBackground();
+                    scheduleFixes();
+                }
+            }, false);
+        }
+    }
+
+    let customThemeActiveTab = 'bg'; // 'bg' | 'color'
+
+    function renderCustomThemeEditorPage() {
+        const existingPage = document.getElementById(CUSTOM_THEME_EDITOR_UI_ID);
+        let customBg = null;
+        try { customBg = localStorage.getItem(STORAGE_KEYS.CUSTOM_CHAT_BG); } catch(e) {}
+        let customColor = getStringSetting(STORAGE_KEYS.CUSTOM_CHAT_COLOR, '#2c2d2e');
+
+        // Скрываем все стандартные блоки VK на странице
+        const groups = document.querySelectorAll('.vkuiGroup, [class*="Group"], .vkuiPanel__in > div, .vkuiBanner, [class*="Banner"], .vkuiFormStatus--mode-error, [class*="FormStatus--error"], [class*="Snackbar"], .vkuiSnackbar, [class*="FormStatus"], [class*="Placeholder"], [role="alert"], .vkuiAlert');
+        for (let i = 0; i < groups.length; i++) {
+            if (groups[i].id !== CUSTOM_THEME_EDITOR_UI_ID && groups[i].id !== SCRIPT_MENU_UI_ID && groups[i].id !== DEBUG_SCRIPT_UI_ID && groups[i].id !== SETTINGS_UI_ID) {
+                groups[i].style.setProperty('display', 'none', 'important');
+            }
+        }
+
+        // Удаление всплывающих ошибок VK
+        const errorEls = document.querySelectorAll('.vkuiBanner, [class*="Banner"], .vkuiFormStatus, [class*="FormStatus"], [class*="Placeholder"], [class*="Snackbar"], .vkuiSnackbar, [role="alert"], .vkuiAlert, [class*="Alert"]');
+        for (let i = 0; i < errorEls.length; i++) {
+            const el = errorEls[i];
+            if (!el.closest('#' + CUSTOM_THEME_EDITOR_UI_ID)) {
+                el.style.setProperty('display', 'none', 'important');
+                try { el.remove(); } catch(e) {}
+            }
+        }
+
+        let target = document.querySelector('.vkuiPanel__in, [class*="Panel__in"], .layout, main') || document.body;
+
+        if (existingPage) {
+            existingPage.remove();
+        }
+
+        const card = document.createElement('div');
+        card.id = CUSTOM_THEME_EDITOR_UI_ID;
+        card.className = 'vkuiGroup vkuiGroup--mode-none vkuiGroup--padding-m';
+        card.style.cssText = `
+            margin: 0 0 90px 0 !important;
+            padding: 0 0 20px 0 !important;
+            background: transparent !important;
+            border: none !important;
+            font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", sans-serif) !important;
+            display: block !important;
+            position: relative !important;
+            z-index: 1 !important;
+            user-select: none !important;
+        `;
+
+        // 1. Шапка страницы
+        const topNav = document.createElement('div');
+        topNav.style.cssText = `
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08));
+            margin-bottom: 12px;
+        `;
+
+        const backBtn = document.createElement('button');
+        backBtn.style.cssText = `
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: none;
+            color: var(--vkui--color_text_accent, #FF5C5C);
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 6px 8px;
+            margin: -6px -8px;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        `;
+        backBtn.innerHTML = `
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        `;
+        backBtn.onclick = (e) => {
+            e.preventDefault();
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = '/mail/settings/theme';
+            }
+            setTimeout(scheduleFixes, 50);
+        };
+
+        const pageTitle = document.createElement('div');
+        pageTitle.style.cssText = 'font-size: 18px; font-weight: 600; color: var(--vkui--color_text_primary, #ffffff);';
+        pageTitle.textContent = 'Своё оформление';
+
+        topNav.appendChild(backBtn);
+        topNav.appendChild(pageTitle);
+        card.appendChild(topNav);
+
+        // 2. Интерактивный предпросмотр чата (Live Preview)
+        const previewContainer = document.createElement('div');
+        previewContainer.id = 'vmu-live-chat-preview';
+        const liveBgStyle = customBg ? `background-image: url("${customBg}"); background-size: cover; background-position: center;` : `background: #101010;`;
+        previewContainer.style.cssText = `
+            position: relative;
+            margin: 0 16px 16px 16px;
+            height: 380px;
+            border-radius: 16px;
+            overflow: hidden;
+            ${liveBgStyle};
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 12px;
+            box-sizing: border-box;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+        `;
+
+        previewContainer.innerHTML = `
+            <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                <!-- Исходящее сообщение 1 -->
+                <div style="align-self: flex-end; max-width: 82%; background: ${customColor}; border-radius: 16px 16px 4px 16px; padding: 8px 12px; color: #ffffff; font-size: 14px; line-height: 1.35; position: relative; box-shadow: 0 2px 6px rgba(0,0,0,0.3);" class="vmu-preview-out-bubble">
+                    <div>Я в своём познании настолько преисполнился...</div>
+                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 3px; font-size: 11px; opacity: 0.75; margin-top: 3px;">
+                        <span>19:23</span>
+                        <span>✓✓</span>
+                    </div>
+                </div>
+
+                <!-- Входящее сообщение 1 (Лиза) -->
+                <div style="display: flex; align-items: flex-end; gap: 8px; max-width: 82%;">
+                    <div style="width: 28px; height: 28px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #6c5ce7; display: flex; align-items: center; justify-content: center;">
+                        <svg width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="14" fill="#8854d0"/><circle cx="14" cy="11" r="5" fill="#ffeaa7"/><path d="M6 25c0-4.4 3.6-8 8-8s8 3.6 8 8" fill="#ffeaa7"/></svg>
+                    </div>
+                    <div style="background: #232324; border-radius: 16px 16px 16px 4px; padding: 8px 12px; color: #ffffff; font-size: 14px; line-height: 1.35; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
+                        <div style="color: var(--vkui--color_text_accent, #FF5C5C); font-weight: 600; font-size: 12px; margin-bottom: 2px;">Лиза</div>
+                        <div>Пожалуйста, не начинай</div>
+                        <div style="text-align: right; font-size: 11px; opacity: 0.6; margin-top: 3px;">19:24</div>
+                    </div>
+                </div>
+
+                <!-- Входящее сообщение 2 -->
+                <div style="margin-left: 36px; max-width: 82%; background: #232324; border-radius: 16px 16px 16px 4px; padding: 8px 12px; color: #ffffff; font-size: 13.5px; line-height: 1.35; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
+                    <div>что я как будто бы уже сто триллионов миллиардов лет проживаю на триллионах и триллионах таких же планет, как эта Земля, мне этот мир абсолютно понятен.</div>
+                    <div style="text-align: right; font-size: 11px; opacity: 0.6; margin-top: 3px;">19:25</div>
+                </div>
+
+                <!-- Стикер Сеня -->
+                <div style="display: flex; align-items: flex-end; gap: 8px; margin-top: 2px;">
+                    <div style="width: 28px; height: 28px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #6c5ce7; display: flex; align-items: center; justify-content: center;">
+                        <svg width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="14" fill="#8854d0"/><circle cx="14" cy="11" r="5" fill="#ffeaa7"/><path d="M6 25c0-4.4 3.6-8 8-8s8 3.6 8 8" fill="#ffeaa7"/></svg>
+                    </div>
+                    <div style="position: relative;">
+                        <svg width="76" height="76" viewBox="0 0 100 100" fill="none">
+                            <path d="M30 65c-5 0-10-8-5-16l15-20c3-4 9-5 13-2l10 7c4 3 5 9 2 13l-10 15c-3 4-8 5-13 4l-12-1z" fill="#f1c40f" stroke="#d35400" stroke-width="2"/>
+                            <ellipse cx="45" cy="38" rx="18" ry="16" fill="#f39c12"/>
+                            <circle cx="42" cy="34" r="3.5" fill="#2c3e50"/><circle cx="43" cy="33" r="1.2" fill="#fff"/>
+                            <path d="M48 38l18 4-16 8z" fill="#e67e22"/>
+                            <path d="M22 45l18 10-5 12-16-12z" fill="#f1c40f" stroke="#d35400" stroke-width="2"/>
+                            <path d="M55 48l25-18c4-3 10-2 13 2l2 3c3 4 2 10-2 13L68 62z" fill="#f1c40f" stroke="#d35400" stroke-width="2"/>
+                        </svg>
+                        <div style="position: absolute; right: 0; bottom: 0; font-size: 11px; opacity: 0.6;">19:26</div>
+                    </div>
+                </div>
+
+                <!-- Входящее сообщение 3 -->
+                <div style="margin-left: 36px; max-width: 82%; background: #232324; border-radius: 16px; padding: 8px 12px; color: #ffffff; font-size: 13.5px; line-height: 1.35; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
+                    <div>И я здесь ищу только одного — покоя, умиротворения и вот этой</div>
+                </div>
+            </div>
+        `;
+
+        card.appendChild(previewContainer);
+
+        // 3. Табы переключения: «Фон» | «Цвет»
+        const tabNav = document.createElement('div');
+        tabNav.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            margin: 0 16px 14px 16px;
+            border-bottom: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.1));
+            position: relative;
+        `;
+
+        const tabBg = document.createElement('div');
+        tabBg.textContent = 'Фон';
+        tabBg.style.cssText = `
+            flex: 1;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 15px;
+            font-weight: ${customThemeActiveTab === 'bg' ? '600' : '400'};
+            color: ${customThemeActiveTab === 'bg' ? 'var(--vkui--color_text_primary, #ffffff)' : 'var(--vkui--color_text_secondary, #828282)'};
+            cursor: pointer;
+            border-bottom: ${customThemeActiveTab === 'bg' ? '2.5px solid var(--vkui--color_text_accent, #FF5C5C)' : '2.5px solid transparent'};
+            transition: all 0.2s ease;
+        `;
+
+        const tabColor = document.createElement('div');
+        tabColor.textContent = 'Цвет';
+        tabColor.style.cssText = `
+            flex: 1;
+            text-align: center;
+            padding: 10px 0;
+            font-size: 15px;
+            font-weight: ${customThemeActiveTab === 'color' ? '600' : '400'};
+            color: ${customThemeActiveTab === 'color' ? 'var(--vkui--color_text_primary, #ffffff)' : 'var(--vkui--color_text_secondary, #828282)'};
+            cursor: pointer;
+            border-bottom: ${customThemeActiveTab === 'color' ? '2.5px solid var(--vkui--color_text_accent, #FF5C5C)' : '2.5px solid transparent'};
+            transition: all 0.2s ease;
+        `;
+
+        tabNav.appendChild(tabBg);
+        tabNav.appendChild(tabColor);
+        card.appendChild(tabNav);
+
+        // 4. Скрытый file input для галереи
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+        fileInput.style.display = 'none';
+
+        fileInput.onchange = (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (file) {
+                processUploadedImage(file, (dataUrl) => {
+                    try {
+                        localStorage.setItem(STORAGE_KEYS.CUSTOM_CHAT_BG, dataUrl);
+                        currentChatPreset = 'custom';
+                        setSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'custom');
+                    } catch(err) {
+                        alert('Превышен лимит размера памяти браузера. Пожалуйста, выберите другое изображение.');
+                    }
+                    applyCustomChatBackground();
+                    renderCustomThemeEditorPage();
+                });
+            }
+        };
+        card.appendChild(fileInput);
+
+        // 5. Контейнер содержимого табов
+        const tabContentContainer = document.createElement('div');
+        tabContentContainer.style.cssText = 'margin: 0 16px;';
+
+        function updateTabContent() {
+            tabContentContainer.innerHTML = '';
+
+            if (customThemeActiveTab === 'bg') {
+                // Вкладка «Фон»
+                const bgRow = document.createElement('div');
+                bgRow.style.cssText = `
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    overflow-x: auto;
+                    padding: 6px 0 14px 0;
+                    -webkit-overflow-scrolling: touch;
+                `;
+
+                // Кнопка 1: Выбрать фото из галереи
+                const uploadBtn = document.createElement('div');
+                uploadBtn.style.cssText = `
+                    width: 80px;
+                    height: 80px;
+                    border-radius: 14px;
+                    background: rgba(255, 255, 255, 0.06);
+                    border: 1.5px dashed rgba(255, 255, 255, 0.25);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    flex-shrink: 0;
+                    transition: transform 0.15s ease;
+                `;
+                uploadBtn.innerHTML = `
+                    <div style="font-size: 24px; margin-bottom: 2px;">🖼️</div>
+                    <div style="font-size: 11px; color: var(--vkui--color_text_accent, #FF5C5C); font-weight: 500;">Галерея</div>
+                `;
+                uploadBtn.onclick = (e) => {
+                    e.preventDefault();
+                    fileInput.click();
+                };
+                bgRow.appendChild(uploadBtn);
+
+                // Кнопка 2: Текущее фото (если загружено)
+                if (customBg) {
+                    const activePhotoCard = document.createElement('div');
+                    activePhotoCard.style.cssText = `
+                        position: relative;
+                        width: 80px;
+                        height: 80px;
+                        border-radius: 14px;
+                        background-image: url("${customBg}");
+                        background-size: cover;
+                        background-position: center;
+                        border: 2px solid var(--vkui--color_text_accent, #FF5C5C);
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+                        cursor: pointer;
+                        flex-shrink: 0;
+                    `;
+                    activePhotoCard.innerHTML = `
+                        <div style="position: absolute; top: 6px; left: 6px; width: 20px; height: 20px; border-radius: 50%; background: #ffffff; color: #000000; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">✓</div>
+                    `;
+                    bgRow.appendChild(activePhotoCard);
+
+                    // Кнопка 3: Удалить фото
+                    const deleteBtn = document.createElement('div');
+                    deleteBtn.style.cssText = `
+                        width: 80px;
+                        height: 80px;
+                        border-radius: 14px;
+                        background: rgba(255, 92, 92, 0.1);
+                        border: 1px solid rgba(255, 92, 92, 0.3);
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        cursor: pointer;
+                        flex-shrink: 0;
+                    `;
+                    deleteBtn.innerHTML = `
+                        <div style="font-size: 20px; margin-bottom: 2px;">🗑️</div>
+                        <div style="font-size: 11px; color: #FF5C5C; font-weight: 500;">Сбросить</div>
+                    `;
+                    deleteBtn.onclick = (e) => {
+                        e.preventDefault();
+                        try { localStorage.removeItem(STORAGE_KEYS.CUSTOM_CHAT_BG); } catch(err) {}
+                        applyCustomChatBackground();
+                        renderCustomThemeEditorPage();
+                    };
+                    bgRow.appendChild(deleteBtn);
+                } else {
+                    // Карточка "Без фона"
+                    const noBgCard = document.createElement('div');
+                    noBgCard.style.cssText = `
+                        position: relative;
+                        width: 80px;
+                        height: 80px;
+                        border-radius: 14px;
+                        background: #19191a;
+                        border: 2px solid var(--vkui--color_text_accent, #FF5C5C);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: #ffffff;
+                        font-size: 12px;
+                        cursor: pointer;
+                        flex-shrink: 0;
+                    `;
+                    noBgCard.innerHTML = `
+                        <div style="position: absolute; top: 6px; left: 6px; width: 20px; height: 20px; border-radius: 50%; background: #ffffff; color: #000000; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">✓</div>
+                        <div style="opacity: 0.7;">Без фона</div>
+                    `;
+                    bgRow.appendChild(noBgCard);
+                }
+
+                tabContentContainer.appendChild(bgRow);
+            } else {
+                // Вкладка «Цвет»
+                const colorRow = document.createElement('div');
+                colorRow.style.cssText = `
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    overflow-x: auto;
+                    padding: 8px 0 16px 0;
+                    -webkit-overflow-scrolling: touch;
+                `;
+
+                CHAT_COLOR_PRESETS.forEach(preset => {
+                    const isSelected = (currentCustomChatColor === preset.value);
+                    const swatch = document.createElement('div');
+                    swatch.title = preset.label;
+                    swatch.style.cssText = `
+                        width: 44px;
+                        height: 44px;
+                        border-radius: 50%;
+                        background: ${preset.value};
+                        border: ${isSelected ? '3px solid #ffffff' : '1px solid rgba(255,255,255,0.2)'};
+                        box-shadow: ${isSelected ? '0 0 0 2px var(--vkui--color_text_accent, #FF5C5C), 0 4px 8px rgba(0,0,0,0.3)' : '0 2px 5px rgba(0,0,0,0.2)'};
+                        cursor: pointer;
+                        flex-shrink: 0;
+                        transition: transform 0.15s ease;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    `;
+
+                    if (isSelected) {
+                        swatch.innerHTML = '<span style="color: #ffffff; font-size: 14px; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.6);">✓</span>';
+                    }
+
+                    swatch.onclick = (e) => {
+                        e.preventDefault();
+                        currentCustomChatColor = preset.value;
+                        setSetting(STORAGE_KEYS.CUSTOM_CHAT_COLOR, preset.value);
+                        currentChatPreset = 'custom';
+                        setSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'custom');
+
+                        const outBubble = previewContainer.querySelector('.vmu-preview-out-bubble');
+                        if (outBubble) {
+                            outBubble.style.background = preset.value;
+                        }
+
+                        applyCustomChatBackground();
+                        updateTabContent();
+                    };
+
+                    colorRow.appendChild(swatch);
+                });
+
+                // Палитра выбора произвольного цвета (Color picker)
+                const customColorPicker = document.createElement('label');
+                customColorPicker.title = 'Свой цвет';
+                customColorPicker.style.cssText = `
+                    width: 44px;
+                    height: 44px;
+                    border-radius: 50%;
+                    background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);
+                    border: 1px solid rgba(255,255,255,0.3);
+                    cursor: pointer;
+                    flex-shrink: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+                    position: relative;
+                    overflow: hidden;
+                `;
+
+                const hiddenColorInput = document.createElement('input');
+                hiddenColorInput.type = 'color';
+                hiddenColorInput.value = currentCustomChatColor.startsWith('#') ? currentCustomChatColor : '#2c2d2e';
+                hiddenColorInput.style.cssText = 'position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer;';
+
+                hiddenColorInput.onchange = (e) => {
+                    const chosen = e.target.value;
+                    currentCustomChatColor = chosen;
+                    setSetting(STORAGE_KEYS.CUSTOM_CHAT_COLOR, chosen);
+                    currentChatPreset = 'custom';
+                    setSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'custom');
+
+                    const outBubble = previewContainer.querySelector('.vmu-preview-out-bubble');
+                    if (outBubble) {
+                        outBubble.style.background = chosen;
+                    }
+
+                    applyCustomChatBackground();
+                    updateTabContent();
+                };
+
+                customColorPicker.appendChild(hiddenColorInput);
+                colorRow.appendChild(customColorPicker);
+
+                tabContentContainer.appendChild(colorRow);
+            }
+        }
+
+        tabBg.onclick = (e) => {
+            e.preventDefault();
+            customThemeActiveTab = 'bg';
+            tabBg.style.fontWeight = '600';
+            tabBg.style.color = 'var(--vkui--color_text_primary, #ffffff)';
+            tabBg.style.borderBottom = '2.5px solid var(--vkui--color_text_accent, #FF5C5C)';
+            tabColor.style.fontWeight = '400';
+            tabColor.style.color = 'var(--vkui--color_text_secondary, #828282)';
+            tabColor.style.borderBottom = '2.5px solid transparent';
+            updateTabContent();
+        };
+
+        tabColor.onclick = (e) => {
+            e.preventDefault();
+            customThemeActiveTab = 'color';
+            tabColor.style.fontWeight = '600';
+            tabColor.style.color = 'var(--vkui--color_text_primary, #ffffff)';
+            tabColor.style.borderBottom = '2.5px solid var(--vkui--color_text_accent, #FF5C5C)';
+            tabBg.style.fontWeight = '400';
+            tabBg.style.color = 'var(--vkui--color_text_secondary, #828282)';
+            tabBg.style.borderBottom = '2.5px solid transparent';
+            updateTabContent();
+        };
+
+        updateTabContent();
+        card.appendChild(tabContentContainer);
+
+        target.appendChild(card);
+        cleanupCustomPageErrors();
+    }
+
     function renderMailAppearancePage() {
         if (!isMailAppearancePage()) return;
 
-        // 1. Фиксируем кнопку «Назад» в шапке нативной страницы
+        // Фиксируем кнопку «Назад» в шапке нативной страницы
         const backBtns = document.querySelectorAll(
             '.vkuiPanelHeaderBack, [class*="PanelHeaderBack"], [aria-label*="Назад" i], [aria-label*="назад" i], [data-testid="header-back"], .vkuiPanelHeader__before a, .vkuiPanelHeader__before button, .vkuiPanelHeader__before [role="button"]'
         );
@@ -2703,266 +3259,43 @@
             }
         }
 
-        // 2. Ищем место для внедрения карточки "Фон из галереи"
-        const existingCard = document.getElementById(MAIL_APPEARANCE_UI_ID);
-        let customBgData = null;
-        try { customBgData = localStorage.getItem(STORAGE_KEYS.CUSTOM_CHAT_BG); } catch(e) {}
+        // Удаляем старую отдельную карточку, если осталась
+        const oldCard = document.getElementById(MAIL_APPEARANCE_UI_ID);
+        if (oldCard) oldCard.remove();
 
-        const groups = Array.from(document.querySelectorAll('.vkuiGroup, [class*="Group"]')).filter(g => g.id !== MAIL_APPEARANCE_UI_ID);
-
-        let insertAnchor = null;
-        let parentContainer = null;
-
-        for (let i = 0; i < groups.length; i++) {
-            const g = groups[i];
-            if (g.textContent.includes('Разное оформление') || g.querySelector('input[type="checkbox"], [role="switch"]')) {
-                insertAnchor = g;
-                parentContainer = g.parentElement;
-                break;
-            }
-        }
-
-        if (!insertAnchor && groups.length > 0) {
-            insertAnchor = groups[0].nextElementSibling;
-            parentContainer = groups[0].parentElement;
-        }
-
-        if (!parentContainer) {
-            parentContainer = document.querySelector('.vkuiPanel__in, [class*="Panel__in"], .layout, main') || document.body;
-        }
-
-        if (existingCard) {
-            if (existingCard.dataset.vmuBgData === (customBgData || 'none')) {
-                return;
-            }
-            existingCard.remove();
-        }
-
-        const card = document.createElement('div');
-        card.id = MAIL_APPEARANCE_UI_ID;
-        card.dataset.vmuBgData = customBgData || 'none';
-        card.className = 'vkuiGroup vkuiGroup--mode-none vkuiGroup--padding-m';
-        card.style.cssText = `
-            margin: 8px 0 16px 0 !important;
-            padding: 0 !important;
-            background: transparent !important;
-            border: none !important;
-            font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", sans-serif) !important;
-            display: block !important;
-            position: relative !important;
-            z-index: 1 !important;
-        `;
-
-        const gallerySection = document.createElement('div');
-        gallerySection.style.cssText = `
-            margin: 0 16px;
-            padding: 14px;
-            border-radius: 12px;
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.1));
-        `;
-
-        const galleryTitle = document.createElement('div');
-        galleryTitle.style.cssText = 'font-size: 15px; font-weight: 600; color: var(--vkui--color_text_primary, #ffffff); margin-bottom: 4px;';
-        galleryTitle.textContent = '🖼️ Фон из галереи';
-
-        const galleryDesc = document.createElement('div');
-        galleryDesc.style.cssText = 'font-size: 13px; color: var(--vkui--color_text_secondary, #999999); margin-bottom: 12px; line-height: 1.3;';
-        galleryDesc.textContent = 'Установите своё фото или картинку в качестве фона всех чатов (работает поверх любой темы)';
-
-        gallerySection.appendChild(galleryTitle);
-        gallerySection.appendChild(galleryDesc);
-
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = 'image/*';
-        fileInput.style.display = 'none';
-
-        fileInput.onchange = (e) => {
-            const file = e.target.files && e.target.files[0];
-            if (file) {
-                processUploadedImage(file, (dataUrl) => {
-                    try {
-                        localStorage.setItem(STORAGE_KEYS.CUSTOM_CHAT_BG, dataUrl);
-                    } catch(err) {
-                        alert('Превышен лимит размера памяти браузера. Пожалуйста, выберите другое изображение.');
-                    }
-                    applyCustomChatBackground();
-                    if (card.parentElement) card.remove();
-                    renderMailAppearancePage();
-                });
-            }
-        };
-        gallerySection.appendChild(fileInput);
-
-        if (customBgData) {
-            const previewWrap = document.createElement('div');
-            previewWrap.style.cssText = `
-                position: relative;
-                width: 100%;
-                height: 140px;
-                border-radius: 10px;
-                overflow: hidden;
-                margin-bottom: 12px;
-                border: 2px solid ${isColorSwapEnabled ? '#FF5C5C' : '#2787F5'};
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            `;
-
-            const imgEl = document.createElement('img');
-            imgEl.src = customBgData;
-            imgEl.style.cssText = 'width: 100%; height: 100%; object-fit: cover; display: block;';
-            previewWrap.appendChild(imgEl);
-
-            const activeBadge = document.createElement('div');
-            activeBadge.style.cssText = `
-                position: absolute;
-                top: 8px;
-                left: 8px;
-                padding: 3px 8px;
-                border-radius: 6px;
-                background: rgba(0, 0, 0, 0.7);
-                color: #ffffff;
-                font-size: 11px;
-                font-weight: 600;
-                backdrop-filter: blur(4px);
-            `;
-            activeBadge.textContent = '✓ Активный фон';
-            previewWrap.appendChild(activeBadge);
-
-            gallerySection.appendChild(previewWrap);
-
-            const btnRow = document.createElement('div');
-            btnRow.style.cssText = 'display: flex; gap: 8px; align-items: center;';
-
-            const changeBtn = document.createElement('button');
-            changeBtn.textContent = '🔄 Заменить фото';
-            changeBtn.style.cssText = `
-                flex: 1;
-                padding: 10px 14px;
-                border-radius: 8px;
-                border: none;
-                background: var(--vkui--color_background_accent, #2787F5);
-                color: #ffffff;
-                font-size: 13px;
-                font-weight: 500;
-                cursor: pointer;
-                touch-action: manipulation;
-            `;
-            changeBtn.onclick = (e) => {
-                e.preventDefault();
-                fileInput.click();
-            };
-
-            const removeBtn = document.createElement('button');
-            removeBtn.textContent = '🗑️ Удалить фон';
-            removeBtn.style.cssText = `
-                padding: 10px 14px;
-                border-radius: 8px;
-                border: 1px solid rgba(255, 92, 92, 0.4);
-                background: rgba(255, 92, 92, 0.12);
-                color: #FF5C5C;
-                font-size: 13px;
-                font-weight: 500;
-                cursor: pointer;
-                touch-action: manipulation;
-            `;
-            removeBtn.onclick = (e) => {
-                e.preventDefault();
-                try { localStorage.removeItem(STORAGE_KEYS.CUSTOM_CHAT_BG); } catch(e) {}
-                applyCustomChatBackground();
-                if (card.parentElement) card.remove();
-                renderMailAppearancePage();
-            };
-
-            btnRow.appendChild(changeBtn);
-            btnRow.appendChild(removeBtn);
-            gallerySection.appendChild(btnRow);
-        } else {
-            const uploadBtn = document.createElement('div');
-            uploadBtn.style.cssText = `
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                padding: 20px;
-                border: 2px dashed var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.2));
-                border-radius: 10px;
-                background: rgba(255, 255, 255, 0.03);
-                cursor: pointer;
-                transition: background-color 0.2s ease, border-color 0.2s ease;
-                text-align: center;
-                touch-action: manipulation;
-                -webkit-tap-highlight-color: transparent;
-            `;
-
-            uploadBtn.innerHTML = `
-                <div style="font-size: 24px; margin-bottom: 6px;">📷</div>
-                <div style="font-size: 14px; font-weight: 500; color: var(--vkui--color_text_accent, #71aaeb);">Выбрать фото из галереи</div>
-                <div style="font-size: 12px; color: var(--vkui--color_text_secondary, #888); margin-top: 2px;">PNG, JPG, WebP</div>
-            `;
-
-            uploadBtn.onclick = (e) => {
-                e.preventDefault();
-                fileInput.click();
-            };
-
-            gallerySection.appendChild(uploadBtn);
-        }
-
-        card.appendChild(gallerySection);
-
-        if (insertAnchor && insertAnchor.parentElement) {
-            insertAnchor.insertAdjacentElement('beforebegin', card);
-        } else if (parentContainer) {
-            parentContainer.appendChild(card);
-        }
+        // Внедряем пункт «Своё» в карусель тем
+        injectCustomThemeOptionInCarousel();
     }
 
     function applyCustomChatBackground() {
+        const isCustom = (currentChatPreset === 'custom');
         let customBg = null;
+        let customColor = getStringSetting(STORAGE_KEYS.CUSTOM_CHAT_COLOR, '#2c2d2e');
+
         try {
             customBg = localStorage.getItem(STORAGE_KEYS.CUSTOM_CHAT_BG);
         } catch(e) {}
 
-        let bgLayer = document.getElementById('vmu-custom-chat-bg-layer');
+        const html = document.documentElement;
+        if (html) {
+            html.style.setProperty('--vmu-custom-chat-bg', customBg ? `url("${customBg}")` : 'none');
+            html.style.setProperty('--vmu-custom-chat-bubble', customColor);
+        }
+
         const inChat = isInChatPage();
 
-        if (customBg && inChat) {
-            if (!bgLayer) {
-                bgLayer = document.createElement('div');
-                bgLayer.id = 'vmu-custom-chat-bg-layer';
-                bgLayer.style.cssText = `
-                    position: fixed !important;
-                    top: 0 !important;
-                    left: 0 !important;
-                    right: 0 !important;
-                    bottom: 0 !important;
-                    width: 100vw !important;
-                    height: 100vh !important;
-                    background-size: cover !important;
-                    background-position: center center !important;
-                    background-repeat: no-repeat !important;
-                    pointer-events: none !important;
-                    z-index: 1 !important;
-                    transform: translate3d(0, 0, 0) !important;
-                    will-change: transform !important;
-                `;
-                document.body.appendChild(bgLayer);
+        if (isCustom && inChat) {
+            if (!document.body.classList.contains('vmu-theme-custom-active')) {
+                document.body.classList.add('vmu-theme-custom-active');
             }
-            const expectedUrl = `url("${customBg}")`;
-            if (bgLayer.style.backgroundImage !== expectedUrl) {
-                bgLayer.style.backgroundImage = expectedUrl;
-            }
-            bgLayer.style.display = 'block';
-
-            if (!document.body.classList.contains('vmu-has-custom-chat-bg')) {
+            if (customBg) {
                 document.body.classList.add('vmu-has-custom-chat-bg');
+            } else {
+                document.body.classList.remove('vmu-has-custom-chat-bg');
             }
         } else {
-            if (bgLayer) {
-                bgLayer.style.display = 'none';
-            }
-            if (document.body && document.body.classList.contains('vmu-has-custom-chat-bg')) {
+            if (document.body) {
+                document.body.classList.remove('vmu-theme-custom-active');
                 document.body.classList.remove('vmu-has-custom-chat-bg');
             }
         }
@@ -2993,7 +3326,7 @@
     }
 
     function cleanupCustomPageErrors() {
-        if (!isScriptMenuPage() && !isDebugScriptPage()) return;
+        if (!isScriptMenuPage() && !isDebugScriptPage() && !isCustomThemeEditorPage()) return;
 
         // 1. Прячем все соседние блоки VK внутри контейнера страницы
         const containers = document.querySelectorAll('.vkuiPanel__in, [class*="Panel__in"], .layout, main, .vkuiSplitCol, [class*="SplitCol"]');
@@ -3001,8 +3334,8 @@
             const children = containers[c].children;
             for (let i = 0; i < children.length; i++) {
                 const child = children[i];
-                if (child.id !== SCRIPT_MENU_UI_ID && child.id !== DEBUG_SCRIPT_UI_ID && child.id !== SETTINGS_UI_ID) {
-                    if (!child.contains(document.getElementById(SCRIPT_MENU_UI_ID)) && !child.contains(document.getElementById(DEBUG_SCRIPT_UI_ID))) {
+                if (child.id !== SCRIPT_MENU_UI_ID && child.id !== DEBUG_SCRIPT_UI_ID && child.id !== SETTINGS_UI_ID && child.id !== CUSTOM_THEME_EDITOR_UI_ID) {
+                    if (!child.contains(document.getElementById(SCRIPT_MENU_UI_ID)) && !child.contains(document.getElementById(DEBUG_SCRIPT_UI_ID)) && !child.contains(document.getElementById(CUSTOM_THEME_EDITOR_UI_ID))) {
                         child.style.setProperty('display', 'none', 'important');
                         child.style.setProperty('visibility', 'hidden', 'important');
                         child.style.setProperty('height', '0', 'important');
@@ -3023,7 +3356,7 @@
         }
         for (let i = 0; i < nodesToHide.length; i++) {
             const parent = nodesToHide[i];
-            if (parent && !parent.closest('#' + SCRIPT_MENU_UI_ID) && !parent.closest('#' + DEBUG_SCRIPT_UI_ID)) {
+            if (parent && !parent.closest('#' + SCRIPT_MENU_UI_ID) && !parent.closest('#' + DEBUG_SCRIPT_UI_ID) && !parent.closest('#' + CUSTOM_THEME_EDITOR_UI_ID)) {
                 const topBlock = parent.closest('.vkuiSnackbar, [class*="Snackbar"], .vkuiBanner, [class*="Banner"], .vkuiPlaceholder, [class*="Placeholder"], .vkuiFormStatus, [class*="FormStatus"], [role="alert"], .vkuiAlert, [class*="Alert"], .vkuiGroup, [class*="Group"], .vkuiSimpleCell, [class*="SimpleCell"], .vkuiPopoutWrapper, [class*="PopoutWrapper"], .vkuiModalCard, [class*="ModalCard"]') || parent;
                 topBlock.style.setProperty('display', 'none', 'important');
                 topBlock.style.setProperty('visibility', 'hidden', 'important');
@@ -3040,7 +3373,7 @@
         );
         for (let i = 0; i < errorCandidates.length; i++) {
             const el = errorCandidates[i];
-            if (!el.closest('#' + SCRIPT_MENU_UI_ID) && !el.closest('#' + DEBUG_SCRIPT_UI_ID)) {
+            if (!el.closest('#' + SCRIPT_MENU_UI_ID) && !el.closest('#' + DEBUG_SCRIPT_UI_ID) && !el.closest('#' + CUSTOM_THEME_EDITOR_UI_ID)) {
                 el.style.setProperty('display', 'none', 'important');
                 el.style.setProperty('visibility', 'hidden', 'important');
                 el.style.setProperty('height', '0', 'important');
@@ -3055,11 +3388,13 @@
         const isAppearance = isAppearancePage();
         const isScriptMenu = isScriptMenuPage();
         const isDebugScript = isDebugScriptPage();
+        const isCustomEditor = isCustomThemeEditorPage();
         const isMailApp = isMailAppearancePage();
 
         const existingCard = document.getElementById(SETTINGS_UI_ID);
         const existingMenuCard = document.getElementById(SCRIPT_MENU_UI_ID);
         const existingDebugCard = document.getElementById(DEBUG_SCRIPT_UI_ID);
+        const existingEditorCard = document.getElementById(CUSTOM_THEME_EDITOR_UI_ID);
         const existingMailCard = document.getElementById(MAIL_APPEARANCE_UI_ID);
 
         if (!isAppearance && existingCard) {
@@ -3070,6 +3405,9 @@
         }
         if (!isDebugScript && existingDebugCard) {
             existingDebugCard.remove();
+        }
+        if (!isCustomEditor && existingEditorCard) {
+            existingEditorCard.remove();
         }
         if (!isMailApp && existingMailCard) {
             existingMailCard.remove();
@@ -3085,6 +3423,11 @@
 
         if (isDebugScript) {
             renderDebugScriptPage();
+            return;
+        }
+
+        if (isCustomEditor) {
+            renderCustomThemeEditorPage();
             return;
         }
 
