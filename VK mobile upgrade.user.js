@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.23.9
+// @version      2.23.10
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -480,6 +480,34 @@
         .bottom_nav__text,
         .bottom_nav__label {
             font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", sans-serif) !important;
+        }
+
+        /* 11. СКРЫТИЕ ОШИБОК И ЛИШНИХ БАННЕРОВ ВК НА КАСТОМНЫХ СТРАНИЦАХ СКРИПТА */
+        body:has(#vmu-script-menu-card) .vkuiBanner,
+        body:has(#vmu-script-menu-card) [class*="Banner"],
+        body:has(#vmu-script-menu-card) [class*="FormStatus"],
+        body:has(#vmu-script-menu-card) [class*="Placeholder"],
+        body:has(#vmu-script-menu-card) [class*="Snackbar"],
+        body:has(#vmu-script-menu-card) .vkuiSnackbar,
+        body:has(#vmu-script-menu-card) [role="alert"],
+        body:has(#vmu-script-menu-card) .vkuiAlert,
+        body:has(#vmu-script-menu-card) [class*="Alert"],
+        body:has(#vmu-debug-script-card) .vkuiBanner,
+        body:has(#vmu-debug-script-card) [class*="Banner"],
+        body:has(#vmu-debug-script-card) [class*="FormStatus"],
+        body:has(#vmu-debug-script-card) [class*="Placeholder"],
+        body:has(#vmu-debug-script-card) [class*="Snackbar"],
+        body:has(#vmu-debug-script-card) .vkuiSnackbar,
+        body:has(#vmu-debug-script-card) [role="alert"],
+        body:has(#vmu-debug-script-card) .vkuiAlert,
+        body:has(#vmu-debug-script-card) [class*="Alert"] {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
         }
     `;
 
@@ -1959,10 +1987,11 @@
         itemMenu.classList.add('vmu-custom-settings-item');
         itemMenu.setAttribute('href', '/settings?act=vmu_menu');
 
-        const iconContainerMenu = itemMenu.querySelector('.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]') || itemMenu;
-        iconContainerMenu.style.cssText = 'display: flex !important; align-items: center !important; justify-content: center !important; width: 28px !important; min-width: 28px !important; height: 28px !important; flex-shrink: 0 !important;';
-        const gearSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; min-width: 28px !important; min-height: 28px !important; color: var(--vkui--color_icon_accent, #FF5C5C) !important; flex-shrink: 0 !important;"><circle cx="14" cy="14" r="3.6" stroke="currentColor" stroke-width="2"/><path d="M12.7 3.5a1.5 1.5 0 0 1 2.6 0l.5 1a2 2 0 0 0 2.2.9l1.1-.3a1.5 1.5 0 0 1 1.8 1.8l-.3 1.1a2 2 0 0 0 .9 2.2l1 .5a1.5 1.5 0 0 1 0 2.6l-1 .5a2 2 0 0 0-.9 2.2l.3 1.1a1.5 1.5 0 0 1-1.8 1.8l-1.1-.3a2 2 0 0 0-2.2.9l-.5 1a1.5 1.5 0 0 1-2.6 0l-.5-1a2 2 0 0 0-2.2-.9l-1.1.3a1.5 1.5 0 0 1-1.8-1.8l.3-1.1a2 2 0 0 0-.9-2.2l-1-.5a1.5 1.5 0 0 1 0-2.6l1-.5a2 2 0 0 0 .9-2.2l-.3-1.1a1.5 1.5 0 0 1 1.8-1.8l1.1.3a2 2 0 0 0 2.2-.9l.5-1Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
-        iconContainerMenu.innerHTML = gearSvg;
+        const iconContainerMenu = itemMenu.querySelector('.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]');
+        const gearSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: var(--vkui--color_icon_accent, #FF5C5C) !important; margin: 0 auto !important;"><circle cx="14" cy="14" r="3.75" stroke="currentColor" stroke-width="2"/><path d="M14 2.5a1.5 1.5 0 0 1 1.45 1.1l.3 1.2a2 2 0 0 0 2.1 1.5l1.2-.3a1.5 1.5 0 0 1 1.7 1.7l-.3 1.2a2 2 0 0 0 1.5 2.1l1.2.3a1.5 1.5 0 0 1 1.1 1.45v1.5a1.5 1.5 0 0 1-1.1 1.45l-1.2.3a2 2 0 0 0-1.5 2.1l.3 1.2a1.5 1.5 0 0 1-1.7 1.7l-1.2-.3a2 2 0 0 0-2.1 1.5l-.3 1.2a1.5 1.5 0 0 1-1.45 1.1h-1.5a1.5 1.5 0 0 1-1.45-1.1l-.3-1.2a2 2 0 0 0-2.1-1.5l-1.2.3a1.5 1.5 0 0 1-1.7-1.7l.3-1.2a2 2 0 0 0-1.5-2.1l-1.2-.3a1.5 1.5 0 0 1-1.1-1.45v-1.5a1.5 1.5 0 0 1 1.1-1.45l1.2-.3a2 2 0 0 0 1.5-2.1l-.3-1.2a1.5 1.5 0 0 1 1.7-1.7l1.2.3a2 2 0 0 0 2.1-1.5l.3-1.2a1.5 1.5 0 0 1 1.45-1.1h1.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
+        if (iconContainerMenu) {
+            iconContainerMenu.innerHTML = gearSvg;
+        }
 
         const textElMenu = itemMenu.querySelector('.vkuiSimpleCell__text, [class*="SimpleCell__text"], [class*="Cell__text"], [class*="SimpleCell__children"], [class*="Cell__children"]') || itemMenu;
         let walkerM = document.createTreeWalker(textElMenu, NodeFilter.SHOW_TEXT);
@@ -1991,10 +2020,11 @@
         itemDebug.classList.add('vmu-custom-settings-item');
         itemDebug.setAttribute('href', '/settings?act=vmu_debug');
 
-        const iconContainerDebug = itemDebug.querySelector('.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]') || itemDebug;
-        iconContainerDebug.style.cssText = 'display: flex !important; align-items: center !important; justify-content: center !important; width: 28px !important; min-width: 28px !important; height: 28px !important; flex-shrink: 0 !important;';
-        const bugSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; min-width: 28px !important; min-height: 28px !important; color: var(--vkui--color_icon_accent, #FF5C5C) !important; flex-shrink: 0 !important;"><path d="M9.5 4.5L11 7M18.5 4.5L17 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="9.5" y="7.5" width="9" height="12" rx="4.5" stroke="currentColor" stroke-width="2"/><path d="M5.5 10.5h4M5.5 13.5h4M5.5 16.5h4M18.5 10.5h4M18.5 13.5h4M18.5 16.5h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 11.5v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
-        iconContainerDebug.innerHTML = bugSvg;
+        const iconContainerDebug = itemDebug.querySelector('.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]');
+        const bugSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: var(--vkui--color_icon_accent, #FF5C5C) !important; margin: 0 auto !important;"><path d="M11 8L8.5 4.5M17 8l2.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="8.5" y="8" width="11" height="13" rx="5.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 11.5h5M3.5 15h5M3.5 18.5h5M19.5 11.5h5M19.5 15h5M19.5 18.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 11.5v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+        if (iconContainerDebug) {
+            iconContainerDebug.innerHTML = bugSvg;
+        }
 
         const textElDebug = itemDebug.querySelector('.vkuiSimpleCell__text, [class*="SimpleCell__text"], [class*="Cell__text"], [class*="SimpleCell__children"], [class*="Cell__children"]') || itemDebug;
         let walkerD = document.createTreeWalker(textElDebug, NodeFilter.SHOW_TEXT);
@@ -2025,10 +2055,20 @@
         const existingPage = document.getElementById(SCRIPT_MENU_UI_ID);
         if (existingPage) return;
 
-        const groups = document.querySelectorAll('.vkuiGroup, [class*="Group"], .vkuiPanel__in > div, .vkuiBanner, [class*="Banner"], .vkuiFormStatus--mode-error, [class*="FormStatus--error"], [class*="Snackbar"], .vkuiSnackbar, [class*="FormStatus"]');
+        const groups = document.querySelectorAll('.vkuiGroup, [class*="Group"], .vkuiPanel__in > div, .vkuiBanner, [class*="Banner"], .vkuiFormStatus--mode-error, [class*="FormStatus--error"], [class*="Snackbar"], .vkuiSnackbar, [class*="FormStatus"], [class*="Placeholder"], [role="alert"], .vkuiAlert');
         for (let i = 0; i < groups.length; i++) {
             if (groups[i].id !== SCRIPT_MENU_UI_ID && groups[i].id !== DEBUG_SCRIPT_UI_ID && groups[i].id !== SETTINGS_UI_ID) {
                 groups[i].style.setProperty('display', 'none', 'important');
+            }
+        }
+
+        // Удаление баннеров ошибок VK
+        const errorEls = document.querySelectorAll('.vkuiBanner, [class*="Banner"], .vkuiFormStatus, [class*="FormStatus"], [class*="Placeholder"], [class*="Snackbar"], .vkuiSnackbar, [role="alert"], .vkuiAlert, [class*="Alert"]');
+        for (let i = 0; i < errorEls.length; i++) {
+            const el = errorEls[i];
+            if (!el.closest('#' + SCRIPT_MENU_UI_ID) && !el.closest('#' + DEBUG_SCRIPT_UI_ID)) {
+                el.style.setProperty('display', 'none', 'important');
+                try { el.remove(); } catch(e) {}
             }
         }
 
@@ -2038,7 +2078,7 @@
         card.id = SCRIPT_MENU_UI_ID;
         card.className = 'vkuiGroup vkuiGroup--mode-none vkuiGroup--padding-m';
         card.style.cssText = `
-            margin: 48px 0 90px 0 !important;
+            margin: 0 0 90px 0 !important;
             padding: 0 0 20px 0 !important;
             background: transparent !important;
             border: none !important;
@@ -2095,26 +2135,6 @@
         topNav.appendChild(backBtn);
         topNav.appendChild(pageTitle);
         card.appendChild(topNav);
-
-        const banner = document.createElement('div');
-        banner.style.cssText = `
-            margin: 0 16px 14px 16px;
-            padding: 14px;
-            border-radius: 12px;
-            background: rgba(39, 135, 245, 0.1);
-            border: 1px solid rgba(39, 135, 245, 0.2);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        `;
-        banner.innerHTML = `
-            <div style="font-size: 26px; line-height: 1;">⚙️</div>
-            <div>
-                <div style="font-size: 15px; font-weight: 600; color: var(--vkui--color_text_primary, #fff);">VK Mobile Upgrade</div>
-                <div style="font-size: 13px; color: var(--vkui--color_text_secondary, #999); margin-top: 2px;">Версия v2.23.9 • Меню настроек скрипта</div>
-            </div>
-        `;
-        card.appendChild(banner);
 
         // 1. Замена вкладки Поиск
         const rowTabSearch = createSelectRow(
@@ -2188,10 +2208,20 @@
         const existingPage = document.getElementById(DEBUG_SCRIPT_UI_ID);
         if (existingPage) return;
 
-        const groups = document.querySelectorAll('.vkuiGroup, [class*="Group"], .vkuiPanel__in > div, .vkuiBanner, [class*="Banner"], .vkuiFormStatus--mode-error, [class*="FormStatus--error"], [class*="Snackbar"], .vkuiSnackbar, [class*="FormStatus"]');
+        const groups = document.querySelectorAll('.vkuiGroup, [class*="Group"], .vkuiPanel__in > div, .vkuiBanner, [class*="Banner"], .vkuiFormStatus--mode-error, [class*="FormStatus--error"], [class*="Snackbar"], .vkuiSnackbar, [class*="FormStatus"], [class*="Placeholder"], [role="alert"], .vkuiAlert');
         for (let i = 0; i < groups.length; i++) {
             if (groups[i].id !== SCRIPT_MENU_UI_ID && groups[i].id !== DEBUG_SCRIPT_UI_ID && groups[i].id !== SETTINGS_UI_ID) {
                 groups[i].style.setProperty('display', 'none', 'important');
+            }
+        }
+
+        // Удаление баннеров ошибок VK
+        const errorEls = document.querySelectorAll('.vkuiBanner, [class*="Banner"], .vkuiFormStatus, [class*="FormStatus"], [class*="Placeholder"], [class*="Snackbar"], .vkuiSnackbar, [role="alert"], .vkuiAlert, [class*="Alert"]');
+        for (let i = 0; i < errorEls.length; i++) {
+            const el = errorEls[i];
+            if (!el.closest('#' + SCRIPT_MENU_UI_ID) && !el.closest('#' + DEBUG_SCRIPT_UI_ID)) {
+                el.style.setProperty('display', 'none', 'important');
+                try { el.remove(); } catch(e) {}
             }
         }
 
@@ -2201,7 +2231,7 @@
         card.id = DEBUG_SCRIPT_UI_ID;
         card.className = 'vkuiGroup vkuiGroup--mode-none vkuiGroup--padding-m';
         card.style.cssText = `
-            margin: 48px 0 90px 0 !important;
+            margin: 0 0 90px 0 !important;
             padding: 0 0 20px 0 !important;
             background: transparent !important;
             border: none !important;
@@ -2282,7 +2312,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.23.9</div>
+            <div>• <b>Script Version:</b> v2.23.10</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>Hide Labels:</b> ${isHideLabelsEnabled}</div>
