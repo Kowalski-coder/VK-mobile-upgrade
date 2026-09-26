@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.25.1
+// @version      2.25.2
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), «Своё оформление» чатов (фон из галереи + свой цвет сообщений с интерактивным предпросмотром), раздел Мессенджер в настройках, кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -593,27 +593,54 @@
             --vmu-custom-chat-bubble: #2c2d2e;
         }
 
+        body.vmu-theme-custom-active {
+            --vkui--color_im_bubble_outgoing: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
+            --vkui--color_im_bubble_outgoing_alternate: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
+            --color_im_bubble_outgoing: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
+            --color_im_bubble_outgoing_alternate: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
+            --im-bubble-outgoing-background: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
+        }
+
+        /* Скрытие стандартных картинок и слоев обоев VK при активной кастомной теме */
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatWallpaper"] img,
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkmChatWallpaper img,
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatWallpaper"] svg,
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="Wallpaper__image"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatWallpaper__image"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatWallpaper"] [style*="background-image"] {
+            opacity: 0 !important;
+            display: none !important;
+        }
+
+        /* Применение кастомного фона чата */
         body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkmChat,
         body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatHistory"],
         body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="MessagesList"],
         body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="im-page--chat"],
         body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatWallpaper"],
         body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkmChatWallpaper,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="im-history"] {
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="im-history"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatContainer"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg main:has([class*="WriteBar"]),
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .layout:has([class*="WriteBar"]) {
             background-image: var(--vmu-custom-chat-bg) !important;
             background-size: cover !important;
             background-position: center center !important;
             background-repeat: no-repeat !important;
             background-attachment: fixed !important;
+            background-color: #111112 !important;
         }
 
         body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkmChat > div,
         body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatHistory"] > div,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="MessagesList"] > div {
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="MessagesList"] > div,
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatHistory"] [class*="Stack"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="MessagesList"] [class*="Stack"] {
             background: transparent !important;
             background-color: transparent !important;
         }
 
+        /* Применение цвета исходящих сообщений */
         body.vmu-theme-custom-active [class*="im-mess_out"] [class*="im-mess--bubble"],
         body.vmu-theme-custom-active [class*="im-mess_out"] [class*="im-mess__bubble"],
         body.vmu-theme-custom-active [class*="im-mess_out"] [class*="im-mess-stack"],
@@ -621,11 +648,29 @@
         body.vmu-theme-custom-active [class*="MessageBubble--out"],
         body.vmu-theme-custom-active [class*="Message--outgoing"] [class*="Message__bubble"],
         body.vmu-theme-custom-active [class*="Message--outgoing"] [class*="im-mess--bubble"],
+        body.vmu-theme-custom-active [class*="Message--outgoing"] [class*="MessageBubble"],
+        body.vmu-theme-custom-active [class*="Message--outgoing"],
         body.vmu-theme-custom-active [data-testid="message-bubble-outgoing"],
-        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"] [class*="MessageBubble__bubble"] {
+        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"] [class*="MessageBubble__bubble"],
+        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"] [class*="MessageBubble__in"],
+        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"] > div {
             background: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
             background-color: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
             color: #ffffff !important;
+        }
+
+        /* Визуальное отключение активного состояния стандартных тем при выборе «Своё» */
+        body.vmu-theme-custom-active .vkuiRadio--checked:not(#vmu-custom-theme-card) [class*="Radio__icon"],
+        body.vmu-theme-custom-active .vkuiRadio--checked:not(#vmu-custom-theme-card) [class*="icon"],
+        body.vmu-theme-custom-active .vkuiRadio--checked:not(#vmu-custom-theme-card) [class*="checked"],
+        body.vmu-theme-custom-active [role="radio"][aria-checked="true"]:not(#vmu-custom-theme-card) [class*="icon"],
+        body.vmu-theme-custom-active [role="radio"][aria-checked="true"]:not(#vmu-custom-theme-card) svg {
+            display: none !important;
+        }
+
+        body.vmu-theme-custom-active .vkuiRadio--checked:not(#vmu-custom-theme-card) [class*="Radio__content"],
+        body.vmu-theme-custom-active [role="radio"][aria-checked="true"]:not(#vmu-custom-theme-card) > div {
+            border-color: rgba(255, 255, 255, 0.12) !important;
         }
 
         /* Предотвращение мигания карточек в карусели */
@@ -2583,7 +2628,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.25.1</div>
+            <div>• <b>Script Version:</b> v2.25.2</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>Hide Labels:</b> ${isHideLabelsEnabled}</div>
@@ -2656,40 +2701,46 @@
     const CUSTOM_THEME_EDITOR_UI_ID = 'vmu-custom-theme-editor-overlay';
 
     function findThemesCarouselRow() {
-        // 1. Поиск по названию стандартных тем оформления чатов
-        const candidateNames = ['Чёрный', 'Черный', 'Классический', 'Ковёр', 'Ковер', 'Пиксели', 'Неон', 'Графика', 'Космос'];
+        // 1. Ищем любую из стандартных тем (Поле, Ковёр, Пиксели, Чёрный, etc.)
+        const candidateNames = ['Поле', 'Ковёр', 'Ковер', 'Пиксели', 'Чёрный', 'Черный', 'Классический', 'Неон', 'Графика', 'Космос'];
         const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
         let node;
+        let foundCardItem = null;
+
         while ((node = walker.nextNode())) {
             const txt = node.nodeValue ? node.nodeValue.trim() : '';
             if (candidateNames.includes(txt)) {
-                let el = node.parentElement;
-                while (el && el !== document.body && el.parentElement) {
-                    const parent = el.parentElement;
-                    const style = window.getComputedStyle(parent);
-                    if (style.display.includes('flex') && parent.children.length > 1) {
-                        return parent;
+                let cur = node.parentElement;
+                // Поднимаемся до уровня элемента-карточки темы
+                while (cur && cur !== document.body) {
+                    if (cur.matches && (cur.matches('.vkuiRadio, [class*="Radio"], [role="radio"], .vkuiTappable') || cur.querySelector('input[type="radio"]'))) {
+                        foundCardItem = cur;
+                        break;
                     }
-                    if (parent.className && typeof parent.className === 'string' && (parent.className.includes('HorizontalScroll') || parent.className.includes('Scroll'))) {
-                        return el.parentElement;
+                    if (cur.parentElement && cur.parentElement.children.length >= 2) {
+                        const style = window.getComputedStyle(cur.parentElement);
+                        if (style.display.includes('flex') && (style.flexDirection === 'row' || !style.flexDirection || style.flexDirection === 'normal')) {
+                            foundCardItem = cur;
+                            break;
+                        }
                     }
-                    el = parent;
+                    cur = cur.parentElement;
                 }
+                if (foundCardItem) break;
             }
         }
 
-        // 2. Вторичный поиск по селекторам горизонтального скролла VKUI
+        if (foundCardItem && foundCardItem.parentElement) {
+            return foundCardItem.parentElement;
+        }
+
+        // 2. Вторичный поиск по точным селекторам VKUI HorizontalScroll
         const scrolls = document.querySelectorAll(
-            '.vkuiHorizontalScroll__in > div, .vkuiHorizontalScroll__content, .vkuiHorizontalScroll__in, [class*="HorizontalScroll__in"] > div, [class*="HorizontalScroll__content"], [class*="HorizontalScroll__in"]'
+            '.vkuiHorizontalScroll__content, [class*="HorizontalScroll__content"], .vkuiHorizontalScroll__in > div, [class*="HorizontalScroll__in"] > div'
         );
         for (let i = 0; i < scrolls.length; i++) {
-            const s = scrolls[i];
-            const flexChild = s.querySelector('div[style*="display: flex"], [class*="content"], [class*="items"]');
-            if (flexChild && flexChild.children.length > 1) {
-                return flexChild;
-            }
-            if (s.children.length > 1) {
-                return s;
+            if (scrolls[i].children.length >= 2) {
+                return scrolls[i];
             }
         }
 
@@ -2725,12 +2776,14 @@
             display: inline-flex !important;
             flex-direction: column !important;
             align-items: center !important;
+            justify-content: flex-start !important;
             margin-right: 12px !important;
             cursor: pointer !important;
             user-select: none !important;
             flex-shrink: 0 !important;
             -webkit-tap-highlight-color: transparent !important;
             vertical-align: top !important;
+            width: auto !important;
         `;
 
         customCard.innerHTML = `
@@ -2743,6 +2796,16 @@
             </div>
             <div style="font-size: 13px; color: ${isCustomActive ? 'var(--vkui--color_text_accent, #FF5C5C)' : 'var(--vkui--color_text_primary, #ffffff)'}; font-weight: ${isCustomActive ? '600' : '400'}; margin-top: 6px; text-align: center;">Своё</div>
         `;
+
+        // Скрываем активные галочки со стандартных карточек, если выбрано «Своё»
+        if (isCustomActive) {
+            carouselRow.querySelectorAll('.vkuiRadio, [class*="Radio"], [role="radio"]').forEach(item => {
+                if (item.id !== 'vmu-custom-theme-card') {
+                    const icon = item.querySelector('[class*="Radio__icon"], [class*="icon"], svg');
+                    if (icon) icon.style.setProperty('display', 'none', 'important');
+                }
+            });
+        }
 
         customCard.onclick = (e) => {
             e.preventDefault();
@@ -2764,6 +2827,10 @@
                     setSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'native');
                     applyCustomChatBackground();
                     injectCustomThemeOptionInCarousel();
+                    carouselRow.querySelectorAll('.vkuiRadio, [class*="Radio"], [role="radio"]').forEach(item => {
+                        const icon = item.querySelector('[class*="Radio__icon"], [class*="icon"], svg');
+                        if (icon) icon.style.removeProperty('display');
+                    });
                 }
             }, false);
         }
@@ -2866,7 +2933,7 @@
         previewContainer.style.cssText = `
             position: relative;
             margin: 16px;
-            height: 380px;
+            height: 360px;
             border-radius: 16px;
             overflow: hidden;
             ${liveBgStyle};
@@ -2881,16 +2948,7 @@
         `;
 
         previewContainer.innerHTML = `
-            <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
-                <!-- Исходящее сообщение 1 -->
-                <div style="align-self: flex-end; max-width: 82%; background: ${customColor}; border-radius: 16px 16px 4px 16px; padding: 8px 12px; color: #ffffff; font-size: 14px; line-height: 1.35; position: relative; box-shadow: 0 2px 6px rgba(0,0,0,0.3);" class="vmu-preview-out-bubble">
-                    <div>Я в своём познании настолько преисполнился...</div>
-                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 3px; font-size: 11px; opacity: 0.75; margin-top: 3px;">
-                        <span>19:23</span>
-                        <span>✓✓</span>
-                    </div>
-                </div>
-
+            <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
                 <!-- Входящее сообщение 1 (Лиза) -->
                 <div style="display: flex; align-items: flex-end; gap: 8px; max-width: 82%;">
                     <div style="width: 28px; height: 28px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #6c5ce7; display: flex; align-items: center; justify-content: center;">
@@ -2898,38 +2956,38 @@
                     </div>
                     <div style="background: #232324; border-radius: 16px 16px 16px 4px; padding: 8px 12px; color: #ffffff; font-size: 14px; line-height: 1.35; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
                         <div style="color: var(--vkui--color_text_accent, #FF5C5C); font-weight: 600; font-size: 12px; margin-bottom: 2px;">Лиза</div>
-                        <div>Пожалуйста, не начинай</div>
+                        <div>Привет! Как тебе новое оформление? ✨</div>
                         <div style="text-align: right; font-size: 11px; opacity: 0.6; margin-top: 3px;">19:24</div>
                     </div>
                 </div>
 
-                <!-- Входящее сообщение 2 -->
-                <div style="margin-left: 36px; max-width: 82%; background: #232324; border-radius: 16px 16px 16px 4px; padding: 8px 12px; color: #ffffff; font-size: 13.5px; line-height: 1.35; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
-                    <div>что я как будто бы уже сто триллионов миллиардов лет проживаю на триллионах и триллионах таких же планет, как эта Земля, мне этот мир абсолютно понятен.</div>
-                    <div style="text-align: right; font-size: 11px; opacity: 0.6; margin-top: 3px;">19:25</div>
+                <!-- Исходящее сообщение 1 -->
+                <div style="align-self: flex-end; max-width: 80%; background: ${customColor}; border-radius: 16px 16px 4px 16px; padding: 8px 12px; color: #ffffff; font-size: 14px; line-height: 1.35; position: relative; box-shadow: 0 2px 6px rgba(0,0,0,0.3);" class="vmu-preview-out-bubble">
+                    <div>Выглядит просто супер! 🔥</div>
+                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 3px; font-size: 11px; opacity: 0.75; margin-top: 3px;">
+                        <span>19:24</span>
+                        <span>✓✓</span>
+                    </div>
                 </div>
 
-                <!-- Стикер Сеня -->
-                <div style="display: flex; align-items: flex-end; gap: 8px; margin-top: 2px;">
+                <!-- Входящее сообщение 2 (Лиза) -->
+                <div style="display: flex; align-items: flex-end; gap: 8px; max-width: 82%;">
                     <div style="width: 28px; height: 28px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #6c5ce7; display: flex; align-items: center; justify-content: center;">
                         <svg width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="14" fill="#8854d0"/><circle cx="14" cy="11" r="5" fill="#ffeaa7"/><path d="M6 25c0-4.4 3.6-8 8-8s8 3.6 8 8" fill="#ffeaa7"/></svg>
                     </div>
-                    <div style="position: relative;">
-                        <svg width="76" height="76" viewBox="0 0 100 100" fill="none">
-                            <path d="M30 65c-5 0-10-8-5-16l15-20c3-4 9-5 13-2l10 7c4 3 5 9 2 13l-10 15c-3 4-8 5-13 4l-12-1z" fill="#f1c40f" stroke="#d35400" stroke-width="2"/>
-                            <ellipse cx="45" cy="38" rx="18" ry="16" fill="#f39c12"/>
-                            <circle cx="42" cy="34" r="3.5" fill="#2c3e50"/><circle cx="43" cy="33" r="1.2" fill="#fff"/>
-                            <path d="M48 38l18 4-16 8z" fill="#e67e22"/>
-                            <path d="M22 45l18 10-5 12-16-12z" fill="#f1c40f" stroke="#d35400" stroke-width="2"/>
-                            <path d="M55 48l25-18c4-3 10-2 13 2l2 3c3 4 2 10-2 13L68 62z" fill="#f1c40f" stroke="#d35400" stroke-width="2"/>
-                        </svg>
-                        <div style="position: absolute; right: 0; bottom: 0; font-size: 11px; opacity: 0.6;">19:26</div>
+                    <div style="background: #232324; border-radius: 16px 16px 16px 4px; padding: 8px 12px; color: #ffffff; font-size: 14px; line-height: 1.35; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
+                        <div>Цвет сообщений и фон идеально сочетаются)</div>
+                        <div style="text-align: right; font-size: 11px; opacity: 0.6; margin-top: 3px;">19:25</div>
                     </div>
                 </div>
 
-                <!-- Входящее сообщение 3 -->
-                <div style="margin-left: 36px; max-width: 82%; background: #232324; border-radius: 16px; padding: 8px 12px; color: #ffffff; font-size: 13.5px; line-height: 1.35; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
-                    <div>И я здесь ищу только одного — покоя, умиротворения и вот этой гармонии</div>
+                <!-- Исходящее сообщение 2 -->
+                <div style="align-self: flex-end; max-width: 80%; background: ${customColor}; border-radius: 16px 16px 4px 16px; padding: 8px 12px; color: #ffffff; font-size: 14px; line-height: 1.35; position: relative; box-shadow: 0 2px 6px rgba(0,0,0,0.3);" class="vmu-preview-out-bubble">
+                    <div>Да, мне тоже очень нравится!</div>
+                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 3px; font-size: 11px; opacity: 0.75; margin-top: 3px;">
+                        <span>19:25</span>
+                        <span>✓✓</span>
+                    </div>
                 </div>
             </div>
         `;
@@ -3134,7 +3192,7 @@
                 `;
 
                 CHAT_COLOR_PRESETS.forEach(preset => {
-                    const isSelected = (currentCustomChatColor === preset.value);
+                    const isSelected = (currentCustomChatColor.toLowerCase() === preset.value.toLowerCase());
                     const swatch = document.createElement('div');
                     swatch.title = preset.label;
                     swatch.style.cssText = `
@@ -3163,10 +3221,11 @@
                         currentChatPreset = 'custom';
                         setSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'custom');
 
-                        const outBubble = previewContainer.querySelector('.vmu-preview-out-bubble');
-                        if (outBubble) {
-                            outBubble.style.background = preset.value;
-                        }
+                        const outBubbles = previewContainer.querySelectorAll('.vmu-preview-out-bubble');
+                        outBubbles.forEach(b => {
+                            b.style.background = preset.value;
+                            b.style.backgroundColor = preset.value;
+                        });
 
                         applyCustomChatBackground();
                         updateTabContent();
@@ -3206,10 +3265,11 @@
                     currentChatPreset = 'custom';
                     setSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'custom');
 
-                    const outBubble = previewContainer.querySelector('.vmu-preview-out-bubble');
-                    if (outBubble) {
-                        outBubble.style.background = chosen;
-                    }
+                    const outBubbles = previewContainer.querySelectorAll('.vmu-preview-out-bubble');
+                    outBubbles.forEach(b => {
+                        b.style.background = chosen;
+                        b.style.backgroundColor = chosen;
+                    });
 
                     applyCustomChatBackground();
                     updateTabContent();
@@ -3292,19 +3352,17 @@
             html.style.setProperty('--vmu-custom-chat-bubble', customColor);
         }
 
-        const inChat = isInChatPage();
-
-        if (isCustom && inChat) {
-            if (!document.body.classList.contains('vmu-theme-custom-active')) {
-                document.body.classList.add('vmu-theme-custom-active');
-            }
-            if (customBg) {
-                document.body.classList.add('vmu-has-custom-chat-bg');
+        if (document.body) {
+            if (isCustom) {
+                if (!document.body.classList.contains('vmu-theme-custom-active')) {
+                    document.body.classList.add('vmu-theme-custom-active');
+                }
+                if (customBg) {
+                    document.body.classList.add('vmu-has-custom-chat-bg');
+                } else {
+                    document.body.classList.remove('vmu-has-custom-chat-bg');
+                }
             } else {
-                document.body.classList.remove('vmu-has-custom-chat-bg');
-            }
-        } else {
-            if (document.body) {
                 document.body.classList.remove('vmu-theme-custom-active');
                 document.body.classList.remove('vmu-has-custom-chat-bg');
             }
