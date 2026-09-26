@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.24.1
+// @version      2.24.2
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация фона чатов из галереи, раздел Мессенджер в настройках, кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -587,18 +587,27 @@
             background-position: center center !important;
             background-repeat: no-repeat !important;
             pointer-events: none !important;
-            z-index: 0 !important;
+            z-index: 1 !important;
             transform: translate3d(0, 0, 0) !important;
             will-change: transform !important;
         }
 
+        body.vmu-has-custom-chat-bg,
+        body.vmu-has-custom-chat-bg #root,
+        body.vmu-has-custom-chat-bg #vk_wrap,
+        body.vmu-has-custom-chat-bg #vk_area_wrap,
         body.vmu-has-custom-chat-bg .vkuiAppRoot,
         body.vmu-has-custom-chat-bg .vkuiRoot,
         body.vmu-has-custom-chat-bg .layout,
         body.vmu-has-custom-chat-bg .layout__in,
+        body.vmu-has-custom-chat-bg .vkuiView,
+        body.vmu-has-custom-chat-bg [class*="View"],
         body.vmu-has-custom-chat-bg .vkuiPanel,
         body.vmu-has-custom-chat-bg .vkuiPanel__in,
+        body.vmu-has-custom-chat-bg [class*="Panel"],
         body.vmu-has-custom-chat-bg [class*="Panel__in"],
+        body.vmu-has-custom-chat-bg [class*="SplitCol"],
+        body.vmu-has-custom-chat-bg [class*="SplitLayout"],
         body.vmu-has-custom-chat-bg [class*="ChatHistory"],
         body.vmu-has-custom-chat-bg [class*="MessagesList"],
         body.vmu-has-custom-chat-bg [class*="im-page--chat"],
@@ -606,14 +615,24 @@
         body.vmu-has-custom-chat-bg [class*="vkmChat"],
         body.vmu-has-custom-chat-bg [class*="History"],
         body.vmu-has-custom-chat-bg [class*="im-history"],
+        body.vmu-has-custom-chat-bg [class*="im-chat"],
         body.vmu-has-custom-chat-bg [class*="ScrollContent"],
-        body.vmu-has-custom-chat-bg [class*="SplitCol"],
         body.vmu-has-custom-chat-bg [class*="ChatHistory"] > div,
         body.vmu-has-custom-chat-bg [class*="MessagesList"] > div,
         body.vmu-has-custom-chat-bg .vkmChat > div,
         body.vmu-has-custom-chat-bg [class*="im-page--chat"] [class*="Panel__in"] {
             background: transparent !important;
             background-color: transparent !important;
+        }
+
+        body.vmu-has-custom-chat-bg [class*="Wallpaper"],
+        body.vmu-has-custom-chat-bg [class*="wallpaper"],
+        body.vmu-has-custom-chat-bg [class*="ChatWallpaper"],
+        body.vmu-has-custom-chat-bg .vkmChatWallpaper {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
         }
 
         body.vmu-has-custom-chat-bg [class*="MessageBubble"],
@@ -623,9 +642,36 @@
         body.vmu-has-custom-chat-bg [class*="im-mess-stack"],
         body.vmu-has-custom-chat-bg [class*="im-mess_in"],
         body.vmu-has-custom-chat-bg [class*="im-mess_out"],
-        body.vmu-has-custom-chat-bg [class*="MessageStack"] {
+        body.vmu-has-custom-chat-bg [class*="MessageStack"],
+        body.vmu-has-custom-chat-bg [class*="im-mess"],
+        body.vmu-has-custom-chat-bg [class*="Message"] {
             position: relative !important;
-            z-index: 1 !important;
+            z-index: 5 !important;
+        }
+
+        body.vmu-has-custom-chat-bg .vkuiPanelHeader,
+        body.vmu-has-custom-chat-bg [class*="PanelHeader"],
+        body.vmu-has-custom-chat-bg .vkmChatHeader,
+        body.vmu-has-custom-chat-bg [class*="ChatHeader"],
+        body.vmu-has-custom-chat-bg [class*="WriteBar"],
+        body.vmu-has-custom-chat-bg [class*="im-chat-input"],
+        body.vmu-has-custom-chat-bg .vkuiWriteBar {
+            z-index: 800 !important;
+            background: var(--vkui--color_background_content, #19191a) !important;
+            background-color: var(--vkui--color_background_content, #19191a) !important;
+        }
+
+        html[data-theme="light"] body.vmu-has-custom-chat-bg .vkuiPanelHeader,
+        html[scheme="bright_light"] body.vmu-has-custom-chat-bg .vkuiPanelHeader,
+        html[data-theme="light"] body.vmu-has-custom-chat-bg [class*="PanelHeader"],
+        html[data-theme="light"] body.vmu-has-custom-chat-bg .vkmChatHeader,
+        html[data-theme="light"] body.vmu-has-custom-chat-bg [class*="ChatHeader"],
+        html[data-theme="light"] body.vmu-has-custom-chat-bg [class*="WriteBar"],
+        html[scheme="bright_light"] body.vmu-has-custom-chat-bg [class*="WriteBar"],
+        html[data-theme="light"] body.vmu-has-custom-chat-bg [class*="im-chat-input"],
+        html[data-theme="light"] body.vmu-has-custom-chat-bg .vkuiWriteBar {
+            background: #ffffff !important;
+            background-color: #ffffff !important;
         }
     `;
 
@@ -1095,60 +1141,74 @@
     // ==========================================
     //    ОПРЕДЕЛЕНИЕ ТЕКУЩЕЙ СТРАНИЦЫ
     // ==========================================
-    function isMainMailListPage() {
+    function isInChatPage() {
+        const path = window.location.pathname.toLowerCase();
         const search = window.location.search.toLowerCase();
         const hash = window.location.hash.toLowerCase();
-        const path = window.location.pathname.toLowerCase();
 
-        // 1. Исключаем все разделы, не относящиеся к диалогам
+        // 1. Исключаем все разделы, заведомо не являющиеся диалогами
         if (path.startsWith('/settings') || path.startsWith('/menu') || path.startsWith('/feed') ||
-            path.startsWith('/clips') || path.startsWith('/video') || path.startsWith('/music') ||
-            path.startsWith('/id') || path.startsWith('/wall') || path.startsWith('/friends') ||
-            path.startsWith('/groups') || path.startsWith('/photos') || path.startsWith('/docs') ||
-            path.startsWith('/bookmarks') || path.startsWith('/call') || search.includes('act=appearance')) {
+            path.startsWith('/clips') || path.startsWith('/clip-') || path.startsWith('/video') || path.startsWith('/music') ||
+            path.startsWith('/friends') || path.startsWith('/groups') || path.startsWith('/photos') ||
+            path.startsWith('/bookmarks') || path.startsWith('/docs') ||
+            isMailAppearancePage() || isScriptMenuPage() || isDebugScriptPage()) {
             return false;
         }
 
-        // 2. Если открыт конкретный диалог / чат / написание сообщения
+        // 2. Явные параметры URL открытого диалога
         if (search.includes('peer=') || search.includes('sel=') || search.includes('act=show') ||
-            search.includes('act=archive') || search.includes('act=folders') || search.includes('act=settings') ||
             search.includes('act=write') || hash.includes('peer=') || hash.includes('sel=') ||
             path.startsWith('/write') || path.startsWith('/convo') || path.includes('/im/convo') ||
             path.includes('/im/chat') || path.includes('/im/peer')) {
+            return true;
+        }
+
+        // 3. Наличие элементов чата в DOM (строка ввода сообщений WriteBar)
+        const writeBar = document.querySelector(
+            '[class*="WriteBar"], [class*="writeBar"], [class*="Writebar"], [class*="write_bar"], [class*="im-chat-input"], [class*="writebox"], textarea[placeholder*="сообщен" i], textarea[placeholder*="Сообщен" i], [data-testid*="writebar" i]'
+        );
+        if (writeBar && (writeBar.offsetWidth > 0 || writeBar.offsetHeight > 0 || writeBar.offsetParent !== null)) {
+            return true;
+        }
+
+        // 4. Наличие истории сообщений или контейнера чата
+        const chatMessages = document.querySelector(
+            '[class*="ChatHistory"], [class*="MessagesList"], .vkmChat, [class*="vkmChat"], [class*="im-history"], [class*="im-chat"], [class*="im-page--chat"], [class*="MessageBubble"], [class*="MessageStack"]'
+        );
+        if (chatMessages && (chatMessages.offsetWidth > 0 || chatMessages.offsetHeight > 0 || chatMessages.offsetParent !== null)) {
+            return true;
+        }
+
+        // 5. Наличие шапки чата (ChatHeader)
+        const chatHeader = document.querySelector(
+            '.vkmChatHeader, [class*="vkmChatHeader"], [class*="ChatHeader"], [class*="im-chat--header"], [data-testid*="chat-header" i]'
+        );
+        if (chatHeader && (chatHeader.offsetWidth > 0 || chatHeader.offsetHeight > 0 || chatHeader.offsetParent !== null)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    function isMainMailListPage() {
+        if (isInChatPage()) {
             return false;
         }
 
-        // 3. Если внутри шапки есть кнопка "Назад" (стрелочка) или "Закрыть" (крестик)
-        const backBtn = document.querySelector(
-            '[aria-label*="Назад" i], [aria-label*="назад" i], [aria-label*="Закрыть" i], [aria-label*="закрыть" i], [data-testid="header-back"], [class*="PanelHeaderBack"], [class*="Header__back"], [class*="Icon--chevron_left"], [class*="Icon--back"], [class*="Icon--arrow_left"]'
-        );
-        if (backBtn && backBtn.closest('.vkuiPanelHeader, [class*="PanelHeader"], .vkmListHeader, [class*="vkmListHeader"]')) {
+        const path = window.location.pathname.toLowerCase();
+        const search = window.location.search.toLowerCase();
+
+        // Исключаем все разделы, не относящиеся к диалогам
+        if (path.startsWith('/settings') || path.startsWith('/menu') || path.startsWith('/feed') ||
+            path.startsWith('/clips') || path.startsWith('/clip-') || path.startsWith('/video') || path.startsWith('/music') ||
+            path.startsWith('/id') || path.startsWith('/wall') || path.startsWith('/friends') ||
+            path.startsWith('/groups') || path.startsWith('/photos') || path.startsWith('/docs') ||
+            path.startsWith('/bookmarks') || path.startsWith('/call') || search.includes('act=appearance') ||
+            isMailAppearancePage() || isScriptMenuPage() || isDebugScriptPage()) {
             return false;
         }
 
-        // 4. Проверка строки ввода (WriteBar) — признак открытого диалога
-        const writeBars = document.querySelectorAll(
-            '[class*="WriteBar"], [class*="writeBar"], [class*="Writebar"], [class*="write_bar"], [class*="im-chat-input"], [class*="writebox"]'
-        );
-        for (let i = 0; i < writeBars.length; i++) {
-            const wb = writeBars[i];
-            if (wb.offsetWidth > 0 && wb.offsetHeight > 0 && wb.offsetParent !== null) {
-                return false;
-            }
-        }
-
-        // 5. Заголовок шапки
-        const titleEl = document.querySelector(
-            '.vkmListHeader__title, [class*="vkmListHeader__title"], .vkuiPanelHeader__typography, [class*="PanelHeader__typography"], .vkuiPanelHeader__content, [class*="PanelHeader__content"]'
-        );
-        if (titleEl && titleEl.textContent) {
-            const titleText = titleEl.textContent.trim().toLowerCase();
-            if (titleText === 'архив' || titleText === 'папки с чатами' || titleText.includes('участник') || titleText.includes('онлайн') || titleText.includes('был') || titleText.includes('была')) {
-                return false;
-            }
-        }
-
-        // 6. Только если путь относится к почте / сообщениям
+        // Путь относится к почте / мессенджеру
         if (path.startsWith('/mail') || path.startsWith('/im')) {
             return true;
         }
@@ -1161,7 +1221,7 @@
         const search = window.location.search.toLowerCase();
 
         if (path.startsWith('/im') || path.startsWith('/mail') || path.startsWith('/feed') ||
-            path.startsWith('/clips') || path.startsWith('/video') || path.startsWith('/music') ||
+            path.startsWith('/clips') || path.startsWith('/clip-') || path.startsWith('/video') || path.startsWith('/music') ||
             path.startsWith('/id') || path.startsWith('/wall') || path.startsWith('/audios') ||
             path.startsWith('/friends') || path.startsWith('/groups') || path.startsWith('/photos') ||
             path.startsWith('/docs') || path.startsWith('/bookmarks') || path.startsWith('/call')) {
@@ -1204,42 +1264,6 @@
     function isMailSettingsPage() {
         const path = window.location.pathname.toLowerCase();
         return (path.startsWith('/mail/settings') || path.startsWith('/im/settings')) && !path.includes('/mail/settings/theme');
-    }
-
-    function isInChatPage() {
-        const path = window.location.pathname.toLowerCase();
-        const search = window.location.search.toLowerCase();
-        const hash = window.location.hash.toLowerCase();
-
-        if (path.startsWith('/settings') || path.startsWith('/menu') || path.startsWith('/feed') ||
-            path.startsWith('/clips') || path.startsWith('/video') || path.startsWith('/music') ||
-            path.startsWith('/friends') || path.startsWith('/groups') || path.startsWith('/photos') ||
-            path.startsWith('/bookmarks') || path.startsWith('/docs') || isMailAppearancePage()) {
-            return false;
-        }
-
-        if (isMainMailListPage()) {
-            return false;
-        }
-
-        if (search.includes('peer=') || search.includes('sel=') || search.includes('act=show') ||
-            hash.includes('peer=') || hash.includes('sel=') ||
-            path.startsWith('/write') || path.startsWith('/convo') || path.includes('/im/convo') ||
-            path.includes('/im/chat') || path.includes('/im/peer')) {
-            return true;
-        }
-
-        const writeBar = document.querySelector('[class*="WriteBar"], [class*="writeBar"], [class*="im-chat-input"]');
-        if (writeBar && writeBar.offsetWidth > 0 && writeBar.offsetHeight > 0) {
-            return true;
-        }
-
-        const chatHistory = document.querySelector('[class*="ChatHistory"], [class*="MessagesList"], .vkmChat, [class*="vkmChat"]');
-        if (chatHistory && chatHistory.offsetWidth > 0 && chatHistory.offsetHeight > 0) {
-            return true;
-        }
-
-        return false;
     }
 
     function updatePageBodyClasses() {
@@ -1761,7 +1785,7 @@
             const img = new Image();
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                const maxDim = 1600;
+                const maxDim = 1440;
                 let width = img.width;
                 let height = img.height;
 
@@ -1780,7 +1804,15 @@
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
 
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                let dataUrl = canvas.toDataURL('image/jpeg', 0.82);
+                if (dataUrl.length > 2200000) {
+                    const smallCanvas = document.createElement('canvas');
+                    smallCanvas.width = Math.round(width * 0.75);
+                    smallCanvas.height = Math.round(height * 0.75);
+                    const sCtx = smallCanvas.getContext('2d');
+                    sCtx.drawImage(img, 0, 0, smallCanvas.width, smallCanvas.height);
+                    dataUrl = smallCanvas.toDataURL('image/jpeg', 0.75);
+                }
                 callback(dataUrl);
             };
             img.src = e.target.result;
@@ -2582,7 +2614,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.24.1</div>
+            <div>• <b>Script Version:</b> v2.24.2</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>Hide Labels:</b> ${isHideLabelsEnabled}</div>
@@ -2911,7 +2943,7 @@
                     background-position: center center !important;
                     background-repeat: no-repeat !important;
                     pointer-events: none !important;
-                    z-index: 0 !important;
+                    z-index: 1 !important;
                     transform: translate3d(0, 0, 0) !important;
                     will-change: transform !important;
                 `;
