@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.26.0
+// @version      2.26.1
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), «Своё оформление» чатов (фон из галереи + свой цвет сообщений с интерактивным предпросмотром), раздел Мессенджер в настройках, кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -638,9 +638,19 @@
             background-attachment: fixed !important;
         }
 
+        /* Подавление псевдоэлементов фонов нативных тем VK */
+        body.vmu-theme-custom-active :is(.vkmChat, [class*="ChatHistory"], [class*="im-page"], .vkuiPanel, .vkuiPanel__in, .vkmChatWallpaper, [class*="Wallpaper"], [class*="ChatTheme"], [class*="ChatBackground"])::before,
+        body.vmu-theme-custom-active :is(.vkmChat, [class*="ChatHistory"], [class*="im-page"], .vkuiPanel, .vkuiPanel__in, .vkmChatWallpaper, [class*="Wallpaper"], [class*="ChatTheme"], [class*="ChatBackground"])::after {
+            background-image: none !important;
+            display: none !important;
+            opacity: 0 !important;
+        }
+
         body.vmu-theme-custom-active:not(.vmu-has-custom-chat-bg) [class*="Wallpaper"],
         body.vmu-theme-custom-active:not(.vmu-has-custom-chat-bg) [class*="wallpaper"],
-        body.vmu-theme-custom-active:not(.vmu-has-custom-chat-bg) .vkmChatWallpaper {
+        body.vmu-theme-custom-active:not(.vmu-has-custom-chat-bg) .vkmChatWallpaper,
+        body.vmu-theme-custom-active:not(.vmu-has-custom-chat-bg) [class*="ChatBackground"],
+        body.vmu-theme-custom-active:not(.vmu-has-custom-chat-bg) [class*="ChatTheme"] {
             display: none !important;
             opacity: 0 !important;
             visibility: hidden !important;
@@ -3568,9 +3578,23 @@
         if (inChat && customBg) {
             document.body.classList.add('vmu-in-chat');
 
-            // А. Находим и обновляем нативные контейнеры обоев VK
+            // А. Подавляем любые фоновые картинки (img, picture, svg, canvas) нативной темы VK
+            const chatImages = document.querySelectorAll(
+                '.vkmChat img, [class*="ChatHistory"] img, .vkuiPanel__in img, [class*="im-page"] img, .vkmChatWallpaper img, [class*="Wallpaper"] img, [class*="ChatTheme"] img, [class*="ChatBackground"] img'
+            );
+            for (let i = 0; i < chatImages.length; i++) {
+                const img = chatImages[i];
+                if (img.closest('.vkuiAvatar, [class*="Avatar"], [class*="avatar"], .vkmMessage__sticker, [class*="Sticker"], [class*="sticker"], .vkmMessage__attachment, [class*="attachment" i], [class*="Attachment"], [class*="PhotoCard"], [class*="VideoCard"], [class*="Snippet"], [class*="WallPost"], .vkmMessage__bubble, .Message__bubble, [class*="MessageBubble"], .vkuiPanelHeader, [class*="PanelHeader"], .vkmChatHeader, [class*="WriteBar"], [class*="writeBar"]')) {
+                    continue;
+                }
+                img.style.setProperty('display', 'none', 'important');
+                img.style.setProperty('opacity', '0', 'important');
+                img.style.setProperty('visibility', 'hidden', 'important');
+            }
+
+            // Б. Находим и обновляем нативные контейнеры обоев VK
             const nativeWallpapers = document.querySelectorAll(
-                '.vkmChatWallpaper, [class*="ChatWallpaper"], [class*="Wallpaper"], [class*="ChatBackground"], [class*="ChatTheme"], [class*="Chat__wallpaper"], [class*="im-chat-wallpaper"], [data-testid*="wallpaper"], [data-testid*="chat-wallpaper"]'
+                '.vkmChatWallpaper, [class*="ChatWallpaper"], [class*="Wallpaper"], [class*="ChatBackground"], [class*="ChatTheme"], [class*="Chat__wallpaper"], [class*="im-chat-wallpaper"], [data-testid*="wallpaper"], [data-testid*="chat-wallpaper"], [class*="ChatBackground__image"]'
             );
             for (let i = 0; i < nativeWallpapers.length; i++) {
                 const wp = nativeWallpapers[i];
@@ -3590,9 +3614,9 @@
                 wp.style.setProperty('background-attachment', 'fixed', 'important');
             }
 
-            // Б. Применяем фон напрямую на контейнеры чата
+            // В. Применяем фон напрямую на контейнеры чата
             const chatContainers = document.querySelectorAll(
-                '.vkmChat, [class*="ChatHistory"], [class*="im-page--chat"], [class*="ChatView"], [class*="ChatLayout"]'
+                '.vkmChat, [class*="ChatHistory"], [class*="im-page--chat"], [class*="ChatView"], [class*="ChatLayout"], .vkuiPanel:has([class*="WriteBar"]), .vkuiPanel__in:has([class*="WriteBar"])'
             );
             for (let i = 0; i < chatContainers.length; i++) {
                 const cc = chatContainers[i];
@@ -3603,7 +3627,7 @@
                 cc.style.setProperty('background-attachment', 'fixed', 'important');
             }
 
-            // В. Также поддерживаем фоновый оверлей #vmu-chat-custom-wallpaper
+            // Г. Также поддерживаем фоновый оверлей #vmu-chat-custom-wallpaper
             if (!bgLayer) {
                 bgLayer = document.createElement('div');
                 bgLayer.id = 'vmu-chat-custom-wallpaper';
@@ -3614,7 +3638,7 @@
             bgLayer.style.setProperty('opacity', '1', 'important');
             bgLayer.style.setProperty('visibility', 'visible', 'important');
 
-            // Г. Очищаем фон внутренних списков сообщений (чтобы не было непрозрачных плашек поверх фона)
+            // Д. Очищаем фон внутренних списков сообщений (чтобы не было непрозрачных плашек поверх фона)
             const innerScrolls = document.querySelectorAll(
                 '.vkmChat__history, [class*="MessagesList"], [class*="MessageStack"], [class*="Conversation"], [class*="ChatRoot"], [class*="Chat__content"]'
             );
