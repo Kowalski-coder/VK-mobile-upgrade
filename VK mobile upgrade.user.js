@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.25.9
+// @version      2.26.0
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), «Своё оформление» чатов (фон из галереи + свой цвет сообщений с интерактивным предпросмотром), раздел Мессенджер в настройках, кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -610,12 +610,24 @@
             visibility: hidden !important;
         }
 
-        /* Применение кастомных обоев на нативные контейнеры обоев VK */
+        /* Применение кастомных обоев на все контейнеры чата и нативные обои VK */
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkmChatWallpaper,
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatWallpaper"],
         body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="Wallpaper"],
         body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="wallpaper"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkmChatWallpaper,
         body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatBackground"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatTheme"] {
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatTheme"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkmChat,
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatHistory"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="MessagesList"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="im-page--chat"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatView"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatLayout"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkuiPanel:has([class*="WriteBar"]),
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkuiPanel:has(.vkmChat),
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkuiPanel:has([class*="ChatHistory"]),
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkuiPanel__in:has([class*="WriteBar"]),
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkuiPanel__in:has(.vkmChat) {
             display: block !important;
             opacity: 1 !important;
             visibility: visible !important;
@@ -632,39 +644,19 @@
             display: none !important;
             opacity: 0 !important;
             visibility: hidden !important;
-        }
-
-        /* Делаем все контейнеры чата прозрачными в режиме кастомного фона */
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat #root,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiRoot,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiSplitLayout,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiSplitCol,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiView,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiPanel,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiPanel__in,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat main,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .layout,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkmChat,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat [class*="ChatHistory"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat [class*="MessagesList"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat [class*="im-page"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat [class*="ChatView"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat [class*="ChatLayout"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat [class*="ChatRoot"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat [class*="Chat__content"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat [class*="Conversation"] {
-            background: transparent !important;
-            background-color: transparent !important;
             background-image: none !important;
         }
 
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat {
-            background-image: var(--vmu-custom-chat-bg) !important;
-            background-size: cover !important;
-            background-position: center center !important;
-            background-repeat: no-repeat !important;
-            background-attachment: fixed !important;
+        /* Прозрачность промежуточных слоев списка сообщений */
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkmChat__history,
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="MessagesList"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="MessageStack"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="Conversation"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatRoot"],
+        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="Chat__content"] {
+            background: transparent !important;
+            background-color: transparent !important;
+            background-image: none !important;
         }
 
         /* Статичный слой кастомного фона */
@@ -681,6 +673,7 @@
             background-size: cover !important;
             background-position: center center !important;
             background-repeat: no-repeat !important;
+            background-attachment: fixed !important;
             display: none;
         }
 
@@ -3519,6 +3512,11 @@
         }
 
         if (document.body) {
+            document.body.style.setProperty('--vmu-custom-chat-bg', customBg ? `url("${customBg}")` : 'none');
+            document.body.style.setProperty('--vmu-custom-chat-bubble', customColor);
+            document.body.style.setProperty('--vmu-custom-chat-bubble-gradient', customColor.startsWith('linear-gradient') ? customColor : 'none');
+            document.body.style.setProperty('--vmu-custom-chat-bubble-color', customColor.startsWith('linear-gradient') ? '#2c2d2e' : customColor);
+
             if (isCustom) {
                 if (!document.body.classList.contains('vmu-theme-custom-active')) {
                     document.body.classList.add('vmu-theme-custom-active');
@@ -3569,6 +3567,43 @@
         let bgLayer = document.getElementById('vmu-chat-custom-wallpaper');
         if (inChat && customBg) {
             document.body.classList.add('vmu-in-chat');
+
+            // А. Находим и обновляем нативные контейнеры обоев VK
+            const nativeWallpapers = document.querySelectorAll(
+                '.vkmChatWallpaper, [class*="ChatWallpaper"], [class*="Wallpaper"], [class*="ChatBackground"], [class*="ChatTheme"], [class*="Chat__wallpaper"], [class*="im-chat-wallpaper"], [data-testid*="wallpaper"], [data-testid*="chat-wallpaper"]'
+            );
+            for (let i = 0; i < nativeWallpapers.length; i++) {
+                const wp = nativeWallpapers[i];
+                const innerMedia = wp.querySelectorAll('img, svg, picture, video, canvas');
+                for (let j = 0; j < innerMedia.length; j++) {
+                    innerMedia[j].style.setProperty('display', 'none', 'important');
+                    innerMedia[j].style.setProperty('opacity', '0', 'important');
+                    innerMedia[j].style.setProperty('visibility', 'hidden', 'important');
+                }
+                wp.style.setProperty('display', 'block', 'important');
+                wp.style.setProperty('opacity', '1', 'important');
+                wp.style.setProperty('visibility', 'visible', 'important');
+                wp.style.setProperty('background-image', `url("${customBg}")`, 'important');
+                wp.style.setProperty('background-size', 'cover', 'important');
+                wp.style.setProperty('background-position', 'center center', 'important');
+                wp.style.setProperty('background-repeat', 'no-repeat', 'important');
+                wp.style.setProperty('background-attachment', 'fixed', 'important');
+            }
+
+            // Б. Применяем фон напрямую на контейнеры чата
+            const chatContainers = document.querySelectorAll(
+                '.vkmChat, [class*="ChatHistory"], [class*="im-page--chat"], [class*="ChatView"], [class*="ChatLayout"]'
+            );
+            for (let i = 0; i < chatContainers.length; i++) {
+                const cc = chatContainers[i];
+                cc.style.setProperty('background-image', `url("${customBg}")`, 'important');
+                cc.style.setProperty('background-size', 'cover', 'important');
+                cc.style.setProperty('background-position', 'center center', 'important');
+                cc.style.setProperty('background-repeat', 'no-repeat', 'important');
+                cc.style.setProperty('background-attachment', 'fixed', 'important');
+            }
+
+            // В. Также поддерживаем фоновый оверлей #vmu-chat-custom-wallpaper
             if (!bgLayer) {
                 bgLayer = document.createElement('div');
                 bgLayer.id = 'vmu-chat-custom-wallpaper';
@@ -3576,37 +3611,33 @@
             }
             bgLayer.style.setProperty('background-image', `url("${customBg}")`, 'important');
             bgLayer.style.setProperty('display', 'block', 'important');
+            bgLayer.style.setProperty('opacity', '1', 'important');
+            bgLayer.style.setProperty('visibility', 'visible', 'important');
 
-            const containersToClear = document.querySelectorAll(
-                '#root, .vkuiRoot, .vkuiSplitLayout, .vkuiSplitCol, .vkuiView, .vkuiPanel, .vkuiPanel__in, main, .layout, .vkmChat, [class*="ChatHistory"], [class*="MessagesList"], [class*="im-page"], [class*="ChatView"], [class*="ChatLayout"], [class*="Conversation"]'
+            // Г. Очищаем фон внутренних списков сообщений (чтобы не было непрозрачных плашек поверх фона)
+            const innerScrolls = document.querySelectorAll(
+                '.vkmChat__history, [class*="MessagesList"], [class*="MessageStack"], [class*="Conversation"], [class*="ChatRoot"], [class*="Chat__content"]'
             );
-            for (let i = 0; i < containersToClear.length; i++) {
-                containersToClear[i].style.setProperty('background-color', 'transparent', 'important');
-                containersToClear[i].style.setProperty('background', 'transparent', 'important');
-                containersToClear[i].style.setProperty('background-image', 'none', 'important');
+            for (let i = 0; i < innerScrolls.length; i++) {
+                innerScrolls[i].style.setProperty('background-color', 'transparent', 'important');
+                innerScrolls[i].style.setProperty('background', 'transparent', 'important');
+                innerScrolls[i].style.setProperty('background-image', 'none', 'important');
             }
         } else {
             document.body.classList.remove('vmu-in-chat');
             if (bgLayer) {
                 bgLayer.style.setProperty('display', 'none', 'important');
             }
-        }
-
-        // 2. Полное подавление любых нативных обоев, картинок и узоров темы VK
-        const nativeWallpapers = document.querySelectorAll(
-            '.vkmChatWallpaper, [class*="ChatWallpaper"], [class*="Wallpaper"], [class*="ChatBackground"], [class*="ChatTheme"], [class*="Chat__wallpaper"], [class*="im-chat-wallpaper"], [data-testid*="wallpaper"], [data-testid*="chat-wallpaper"]'
-        );
-        for (let i = 0; i < nativeWallpapers.length; i++) {
-            const wp = nativeWallpapers[i];
-            wp.style.setProperty('display', 'none', 'important');
-            wp.style.setProperty('opacity', '0', 'important');
-            wp.style.setProperty('visibility', 'hidden', 'important');
-            wp.style.setProperty('background-image', 'none', 'important');
-            const innerMedia = wp.querySelectorAll('img, svg, picture, video, canvas, div');
-            for (let j = 0; j < innerMedia.length; j++) {
-                innerMedia[j].style.setProperty('display', 'none', 'important');
-                innerMedia[j].style.setProperty('opacity', '0', 'important');
-                innerMedia[j].style.setProperty('visibility', 'hidden', 'important');
+            if (!customBg) {
+                const nativeWallpapers = document.querySelectorAll(
+                    '.vkmChatWallpaper, [class*="ChatWallpaper"], [class*="Wallpaper"], [class*="ChatBackground"], [class*="ChatTheme"]'
+                );
+                for (let i = 0; i < nativeWallpapers.length; i++) {
+                    const wp = nativeWallpapers[i];
+                    wp.style.setProperty('display', 'none', 'important');
+                    wp.style.setProperty('opacity', '0', 'important');
+                    wp.style.setProperty('visibility', 'hidden', 'important');
+                }
             }
         }
 
