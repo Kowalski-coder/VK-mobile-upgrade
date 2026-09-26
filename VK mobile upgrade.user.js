@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.23.7
+// @version      2.23.8
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие панели папок, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -1512,7 +1512,7 @@
 
         const titleText = document.createElement('div');
         titleText.style.cssText = 'font-size: 16px; font-weight: 500; color: var(--vkui--color_text_primary, #ffffff); display: flex; align-items: center; gap: 8px;';
-        titleText.innerHTML = '<span>🛠️ Кастом</span> <span style="font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 6px; background: rgba(39, 135, 245, 0.2); color: var(--vkui--color_text_accent, #71aaeb);">ручная настройка</span>';
+        titleText.innerHTML = '<span>🛠️ Размер значков на нижней панели</span> <span style="font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 6px; background: rgba(39, 135, 245, 0.2); color: var(--vkui--color_text_accent, #71aaeb);">ручная настройка</span>';
 
         const descText = document.createElement('div');
         descText.style.cssText = 'font-size: 13px; color: var(--vkui--color_text_secondary, #999999); margin-top: 3px;';
@@ -1953,27 +1953,23 @@
             return;
         }
 
-        // 1. Создаем пункт "Меню скрипта" с иконкой шестерёнки
+        // 1. Создаем пункт "Меню скрипта" с центрированной иконкой шестерёнки
         const itemMenu = appearanceCell.cloneNode(true);
         itemMenu.id = 'vmu-settings-item-menu';
         itemMenu.classList.add('vmu-custom-settings-item');
         itemMenu.setAttribute('href', '/settings?act=vmu_menu');
 
         const iconContainerMenu = itemMenu.querySelector('.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]') || itemMenu;
-        const gearSvg = `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--settings_outline_28" style="color: var(--vkui--color_icon_accent, #FF5C5C) !important;"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M12.04 3.09a2 2 0 0 1 3.92 0l.25 1.54a2 2 0 0 0 1.56 1.56l1.54.25a2 2 0 0 1 1.48 3.58l-1.09 1.12a2 2 0 0 0 0 2.21l1.09 1.12a2 2 0 0 1-1.48 3.58l-1.54.25a2 2 0 0 0-1.56 1.56l-.25 1.54a2 2 0 0 1-3.92 0l-.25-1.54a2 2 0 0 0-1.56-1.56l-1.54-.25a2 2 0 0 1-1.48-3.58l1.09-1.12a2 2 0 0 0 0-2.21l-1.09-1.12a2 2 0 0 1 1.48-3.58l1.54-.25a2 2 0 0 0 1.56-1.56l.25-1.54Zm1.96 6.91a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm-2 4a2 2 0 1 1 4 0 2 2 0 0 1-4 0Z"/></svg>`;
-        const svgElM = iconContainerMenu.querySelector('svg');
-        if (svgElM) {
-            svgElM.outerHTML = gearSvg;
-        } else {
-            iconContainerMenu.innerHTML = gearSvg;
-        }
+        iconContainerMenu.style.cssText = 'display: flex !important; align-items: center !important; justify-content: center !important; width: 28px !important; min-width: 28px !important; height: 28px !important; flex-shrink: 0 !important; box-sizing: content-box !important; margin-right: 12px !important;';
+        const gearSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="currentColor" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28 vkuiIcon--settings_outline_28" style="display: block !important; width: 28px !important; height: 28px !important; min-width: 28px !important; min-height: 28px !important; max-width: 28px !important; max-height: 28px !important; color: var(--vkui--color_icon_accent, #FF5C5C) !important; flex-shrink: 0 !important; margin: 0 auto !important;"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M13.882 2.308a1.2 1.2 0 0 1 1.196.994l.216 1.27a.64.64 0 0 0 .61.536c.21 0 .416-.07.575-.198l1.016-.81a1.2 1.2 0 0 1 1.547.098l1.378 1.378a1.2 1.2 0 0 1 .098 1.547l-.81 1.016a.9.9 0 0 0 .338 1.185l1.27.216a1.2 1.2 0 0 1 .994 1.196v1.948a1.2 1.2 0 0 1-.994 1.196l-1.27.216a.9.9 0 0 0-.338 1.185l.81 1.016a1.2 1.2 0 0 1-.098 1.547l-1.378 1.378a1.2 1.2 0 0 1-1.547.098l-1.016-.81a.9.9 0 0 0-1.185.338l-.216 1.27a1.2 1.2 0 0 1-1.196.994h-1.948a1.2 1.2 0 0 1-1.196-.994l-.216-1.27a.9.9 0 0 0-1.185-.338l-1.016.81a1.2 1.2 0 0 1-1.547-.098l-1.378-1.378a1.2 1.2 0 0 1-.098-1.547l.81-1.016a.9.9 0 0 0-.338-1.185l-1.27-.216a1.2 1.2 0 0 1-.994-1.196v-1.948a1.2 1.2 0 0 1 .994-1.196l1.27-.216a.9.9 0 0 0 .338-1.185l-.81-1.016a1.2 1.2 0 0 1 .098-1.547l1.378-1.378a1.2 1.2 0 0 1 1.547-.098l1.016.81c.36.29.866.214 1.185-.338l.216-1.27a1.2 1.2 0 0 1 1.196-.994h1.948zm-.208 2.008h-1.532l-.187 1.096a2.7 2.7 0 0 1-3.555 1.014l-.877-.7-1.084 1.084.7.877a2.7 2.7 0 0 1-1.014 3.555l-1.096.187v1.532l1.096.187a2.7 2.7 0 0 1 1.014 3.555l-.7.877 1.084 1.084.877-.7a2.7 2.7 0 0 1 3.555 1.014l.187 1.096h1.532l.187-1.096a2.7 2.7 0 0 1 3.555-1.014l.877.7 1.084-1.084-.7-.877a2.7 2.7 0 0 1 1.014-3.555l1.096-.187v-1.532l-1.096-.187a2.7 2.7 0 0 1-1.014-3.555l.7-.877-1.084-1.084-.877.7a2.7 2.7 0 0 1-3.555-1.014l-.187-1.096zM14 10a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4z"/></svg>`;
+        iconContainerMenu.innerHTML = gearSvg;
 
         const textElMenu = itemMenu.querySelector('.vkuiSimpleCell__text, [class*="SimpleCell__text"], [class*="Cell__text"], [class*="SimpleCell__children"], [class*="Cell__children"]') || itemMenu;
         let walkerM = document.createTreeWalker(textElMenu, NodeFilter.SHOW_TEXT);
         let nodeM;
         let setM = false;
         while ((nodeM = walkerM.nextNode())) {
-            if (nodeM.nodeValue.includes('Внешний вид')) {
+            if (nodeM.nodeValue.includes('Внешний вид') || nodeM.nodeValue.trim().length > 0) {
                 nodeM.nodeValue = 'Меню скрипта';
                 setM = true;
                 break;
@@ -1989,27 +1985,23 @@
             scheduleFixes();
         };
 
-        // 2. Создаем пункт "Debug script" с иконкой жука
+        // 2. Создаем пункт "Debug script" с центрированной иконкой жука
         const itemDebug = appearanceCell.cloneNode(true);
         itemDebug.id = 'vmu-settings-item-debug';
         itemDebug.classList.add('vmu-custom-settings-item');
         itemDebug.setAttribute('href', '/settings?act=vmu_debug');
 
         const iconContainerDebug = itemDebug.querySelector('.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]') || itemDebug;
-        const bugSvg = `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--bug_outline_28" style="color: var(--vkui--color_icon_accent, #FF5C5C) !important;"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M14 3.5a4.5 4.5 0 0 0-4.5 4.5v.5h9V8A4.5 4.5 0 0 0 14 3.5ZM7.5 9.5v.85l-3.23-.8a1 1 0 0 0-.49 1.94l3.72.93v2.16L3.8 15.6a1 1 0 1 0 .62 1.9l3.08-.99v2.17l-3.32 1.33a1 1 0 1 0 .74 1.86l3.58-1.43v.06a5.5 5.5 0 0 0 11 0v-.06l3.58 1.43a1 1 0 1 0 .74-1.86l-3.32-1.33v-2.17l3.08.99a1 1 0 1 0 .62-1.9l-3.7-1.02v-2.16l3.72-.93a1 1 0 0 0-.49-1.94l-3.23.8v-.85H7.5Zm2 2h9v7a3.5 3.5 0 0 1-7 0v-7Z"/></svg>`;
-        const svgElD = iconContainerDebug.querySelector('svg');
-        if (svgElD) {
-            svgElD.outerHTML = bugSvg;
-        } else {
-            iconContainerDebug.innerHTML = bugSvg;
-        }
+        iconContainerDebug.style.cssText = 'display: flex !important; align-items: center !important; justify-content: center !important; width: 28px !important; min-width: 28px !important; height: 28px !important; flex-shrink: 0 !important; box-sizing: content-box !important; margin-right: 12px !important;';
+        const bugSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="currentColor" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28 vkuiIcon--bug_outline_28" style="display: block !important; width: 28px !important; height: 28px !important; min-width: 28px !important; min-height: 28px !important; max-width: 28px !important; max-height: 28px !important; color: var(--vkui--color_icon_accent, #FF5C5C) !important; flex-shrink: 0 !important; margin: 0 auto !important;"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M14 2.5a5.5 5.5 0 0 0-5.5 5.5v.5H7a1 1 0 0 0-1 1v.25a1 1 0 0 0-.02.2l-2.45.82a1 1 0 1 0 .64 1.9l2.83-.95V13.5l-3.37 1.68a1 1 0 0 0 .9 1.78l2.47-1.24v2.53l-2.73 2.05a1 1 0 1 0 1.2 1.6l2.09-1.57A6.5 6.5 0 0 0 20.44 21l2.09 1.57a1 1 0 1 0 1.2-1.6l-2.73-2.05v-2.53l2.47 1.24a1 1 0 0 0 .9-1.78L21 14.22v-2.28l2.83.95a1 1 0 0 0 .64-1.9l-2.45-.82a1 1 0 0 0-.02-.2V9.5a1 1 0 0 0-1-1h-1.5V8a5.5 5.5 0 0 0-5.5-5.5zm-3.5 6a3.5 3.5 0 0 1 7 0v.5h-7V8.5zm-2 3.5h11v5.5a5.5 5.5 0 0 1-11 0V12zm2 2v3.5a3.5 3.5 0 0 0 7 0V14h-7z"/></svg>`;
+        iconContainerDebug.innerHTML = bugSvg;
 
         const textElDebug = itemDebug.querySelector('.vkuiSimpleCell__text, [class*="SimpleCell__text"], [class*="Cell__text"], [class*="SimpleCell__children"], [class*="Cell__children"]') || itemDebug;
         let walkerD = document.createTreeWalker(textElDebug, NodeFilter.SHOW_TEXT);
         let nodeD;
         let setD = false;
         while ((nodeD = walkerD.nextNode())) {
-            if (nodeD.nodeValue.includes('Внешний вид')) {
+            if (nodeD.nodeValue.includes('Внешний вид') || nodeD.nodeValue.trim().length > 0) {
                 nodeD.nodeValue = 'Debug script';
                 setD = true;
                 break;
@@ -2119,11 +2111,67 @@
             <div style="font-size: 26px; line-height: 1;">⚙️</div>
             <div>
                 <div style="font-size: 15px; font-weight: 600; color: var(--vkui--color_text_primary, #fff);">VK Mobile Upgrade</div>
-                <div style="font-size: 13px; color: var(--vkui--color_text_secondary, #999); margin-top: 2px;">Версия v2.23.7 • Меню настроек скрипта</div>
+                <div style="font-size: 13px; color: var(--vkui--color_text_secondary, #999); margin-top: 2px;">Версия v2.23.8 • Меню настроек скрипта</div>
             </div>
         `;
         card.appendChild(banner);
 
+        // 1. Замена вкладки Поиск
+        const rowTabSearch = createSelectRow(
+            'Замена вкладки Поиск',
+            'Кнопка на нижней панели (по умолчанию: Поиск)',
+            currentTabSearch,
+            TAB_OPTIONS_SEARCH,
+            (selected) => {
+                currentTabSearch = selected;
+                setSetting(STORAGE_KEYS.TAB_SEARCH, selected);
+                scheduleFixes();
+            }
+        );
+        card.appendChild(rowTabSearch);
+
+        // 2. Скрыть категории чатов
+        const rowFolders = createSwitchRow(
+            'Скрыть категории чатов',
+            'Убирает панель категорий (Все, Каналы, Бизнес, Чаты) и лишние отступы',
+            isHideFoldersEnabled,
+            (checked) => {
+                isHideFoldersEnabled = checked;
+                setSetting(STORAGE_KEYS.HIDE_FOLDERS_BAR, isHideFoldersEnabled);
+                applyStyles();
+            }
+        );
+        card.appendChild(rowFolders);
+
+        // 3. Отключить звонки в чатах
+        const rowCalls = createSwitchRow(
+            'Отключить звонки в чатах',
+            'Скрывает кнопку звонка из шапки диалогов',
+            isHideCallsEnabled,
+            (checked) => {
+                isHideCallsEnabled = checked;
+                setSetting(STORAGE_KEYS.HIDE_CALLS, isHideCallsEnabled);
+                applyStyles();
+                scheduleFixes();
+            }
+        );
+        card.appendChild(rowCalls);
+
+        // 4. Отключить кружки в чатах
+        const rowVideo = createSwitchRow(
+            'Отключить кружки в чатах',
+            'Скрывает кнопку записи кружков в строке ввода сообщений',
+            isHideVideoMsgsEnabled,
+            (checked) => {
+                isHideVideoMsgsEnabled = checked;
+                setSetting(STORAGE_KEYS.HIDE_VIDEO_MSGS, isHideVideoMsgsEnabled);
+                applyStyles();
+                scheduleFixes();
+            }
+        );
+        card.appendChild(rowVideo);
+
+        // Заглушки (ниже работающих опций)
         const stub1 = createSwitchRow('Оптимизация анимаций UI', 'Плавные переходы и отключение тяжелых эффектов (Заглушка)', true, () => {});
         const stub2 = createSwitchRow('Автоматическая синхронизация', 'Синхронизировать настройки скрипта между вкладками (Заглушка)', false, () => {});
         const stub3 = createSwitchRow('Уведомления об обновлениях', 'Проверять наличие новых версий на GitHub (Заглушка)', true, () => {});
@@ -2211,9 +2259,14 @@
         topNav.appendChild(pageTitle);
         card.appendChild(topNav);
 
+        // 1. Ручная настройка размера значков на нижней панели
+        const customSection = createCustomIconsSection();
+        card.appendChild(customSection);
+
+        // 2. Системная диагностика
         const diagBox = document.createElement('div');
         diagBox.style.cssText = `
-            margin: 0 16px 14px 16px;
+            margin: 16px 16px 14px 16px;
             padding: 14px;
             border-radius: 12px;
             background: rgba(0, 0, 0, 0.25);
@@ -2229,7 +2282,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.23.7</div>
+            <div>• <b>Script Version:</b> v2.23.8</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>Hide Labels:</b> ${isHideLabelsEnabled}</div>
@@ -2406,21 +2459,7 @@
         );
         card.appendChild(rowTheme);
 
-        // 2. Замена вкладки Поиск
-        const rowTabSearch = createSelectRow(
-            'Замена вкладки Поиск',
-            'Кнопка на нижней панели (по умолчанию: Поиск)',
-            currentTabSearch,
-            TAB_OPTIONS_SEARCH,
-            (selected) => {
-                currentTabSearch = selected;
-                setSetting(STORAGE_KEYS.TAB_SEARCH, selected);
-                scheduleFixes();
-            }
-        );
-        card.appendChild(rowTabSearch);
-
-        // 3. Скрыть подписи на нижней панели
+        // 2. Скрыть подписи на нижней панели
         const rowLabels = createSwitchRow(
             'Скрыть подписи на нижней панели',
             'Оставлять только иконки (Главная, Поиск, Мессенджер, Клипы, Ещё)',
@@ -2432,51 +2471,6 @@
             }
         );
         card.appendChild(rowLabels);
-
-        // 4. Скрыть панель папок / категорий
-        const rowFolders = createSwitchRow(
-            'Скрыть вкладки папок в мессенджере',
-            'Убирает панель категорий (Все, Каналы, Бизнес, Чаты) и лишние отступы',
-            isHideFoldersEnabled,
-            (checked) => {
-                isHideFoldersEnabled = checked;
-                setSetting(STORAGE_KEYS.HIDE_FOLDERS_BAR, isHideFoldersEnabled);
-                applyStyles();
-            }
-        );
-        card.appendChild(rowFolders);
-
-        // 5. Отключить звонки в чатах
-        const rowCalls = createSwitchRow(
-            'Отключить звонки в чатах',
-            'Скрывает кнопку звонка из шапки диалогов',
-            isHideCallsEnabled,
-            (checked) => {
-                isHideCallsEnabled = checked;
-                setSetting(STORAGE_KEYS.HIDE_CALLS, isHideCallsEnabled);
-                applyStyles();
-                scheduleFixes();
-            }
-        );
-        card.appendChild(rowCalls);
-
-        // 6. Отключить видеосообщения (кружки)
-        const rowVideo = createSwitchRow(
-            'Отключить видеосообщения (кружки)',
-            'Скрывает кнопку записи кружков в строке ввода сообщений',
-            isHideVideoMsgsEnabled,
-            (checked) => {
-                isHideVideoMsgsEnabled = checked;
-                setSetting(STORAGE_KEYS.HIDE_VIDEO_MSGS, isHideVideoMsgsEnabled);
-                applyStyles();
-                scheduleFixes();
-            }
-        );
-        card.appendChild(rowVideo);
-
-        // 7. Кастомные параметры иконок (размер и толщина линий)
-        const customSection = createCustomIconsSection();
-        card.appendChild(customSection);
 
         if (nativeGroup && nativeGroup.parentElement) {
             nativeGroup.insertAdjacentElement('beforebegin', card);
