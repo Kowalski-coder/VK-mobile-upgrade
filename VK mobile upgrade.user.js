@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.25.0
+// @version      2.25.1
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), «Своё оформление» чатов (фон из галереи + свой цвет сообщений с интерактивным предпросмотром), раздел Мессенджер в настройках, кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -2583,7 +2583,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.25.0</div>
+            <div>• <b>Script Version:</b> v2.25.1</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>Hide Labels:</b> ${isHideLabelsEnabled}</div>
@@ -2653,39 +2653,54 @@
         cleanupCustomPageErrors();
     }
 
-    const CUSTOM_THEME_EDITOR_UI_ID = 'vmu-custom-theme-editor-card';
+    const CUSTOM_THEME_EDITOR_UI_ID = 'vmu-custom-theme-editor-overlay';
 
-    function injectCustomThemeOptionInCarousel() {
-        if (!isMailAppearancePage()) return;
-
-        // Ищем контейнер с каруселью тем оформления
-        const scrollContainers = document.querySelectorAll(
-            '.vkuiHorizontalScroll__in, [class*="HorizontalScroll__in"], [class*="HorizontalScroll"] > div, [class*="Carousel"], [class*="HorizontalScroll"]'
-        );
-        let carousel = null;
-        for (let i = 0; i < scrollContainers.length; i++) {
-            const c = scrollContainers[i];
-            if (c.textContent.includes('Чёрный') || c.textContent.includes('Ковёр') || c.textContent.includes('Пиксели') || c.textContent.includes('Классический') || c.querySelector('[class*="Radio"], input[type="radio"], [role="radio"]')) {
-                carousel = c;
-                break;
-            }
-        }
-
-        if (!carousel) {
-            const groups = document.querySelectorAll('.vkuiGroup, [class*="Group"]');
-            for (let i = 0; i < groups.length; i++) {
-                const g = groups[i];
-                if (g.textContent.includes('ОФОРМЛЕНИЕ ВСЕХ ЧАТОВ') || g.textContent.includes('Оформление всех чатов')) {
-                    const scroll = g.querySelector('.vkuiHorizontalScroll__in, [class*="HorizontalScroll__in"], [class*="HorizontalScroll"] > div') || g.querySelector('[class*="HorizontalScroll"]');
-                    if (scroll) {
-                        carousel = scroll;
-                        break;
+    function findThemesCarouselRow() {
+        // 1. Поиск по названию стандартных тем оформления чатов
+        const candidateNames = ['Чёрный', 'Черный', 'Классический', 'Ковёр', 'Ковер', 'Пиксели', 'Неон', 'Графика', 'Космос'];
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        let node;
+        while ((node = walker.nextNode())) {
+            const txt = node.nodeValue ? node.nodeValue.trim() : '';
+            if (candidateNames.includes(txt)) {
+                let el = node.parentElement;
+                while (el && el !== document.body && el.parentElement) {
+                    const parent = el.parentElement;
+                    const style = window.getComputedStyle(parent);
+                    if (style.display.includes('flex') && parent.children.length > 1) {
+                        return parent;
                     }
+                    if (parent.className && typeof parent.className === 'string' && (parent.className.includes('HorizontalScroll') || parent.className.includes('Scroll'))) {
+                        return el.parentElement;
+                    }
+                    el = parent;
                 }
             }
         }
 
-        if (!carousel) return;
+        // 2. Вторичный поиск по селекторам горизонтального скролла VKUI
+        const scrolls = document.querySelectorAll(
+            '.vkuiHorizontalScroll__in > div, .vkuiHorizontalScroll__content, .vkuiHorizontalScroll__in, [class*="HorizontalScroll__in"] > div, [class*="HorizontalScroll__content"], [class*="HorizontalScroll__in"]'
+        );
+        for (let i = 0; i < scrolls.length; i++) {
+            const s = scrolls[i];
+            const flexChild = s.querySelector('div[style*="display: flex"], [class*="content"], [class*="items"]');
+            if (flexChild && flexChild.children.length > 1) {
+                return flexChild;
+            }
+            if (s.children.length > 1) {
+                return s;
+            }
+        }
+
+        return null;
+    }
+
+    function injectCustomThemeOptionInCarousel() {
+        if (!isMailAppearancePage()) return;
+
+        const carouselRow = findThemesCarouselRow();
+        if (!carouselRow) return;
 
         let customCard = document.getElementById('vmu-custom-theme-card');
         const isCustomActive = (currentChatPreset === 'custom');
@@ -2697,10 +2712,10 @@
             customCard = document.createElement('div');
             customCard.id = 'vmu-custom-theme-card';
             customCard.className = 'vmu-custom-theme-carousel-item';
-            carousel.prepend(customCard);
+            carouselRow.insertBefore(customCard, carouselRow.firstElementChild);
         } else {
-            if (carousel.firstElementChild !== customCard) {
-                carousel.prepend(customCard);
+            if (customCard.parentElement !== carouselRow || carouselRow.firstElementChild !== customCard) {
+                carouselRow.insertBefore(customCard, carouselRow.firstElementChild);
             }
         }
 
@@ -2715,6 +2730,7 @@
             user-select: none !important;
             flex-shrink: 0 !important;
             -webkit-tap-highlight-color: transparent !important;
+            vertical-align: top !important;
         `;
 
         customCard.innerHTML = `
@@ -2734,19 +2750,20 @@
             currentChatPreset = 'custom';
             setSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'custom');
             applyCustomChatBackground();
+            injectCustomThemeOptionInCarousel();
             window.history.pushState(null, '', '/mail/settings/theme?act=vmu_custom_theme');
-            scheduleFixes();
+            renderCustomThemeEditorPage();
         };
 
-        if (!carousel.dataset.vmuNativeListener) {
-            carousel.dataset.vmuNativeListener = 'true';
-            carousel.addEventListener('click', (e) => {
+        if (!carouselRow.dataset.vmuNativeListener) {
+            carouselRow.dataset.vmuNativeListener = 'true';
+            carouselRow.addEventListener('click', (e) => {
                 const target = e.target;
                 if (target && !target.closest('#vmu-custom-theme-card')) {
                     currentChatPreset = 'native';
                     setSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'native');
                     applyCustomChatBackground();
-                    scheduleFixes();
+                    injectCustomThemeOptionInCarousel();
                 }
             }, false);
         }
@@ -2754,48 +2771,45 @@
 
     let customThemeActiveTab = 'bg'; // 'bg' | 'color'
 
+    function closeCustomThemeEditor() {
+        const overlay = document.getElementById(CUSTOM_THEME_EDITOR_UI_ID);
+        if (overlay) overlay.remove();
+        if (window.location.search.includes('act=vmu_custom_theme') || window.location.hash === '#vmu_custom_theme') {
+            window.history.replaceState(null, '', '/mail/settings/theme');
+        }
+        injectCustomThemeOptionInCarousel();
+    }
+
     function renderCustomThemeEditorPage() {
-        const existingPage = document.getElementById(CUSTOM_THEME_EDITOR_UI_ID);
+        let overlay = document.getElementById(CUSTOM_THEME_EDITOR_UI_ID);
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = CUSTOM_THEME_EDITOR_UI_ID;
+            document.body.appendChild(overlay);
+        }
+
         let customBg = null;
         try { customBg = localStorage.getItem(STORAGE_KEYS.CUSTOM_CHAT_BG); } catch(e) {}
         let customColor = getStringSetting(STORAGE_KEYS.CUSTOM_CHAT_COLOR, '#2c2d2e');
 
-        // Скрываем все стандартные блоки VK на странице
-        const groups = document.querySelectorAll('.vkuiGroup, [class*="Group"], .vkuiPanel__in > div, .vkuiBanner, [class*="Banner"], .vkuiFormStatus--mode-error, [class*="FormStatus--error"], [class*="Snackbar"], .vkuiSnackbar, [class*="FormStatus"], [class*="Placeholder"], [role="alert"], .vkuiAlert');
-        for (let i = 0; i < groups.length; i++) {
-            if (groups[i].id !== CUSTOM_THEME_EDITOR_UI_ID && groups[i].id !== SCRIPT_MENU_UI_ID && groups[i].id !== DEBUG_SCRIPT_UI_ID && groups[i].id !== SETTINGS_UI_ID) {
-                groups[i].style.setProperty('display', 'none', 'important');
-            }
-        }
-
-        // Удаление всплывающих ошибок VK
-        const errorEls = document.querySelectorAll('.vkuiBanner, [class*="Banner"], .vkuiFormStatus, [class*="FormStatus"], [class*="Placeholder"], [class*="Snackbar"], .vkuiSnackbar, [role="alert"], .vkuiAlert, [class*="Alert"]');
-        for (let i = 0; i < errorEls.length; i++) {
-            const el = errorEls[i];
-            if (!el.closest('#' + CUSTOM_THEME_EDITOR_UI_ID)) {
-                el.style.setProperty('display', 'none', 'important');
-                try { el.remove(); } catch(e) {}
-            }
-        }
-
-        let target = document.querySelector('.vkuiPanel__in, [class*="Panel__in"], .layout, main') || document.body;
-
-        if (existingPage) {
-            existingPage.remove();
-        }
-
-        const card = document.createElement('div');
-        card.id = CUSTOM_THEME_EDITOR_UI_ID;
-        card.className = 'vkuiGroup vkuiGroup--mode-none vkuiGroup--padding-m';
-        card.style.cssText = `
-            margin: 0 0 90px 0 !important;
-            padding: 0 0 20px 0 !important;
-            background: transparent !important;
-            border: none !important;
+        overlay.innerHTML = '';
+        overlay.style.cssText = `
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: var(--vkui--color_background_content, #19191a) !important;
+            color: var(--vkui--color_text_primary, #ffffff) !important;
+            z-index: 99999 !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            box-sizing: border-box !important;
+            display: flex !important;
+            flex-direction: column !important;
             font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", sans-serif) !important;
-            display: block !important;
-            position: relative !important;
-            z-index: 1 !important;
             user-select: none !important;
         `;
 
@@ -2806,15 +2820,18 @@
             align-items: center;
             gap: 12px;
             padding: 12px 16px;
+            background: var(--vkui--color_background_content, #19191a);
+            position: sticky;
+            top: 0;
+            z-index: 10;
             border-bottom: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08));
-            margin-bottom: 12px;
         `;
 
         const backBtn = document.createElement('button');
         backBtn.style.cssText = `
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            justify-content: center;
             background: none;
             border: none;
             color: var(--vkui--color_text_accent, #FF5C5C);
@@ -2827,16 +2844,11 @@
             touch-action: manipulation;
         `;
         backBtn.innerHTML = `
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
         `;
         backBtn.onclick = (e) => {
             e.preventDefault();
-            if (window.history.length > 1) {
-                window.history.back();
-            } else {
-                window.location.href = '/mail/settings/theme';
-            }
-            setTimeout(scheduleFixes, 50);
+            closeCustomThemeEditor();
         };
 
         const pageTitle = document.createElement('div');
@@ -2845,7 +2857,7 @@
 
         topNav.appendChild(backBtn);
         topNav.appendChild(pageTitle);
-        card.appendChild(topNav);
+        overlay.appendChild(topNav);
 
         // 2. Интерактивный предпросмотр чата (Live Preview)
         const previewContainer = document.createElement('div');
@@ -2853,7 +2865,7 @@
         const liveBgStyle = customBg ? `background-image: url("${customBg}"); background-size: cover; background-position: center;` : `background: #101010;`;
         previewContainer.style.cssText = `
             position: relative;
-            margin: 0 16px 16px 16px;
+            margin: 16px;
             height: 380px;
             border-radius: 16px;
             overflow: hidden;
@@ -2865,6 +2877,7 @@
             box-sizing: border-box;
             border: 1px solid rgba(255, 255, 255, 0.1);
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+            flex-shrink: 0;
         `;
 
         previewContainer.innerHTML = `
@@ -2916,12 +2929,12 @@
 
                 <!-- Входящее сообщение 3 -->
                 <div style="margin-left: 36px; max-width: 82%; background: #232324; border-radius: 16px; padding: 8px 12px; color: #ffffff; font-size: 13.5px; line-height: 1.35; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
-                    <div>И я здесь ищу только одного — покоя, умиротворения и вот этой</div>
+                    <div>И я здесь ищу только одного — покоя, умиротворения и вот этой гармонии</div>
                 </div>
             </div>
         `;
 
-        card.appendChild(previewContainer);
+        overlay.appendChild(previewContainer);
 
         // 3. Табы переключения: «Фон» | «Цвет»
         const tabNav = document.createElement('div');
@@ -2932,6 +2945,7 @@
             margin: 0 16px 14px 16px;
             border-bottom: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.1));
             position: relative;
+            flex-shrink: 0;
         `;
 
         const tabBg = document.createElement('div');
@@ -2964,7 +2978,7 @@
 
         tabNav.appendChild(tabBg);
         tabNav.appendChild(tabColor);
-        card.appendChild(tabNav);
+        overlay.appendChild(tabNav);
 
         // 4. Скрытый file input для галереи
         const fileInput = document.createElement('input');
@@ -2988,17 +3002,16 @@
                 });
             }
         };
-        card.appendChild(fileInput);
+        overlay.appendChild(fileInput);
 
         // 5. Контейнер содержимого табов
         const tabContentContainer = document.createElement('div');
-        tabContentContainer.style.cssText = 'margin: 0 16px;';
+        tabContentContainer.style.cssText = 'margin: 0 16px 40px 16px; flex-shrink: 0;';
 
         function updateTabContent() {
             tabContentContainer.innerHTML = '';
 
             if (customThemeActiveTab === 'bg') {
-                // Вкладка «Фон»
                 const bgRow = document.createElement('div');
                 bgRow.style.cssText = `
                     display: flex;
@@ -3234,10 +3247,7 @@
         };
 
         updateTabContent();
-        card.appendChild(tabContentContainer);
-
-        target.appendChild(card);
-        cleanupCustomPageErrors();
+        overlay.appendChild(tabContentContainer);
     }
 
     function renderMailAppearancePage() {
@@ -3326,7 +3336,7 @@
     }
 
     function cleanupCustomPageErrors() {
-        if (!isScriptMenuPage() && !isDebugScriptPage() && !isCustomThemeEditorPage()) return;
+        if (!isScriptMenuPage() && !isDebugScriptPage()) return;
 
         // 1. Прячем все соседние блоки VK внутри контейнера страницы
         const containers = document.querySelectorAll('.vkuiPanel__in, [class*="Panel__in"], .layout, main, .vkuiSplitCol, [class*="SplitCol"]');
