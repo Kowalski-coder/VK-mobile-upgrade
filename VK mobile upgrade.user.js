@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.26.3
+// @version      2.26.4
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), «Своё оформление» чатов (фон из галереи + свой цвет сообщений с интерактивным предпросмотром), раздел Мессенджер в настройках, кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -3527,6 +3527,8 @@
         injectCustomThemeOptionInCarousel();
     }
 
+    const CUSTOM_BG_STYLE_TAG_ID = 'vmu-custom-chat-bg-style';
+
     function applyCustomChatBackground() {
         currentChatPreset = getStringSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'classic');
         const isCustom = (currentChatPreset === 'custom');
@@ -3539,14 +3541,12 @@
 
         const html = document.documentElement;
         if (html) {
-            html.style.setProperty('--vmu-custom-chat-bg', customBg ? `url("${customBg}")` : 'none');
             html.style.setProperty('--vmu-custom-chat-bubble', customColor);
             html.style.setProperty('--vmu-custom-chat-bubble-gradient', customColor.startsWith('linear-gradient') ? customColor : 'none');
             html.style.setProperty('--vmu-custom-chat-bubble-color', customColor.startsWith('linear-gradient') ? '#2c2d2e' : customColor);
         }
 
         if (document.body) {
-            document.body.style.setProperty('--vmu-custom-chat-bg', customBg ? `url("${customBg}")` : 'none');
             document.body.style.setProperty('--vmu-custom-chat-bubble', customColor);
             document.body.style.setProperty('--vmu-custom-chat-bubble-gradient', customColor.startsWith('linear-gradient') ? customColor : 'none');
             document.body.style.setProperty('--vmu-custom-chat-bubble-color', customColor.startsWith('linear-gradient') ? '#2c2d2e' : customColor);
@@ -3560,25 +3560,51 @@
                 } else {
                     document.body.classList.remove('vmu-has-custom-chat-bg');
                 }
-
-                // Управление постоянным фиксированным фоновым слоем
-                let bgLayer = document.getElementById('vmu-chat-custom-wallpaper');
-                if (customBg) {
-                    if (!bgLayer) {
-                        bgLayer = document.createElement('div');
-                        bgLayer.id = 'vmu-chat-custom-wallpaper';
-                        document.body.prepend(bgLayer);
-                    }
-                    bgLayer.style.setProperty('background-image', `url("${customBg}")`, 'important');
-                } else {
-                    if (bgLayer) bgLayer.remove();
-                }
             } else {
                 document.body.classList.remove('vmu-theme-custom-active');
                 document.body.classList.remove('vmu-has-custom-chat-bg');
-                const bgLayer = document.getElementById('vmu-chat-custom-wallpaper');
-                if (bgLayer) bgLayer.remove();
             }
+        }
+
+        // Внедряем прямой <style> тег с изображением фона без промежуточных CSS-переменных
+        let bgStyleTag = document.getElementById(CUSTOM_BG_STYLE_TAG_ID);
+        if (isCustom && customBg) {
+            if (!bgStyleTag) {
+                bgStyleTag = document.createElement('style');
+                bgStyleTag.id = CUSTOM_BG_STYLE_TAG_ID;
+                (document.head || document.documentElement).appendChild(bgStyleTag);
+            }
+            bgStyleTag.textContent = `
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat,
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat #root,
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiRoot,
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiSplitLayout,
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiSplitCol,
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiView,
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiPanel,
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiPanel__in,
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkmChatWallpaper,
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatWallpaper"],
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="Wallpaper"],
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="wallpaper"],
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatBackground"],
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatTheme"],
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkmChat,
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatHistory"],
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="MessagesList"],
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="im-page--chat"],
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatView"],
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatLayout"],
+                body.vmu-theme-custom-active.vmu-has-custom-chat-bg #vmu-chat-custom-wallpaper {
+                    background-image: url("${customBg}") !important;
+                    background-size: cover !important;
+                    background-position: center center !important;
+                    background-repeat: no-repeat !important;
+                    background-attachment: fixed !important;
+                }
+            `;
+        } else {
+            if (bgStyleTag) bgStyleTag.remove();
         }
 
         try { fixChatElementsDirectly(); } catch (e) {}
