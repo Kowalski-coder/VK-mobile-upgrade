@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.27.2
+// @version      2.27.3
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -248,20 +248,28 @@
                document.referrer.includes('android-app://');
     }
 
+    let startupNavDone = false;
     function handleStartupNavigation() {
-        if (currentStartPage !== 'mail') return;
-        const path = window.location.pathname.toLowerCase();
-        const isRoot = (path === '/' || path === '' || path === '/index.php');
-        const isPwaColdStart = isPwaApp() && !sessionStorage.getItem('vmu_pwa_session_active') && (isRoot || path === '/feed');
+        if (startupNavDone) return;
+        startupNavDone = true;
 
-        if (isRoot || isPwaColdStart) {
-            sessionStorage.setItem('vmu_pwa_session_active', 'true');
-            if (path !== '/mail') {
-                try {
-                    window.location.replace('/mail');
-                } catch (e) {
-                    window.location.href = '/mail';
-                }
+        if (currentStartPage !== 'mail') return;
+
+        try {
+            if (sessionStorage.getItem('vmu_startup_nav_done')) {
+                return;
+            }
+            sessionStorage.setItem('vmu_startup_nav_done', '1');
+        } catch (e) {}
+
+        const path = window.location.pathname.toLowerCase();
+        const isColdEntry = (path === '/' || path === '' || path === '/index.php' || (isPwaApp() && path === '/feed'));
+
+        if (isColdEntry && path !== '/mail') {
+            try {
+                window.location.replace('/mail');
+            } catch (e) {
+                window.location.href = '/mail';
             }
         }
     }
@@ -270,22 +278,28 @@
         const isLight = (currentThemeMode === 'light');
         const isSnow = (currentThemeMode === 'snow_black');
 
-        let bg = '#19191a';
-        let fg = '#ffffff';
+        // Фоновый цвет и цвет значка VK в зависимости от темы
+        let bg = '#19191a';      // Тёмная тема: тёмно-серый
+        let fg = '#71aaeb';      // Тёмная тема: синеватый акцент
         let themeMeta = '#19191a';
 
         if (isLight) {
-            bg = '#2787f5';
-            fg = '#ffffff';
+            bg = '#ffffff';      // Светлая тема: белый фон
+            fg = '#2787f5';      // Светлая тема: классический синий VK
             themeMeta = '#ffffff';
         } else if (isSnow) {
-            bg = '#000000';
-            fg = '#ffffff';
+            bg = '#000000';      // Snow Black: глубокий чёрный
+            fg = '#ff5c5c';      // Snow Black: красноватый акцент
             themeMeta = '#000000';
         }
 
-        // Векторная иконка VK в высоком разрешении 512x512
-        const svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="${bg}"/><path d="M321.5 426.7c-146.2 0-229.7-100.1-233.2-266.7h73c2.4 122.3 56.3 174.2 99.1 184.9v-184.9h68.8v105.6c42.1-4.5 85.8-52.5 100.6-105.6h68.8c-11.7 65.9-60.3 113.9-94.9 134.1 34.6 16.1 90 58.8 110.1 132.7h-75.7c-15.7-49.1-54.8-87.1-106.8-92.2v92.2h-9.8z" fill="${fg}"/></svg>`;
+        // Векторная иконка VK 512x512 с адаптивной безопасной зоной (Maskable Safe Zone)
+        const svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">` +
+            `<rect width="512" height="512" fill="${bg}"/>` +
+            `<g transform="translate(256, 256) scale(17) translate(-12, -12)">` +
+            `<path d="M6.79 7.3H4.05c.13 6.24 3.25 9.99 8.72 9.99h.31v-3.57c2.01.2 3.53 1.67 4.14 3.57h2.84c-.78-2.84-2.83-4.41-4.11-5.01 1.28-.74 3.08-2.54 3.51-4.98h-2.58c-.56 1.98-2.22 3.78-3.8 3.95V7.3H10.5v6.92c-1.6-.4-3.62-2.34-3.71-6.92Z" fill="${fg}"/>` +
+            `</g>` +
+            `</svg>`;
         const iconDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString);
 
         // Обновление Favicon
@@ -341,7 +355,7 @@
             description: "VK Mobile Upgrade",
             start_url: startUrl,
             display: "standalone",
-            background_color: themeMeta,
+            background_color: bg,
             theme_color: themeMeta,
             icons: [
                 {
@@ -371,34 +385,20 @@
     //     БАЗОВЫЕ ИСПРАВЛЕНИЯ UI (ВСЕГДА АКТИВНЫ)
     // ==========================================
     const FIXES_CSS = `
-        /* 0. СТИЛИЗАЦИЯ ЗАГРУЗОЧНОГО ЭКРАНА, СПИННЕРОВ И ШРИФТОВ ПРИ СТАРТЕ */
-        html, body {
-            font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", Arial, sans-serif) !important;
-        }
-
-        [data-theme="dark"] body,
-        [scheme="space_gray"] body,
-        [data-vkui-theme="space_gray"] body,
+        /* 0. СТИЛИЗАЦИЯ ЗАГРУЗОЧНОГО ЭКРАНА И СПИННЕРОВ */
         html[scheme="space_gray"],
         html[data-theme="dark"] {
             background-color: #19191a !important;
-            color: #ffffff !important;
         }
 
-        [data-theme="snow_black"] body,
-        body.vmu-color-swap,
-        html.vmu-color-swap {
+        html.vmu-color-swap,
+        html[data-theme="snow_black"] {
             background-color: #000000 !important;
-            color: #ffffff !important;
         }
 
-        [data-theme="light"] body,
-        [scheme="bright_light"] body,
-        [data-vkui-theme="bright_light"] body,
         html[scheme="bright_light"],
         html[data-theme="light"] {
             background-color: #ffffff !important;
-            color: #000000 !important;
         }
 
         .vkuiSpinner,
@@ -2768,7 +2768,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.27.2</div>
+            <div>• <b>Script Version:</b> v2.27.3</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>Hide Labels:</b> ${isHideLabelsEnabled}</div>
@@ -3663,7 +3663,6 @@
         if (isRunningFixes) return;
         isRunningFixes = true;
         try {
-            try { handleStartupNavigation(); } catch (e) {}
             try { updatePwaManifestAndIcons(); } catch (e) {}
             try { updatePageBodyClasses(); } catch (e) {}
             try { applyStyles(); } catch (e) {}
