@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.27.1
-// @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, ручная настройка размера и толщины значков на нижней панели (общая и по отдельности), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
+// @version      2.27.2
+// @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -31,6 +31,7 @@
     const STORAGE_KEYS = {
         THEME_MODE: 'vmu_theme_mode', // 'light' | 'dark' | 'snow_black'
         TAB_SEARCH: 'vmu_tab_search', // 'search' | 'friends' | 'groups' | 'music' | 'video' | 'bookmarks'
+        START_PAGE: 'vmu_start_page', // 'mail' | 'feed'
         HIDE_TAB_LABELS: 'vmu_hide_tab_labels',
         HIDE_FOLDERS_BAR: 'vmu_hide_folders_bar',
         HIDE_CALLS: 'vmu_hide_calls',
@@ -81,6 +82,7 @@
 
     let currentThemeMode = getThemeSetting();
     let currentTabSearch = getStringSetting(STORAGE_KEYS.TAB_SEARCH, 'search');
+    let currentStartPage = getStringSetting(STORAGE_KEYS.START_PAGE, 'mail');
     let isColorSwapEnabled = (currentThemeMode === 'snow_black');
     let isHideLabelsEnabled = getSetting(STORAGE_KEYS.HIDE_TAB_LABELS, false);
     let isHideFoldersEnabled = getSetting(STORAGE_KEYS.HIDE_FOLDERS_BAR, true);
@@ -235,11 +237,177 @@
         { value: 'light', label: 'Светлая' },
         { value: 'snow_black', label: 'Snow Black' }
     ];
+    const START_PAGE_OPTIONS = [
+        { value: 'mail', label: 'Мессенджер (/mail)' },
+        { value: 'feed', label: 'Главная (/feed)' }
+    ];
+
+    function isPwaApp() {
+        return window.matchMedia('(display-mode: standalone)').matches ||
+               window.navigator.standalone === true ||
+               document.referrer.includes('android-app://');
+    }
+
+    function handleStartupNavigation() {
+        if (currentStartPage !== 'mail') return;
+        const path = window.location.pathname.toLowerCase();
+        const isRoot = (path === '/' || path === '' || path === '/index.php');
+        const isPwaColdStart = isPwaApp() && !sessionStorage.getItem('vmu_pwa_session_active') && (isRoot || path === '/feed');
+
+        if (isRoot || isPwaColdStart) {
+            sessionStorage.setItem('vmu_pwa_session_active', 'true');
+            if (path !== '/mail') {
+                try {
+                    window.location.replace('/mail');
+                } catch (e) {
+                    window.location.href = '/mail';
+                }
+            }
+        }
+    }
+
+    function updatePwaManifestAndIcons() {
+        const isLight = (currentThemeMode === 'light');
+        const isSnow = (currentThemeMode === 'snow_black');
+
+        let bg = '#19191a';
+        let fg = '#ffffff';
+        let themeMeta = '#19191a';
+
+        if (isLight) {
+            bg = '#2787f5';
+            fg = '#ffffff';
+            themeMeta = '#ffffff';
+        } else if (isSnow) {
+            bg = '#000000';
+            fg = '#ffffff';
+            themeMeta = '#000000';
+        }
+
+        // Векторная иконка VK в высоком разрешении 512x512
+        const svgString = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="${bg}"/><path d="M321.5 426.7c-146.2 0-229.7-100.1-233.2-266.7h73c2.4 122.3 56.3 174.2 99.1 184.9v-184.9h68.8v105.6c42.1-4.5 85.8-52.5 100.6-105.6h68.8c-11.7 65.9-60.3 113.9-94.9 134.1 34.6 16.1 90 58.8 110.1 132.7h-75.7c-15.7-49.1-54.8-87.1-106.8-92.2v92.2h-9.8z" fill="${fg}"/></svg>`;
+        const iconDataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgString);
+
+        // Обновление Favicon
+        let iconLink = document.querySelector('link[rel="icon"], link[rel="shortcut icon"]');
+        if (!iconLink) {
+            iconLink = document.createElement('link');
+            iconLink.rel = 'icon';
+            (document.head || document.documentElement).appendChild(iconLink);
+        }
+        iconLink.type = 'image/svg+xml';
+        iconLink.href = iconDataUrl;
+
+        // Обновление Apple Touch Icon
+        let appleLink = document.querySelector('link[rel="apple-touch-icon"]');
+        if (!appleLink) {
+            appleLink = document.createElement('link');
+            appleLink.rel = 'apple-touch-icon';
+            (document.head || document.documentElement).appendChild(appleLink);
+        }
+        appleLink.href = iconDataUrl;
+
+        // Обновление метатегов имени приложения
+        let appNameMeta = document.querySelector('meta[name="application-name"]');
+        if (!appNameMeta) {
+            appNameMeta = document.createElement('meta');
+            appNameMeta.name = 'application-name';
+            (document.head || document.documentElement).appendChild(appNameMeta);
+        }
+        appNameMeta.content = 'VK';
+
+        let appleTitleMeta = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+        if (!appleTitleMeta) {
+            appleTitleMeta = document.createElement('meta');
+            appleTitleMeta.name = 'apple-mobile-web-app-title';
+            (document.head || document.documentElement).appendChild(appleTitleMeta);
+        }
+        appleTitleMeta.content = 'VK';
+
+        // Обновление цвета статусной строки и темы браузера
+        let themeMetaTag = document.querySelector('meta[name="theme-color"]');
+        if (!themeMetaTag) {
+            themeMetaTag = document.createElement('meta');
+            themeMetaTag.name = 'theme-color';
+            (document.head || document.documentElement).appendChild(themeMetaTag);
+        }
+        themeMetaTag.content = themeMeta;
+
+        // Динамический Web App Manifest
+        const startUrl = (currentStartPage === 'mail') ? '/mail' : '/feed';
+        const manifestObj = {
+            name: "VK",
+            short_name: "VK",
+            description: "VK Mobile Upgrade",
+            start_url: startUrl,
+            display: "standalone",
+            background_color: themeMeta,
+            theme_color: themeMeta,
+            icons: [
+                {
+                    src: iconDataUrl,
+                    sizes: "512x512",
+                    type: "image/svg+xml",
+                    purpose: "any maskable"
+                }
+            ]
+        };
+        try {
+            const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+            const manifestUrl = URL.createObjectURL(manifestBlob);
+
+            let manifestLink = document.querySelector('link[rel="manifest"]');
+            if (!manifestLink) {
+                manifestLink = document.createElement('link');
+                manifestLink.rel = 'manifest';
+                (document.head || document.documentElement).appendChild(manifestLink);
+            }
+            manifestLink.href = manifestUrl;
+        } catch (e) {}
+    }
+
 
     // ==========================================
     //     БАЗОВЫЕ ИСПРАВЛЕНИЯ UI (ВСЕГДА АКТИВНЫ)
     // ==========================================
     const FIXES_CSS = `
+        /* 0. СТИЛИЗАЦИЯ ЗАГРУЗОЧНОГО ЭКРАНА, СПИННЕРОВ И ШРИФТОВ ПРИ СТАРТЕ */
+        html, body {
+            font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", Arial, sans-serif) !important;
+        }
+
+        [data-theme="dark"] body,
+        [scheme="space_gray"] body,
+        [data-vkui-theme="space_gray"] body,
+        html[scheme="space_gray"],
+        html[data-theme="dark"] {
+            background-color: #19191a !important;
+            color: #ffffff !important;
+        }
+
+        [data-theme="snow_black"] body,
+        body.vmu-color-swap,
+        html.vmu-color-swap {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+        }
+
+        [data-theme="light"] body,
+        [scheme="bright_light"] body,
+        [data-vkui-theme="bright_light"] body,
+        html[scheme="bright_light"],
+        html[data-theme="light"] {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+        }
+
+        .vkuiSpinner,
+        [class*="Spinner"],
+        [class*="Preloader"],
+        [class*="Splash"] {
+            color: var(--vkui--color_icon_accent, #71aaeb) !important;
+        }
+
         /* 1. ИСПРАВЛЕНИЕ ОВАЛЬНЫХ СЧЕТЧИКОВ СООБЩЕНИЙ/УВЕДОМЛЕНИЙ -> ИДЕАЛЬНЫЙ КРУГ */
         [class*="Counter"],
         .vkuiCounter,
@@ -2180,6 +2348,7 @@
         }
 
         applyStyles();
+        updatePwaManifestAndIcons();
 
         // Синхронизируем с нативными переключателями VK, если есть
         const lightRadio = document.querySelector(
@@ -2224,6 +2393,8 @@
     }
 
     syncCurrentTheme();
+    try { handleStartupNavigation(); } catch (e) {}
+    try { updatePwaManifestAndIcons(); } catch (e) {}
 
     const SCRIPT_MENU_UI_ID = 'vmu-script-menu-card';
     const DEBUG_SCRIPT_UI_ID = 'vmu-debug-script-card';
@@ -2412,7 +2583,21 @@
         topNav.appendChild(pageTitle);
         card.appendChild(topNav);
 
-        // 1. Замена вкладки Поиск
+        // 1. Стартовая вкладка веб-приложения
+        const rowStartPage = createSelectRow(
+            'Стартовая вкладка',
+            'Вкладка при открытии веб-приложения (PWA) или главной страницы',
+            currentStartPage,
+            START_PAGE_OPTIONS,
+            (selected) => {
+                currentStartPage = selected;
+                setSetting(STORAGE_KEYS.START_PAGE, selected);
+                updatePwaManifestAndIcons();
+            }
+        );
+        card.appendChild(rowStartPage);
+
+        // 2. Замена вкладки Поиск
         const rowTabSearch = createSelectRow(
             'Замена вкладки Поиск',
             'Кнопка на нижней панели (по умолчанию: Поиск)',
@@ -2426,7 +2611,7 @@
         );
         card.appendChild(rowTabSearch);
 
-        // 2. Скрыть категории чатов
+        // 3. Скрыть категории чатов
         const rowFolders = createSwitchRow(
             'Скрыть категории чатов',
             'Убирает панель категорий (Все, Каналы, Бизнес, Чаты) и лишние отступы',
@@ -2435,11 +2620,12 @@
                 isHideFoldersEnabled = checked;
                 setSetting(STORAGE_KEYS.HIDE_FOLDERS_BAR, isHideFoldersEnabled);
                 applyStyles();
+        updatePwaManifestAndIcons();
             }
         );
         card.appendChild(rowFolders);
 
-        // 3. Отключить звонки в чатах
+        // 4. Отключить звонки в чатах
         const rowCalls = createSwitchRow(
             'Отключить звонки в чатах',
             'Скрывает кнопку звонка из шапки диалогов',
@@ -2448,12 +2634,13 @@
                 isHideCallsEnabled = checked;
                 setSetting(STORAGE_KEYS.HIDE_CALLS, isHideCallsEnabled);
                 applyStyles();
+        updatePwaManifestAndIcons();
                 scheduleFixes();
             }
         );
         card.appendChild(rowCalls);
 
-        // 4. Отключить кружки в чатах
+        // 5. Отключить кружки в чатах
         const rowVideo = createSwitchRow(
             'Отключить кружки в чатах',
             'Скрывает кнопку записи кружков в строке ввода сообщений',
@@ -2462,6 +2649,7 @@
                 isHideVideoMsgsEnabled = checked;
                 setSetting(STORAGE_KEYS.HIDE_VIDEO_MSGS, isHideVideoMsgsEnabled);
                 applyStyles();
+        updatePwaManifestAndIcons();
                 scheduleFixes();
             }
         );
@@ -2580,7 +2768,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.27.1</div>
+            <div>• <b>Script Version:</b> v2.27.2</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>Hide Labels:</b> ${isHideLabelsEnabled}</div>
@@ -2914,6 +3102,7 @@
                 isHideLabelsEnabled = checked;
                 setSetting(STORAGE_KEYS.HIDE_TAB_LABELS, isHideLabelsEnabled);
                 applyStyles();
+        updatePwaManifestAndIcons();
             }
         );
         card.appendChild(rowLabels);
@@ -3474,6 +3663,8 @@
         if (isRunningFixes) return;
         isRunningFixes = true;
         try {
+            try { handleStartupNavigation(); } catch (e) {}
+            try { updatePwaManifestAndIcons(); } catch (e) {}
             try { updatePageBodyClasses(); } catch (e) {}
             try { applyStyles(); } catch (e) {}
             try { syncCurrentTheme(); } catch (e) {}
