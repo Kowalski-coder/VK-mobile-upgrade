@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.27.0
+// @version      2.27.1
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, ручная настройка размера и толщины значков на нижней панели (общая и по отдельности), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -35,7 +35,7 @@
         HIDE_FOLDERS_BAR: 'vmu_hide_folders_bar',
         HIDE_CALLS: 'vmu_hide_calls',
         HIDE_VIDEO_MSGS: 'vmu_hide_video_msgs',
-        CUSTOM_ICON_PARAMS: 'vmu_custom_icon_params_v3',
+        CUSTOM_ICON_PARAMS: 'vmu_custom_icon_params_v4',
         ICON_INDIVIDUAL_MODE: 'vmu_icon_individual_mode',
         CUSTOM_SECTION_OPEN: 'vmu_custom_section_open'
     };
@@ -91,10 +91,10 @@
         global: { scale: 100, stroke: 1.5 },
         home: { scale: 100, stroke: 1.5 },
         search: { scale: 100, stroke: 1.5 },
-        friends: { scale: 125, stroke: 1.6 },
-        groups: { scale: 125, stroke: 1.6 },
-        music: { scale: 125, stroke: 1.6 },
-        video: { scale: 125, stroke: 1.6 },
+        friends: { scale: 100, stroke: 1.5 },
+        groups: { scale: 100, stroke: 1.5 },
+        music: { scale: 100, stroke: 1.5 },
+        video: { scale: 100, stroke: 1.5 },
         bookmarks: { scale: 100, stroke: 1.5 },
         messages: { scale: 100, stroke: 1.5 },
         clips: { scale: 100, stroke: 1.5 },
@@ -121,9 +121,12 @@
     function getTabSvg(targetKey) {
         const isIndividual = getSetting(STORAGE_KEYS.ICON_INDIVIDUAL_MODE, false);
         const customParams = getCustomIconParams();
-        const p = isIndividual ? (customParams[targetKey] || DEFAULT_CUSTOM_PARAMS[targetKey] || { scale: 125, stroke: 1.6 }) : (customParams.global || { scale: 100, stroke: 1.5 });
-        const s = (p.scale || 125) / 100;
-        const st = (parseFloat(p.stroke) || 1.6).toFixed(1);
+        const p = isIndividual ? (customParams[targetKey] || DEFAULT_CUSTOM_PARAMS[targetKey] || { scale: 100, stroke: 1.5 }) : (customParams.global || { scale: 100, stroke: 1.5 });
+        const isOutlineCustom = (targetKey === 'friends' || targetKey === 'groups' || targetKey === 'music' || targetKey === 'video');
+        const baseScale = isOutlineCustom ? 1.25 : 1.0;
+        const baseStrokeMult = isOutlineCustom ? (1.6 / 1.5) : 1.0;
+        const s = ((p.scale || 100) / 100) * baseScale;
+        const st = ((parseFloat(p.stroke) || 1.5) * baseStrokeMult).toFixed(1);
         const tx = (14 * (1 - s)).toFixed(2);
         const ty = (14 * (1 - s)).toFixed(2);
         const sStr = s.toFixed(2);
@@ -146,8 +149,11 @@
     }
 
     function getIconPreviewSvg(targetKey, scale, stroke) {
-        const s = (scale || 100) / 100;
-        const st = (parseFloat(stroke) || 1.5).toFixed(1);
+        const isOutlineCustom = (targetKey === 'friends' || targetKey === 'groups' || targetKey === 'music' || targetKey === 'video');
+        const baseScale = isOutlineCustom ? 1.25 : 1.0;
+        const baseStrokeMult = isOutlineCustom ? (1.6 / 1.5) : 1.0;
+        const s = ((scale || 100) / 100) * baseScale;
+        const st = ((parseFloat(stroke) || 1.5) * baseStrokeMult).toFixed(1);
         const tx = (14 * (1 - s)).toFixed(2);
         const ty = (14 * (1 - s)).toFixed(2);
         const sStr = s.toFixed(2);
@@ -2570,11 +2576,11 @@
         `;
 
         const customP = getCustomIconParams();
-        const tabInfo = `${currentTabSearch} (scale: ${customP[currentTabSearch] ? customP[currentTabSearch].scale : 125}%, stroke: ${customP[currentTabSearch] ? customP[currentTabSearch].stroke : 1.6}px)`;
+        const tabInfo = `${currentTabSearch} (scale: ${customP[currentTabSearch] ? customP[currentTabSearch].scale : 100}%, stroke: ${customP[currentTabSearch] ? customP[currentTabSearch].stroke : 1.5}px)`;
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.27.0</div>
+            <div>• <b>Script Version:</b> v2.27.1</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>Hide Labels:</b> ${isHideLabelsEnabled}</div>
@@ -3240,9 +3246,10 @@
         // 4. Иконка SVG
         const iconContainer = item.querySelector('.vkuiTabbarItem__icon, [class*="TabbarItem__icon"], [class*="TabBarItem__icon"]') || item;
         const existingSvg = iconContainer.querySelector('svg');
+        const isIndividual = getSetting(STORAGE_KEYS.ICON_INDIVIDUAL_MODE, false);
         const customParams = getCustomIconParams();
-        const p = customParams[targetKey] || { scale: 100, stroke: 1.5 };
-        const svgSig = `${targetKey}_${p.scale || 100}_${p.stroke || 1.5}`;
+        const p = isIndividual ? (customParams[targetKey] || DEFAULT_CUSTOM_PARAMS[targetKey] || { scale: 100, stroke: 1.5 }) : (customParams.global || { scale: 100, stroke: 1.5 });
+        const svgSig = `${targetKey}_${isIndividual ? 'ind' : 'glob'}_${p.scale || 100}_${p.stroke || 1.5}`;
 
         if (!existingSvg || existingSvg.dataset.vmuSvgSig !== svgSig) {
             const temp = document.createElement('div');
