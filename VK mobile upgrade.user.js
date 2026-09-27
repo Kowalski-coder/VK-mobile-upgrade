@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.26.9
-// @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), «Своё оформление» чатов (фон из галереи + свой цвет сообщений с интерактивным предпросмотром), раздел Мессенджер в настройках, кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
+// @version      2.27.0
+// @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, ручная настройка размера и толщины значков на нижней панели (общая и по отдельности), кастомизация кнопки «Поиск» в нижней панели (Друзья, Сообщества, Музыка, Видео, Закладки), скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений (кружков).
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -35,12 +35,9 @@
         HIDE_FOLDERS_BAR: 'vmu_hide_folders_bar',
         HIDE_CALLS: 'vmu_hide_calls',
         HIDE_VIDEO_MSGS: 'vmu_hide_video_msgs',
-        CUSTOM_ICON_PARAMS: 'vmu_custom_icon_params_v2',
-        CUSTOM_SECTION_OPEN: 'vmu_custom_section_open',
-        CUSTOM_CHAT_BG: 'vmu_custom_chat_bg',
-        CUSTOM_CHAT_COLOR: 'vmu_custom_chat_color',
-        DIFF_CHAT_THEMES: 'vmu_diff_chat_themes',
-        CHAT_THEME_PRESET: 'vmu_chat_theme_preset'
+        CUSTOM_ICON_PARAMS: 'vmu_custom_icon_params_v3',
+        ICON_INDIVIDUAL_MODE: 'vmu_icon_individual_mode',
+        CUSTOM_SECTION_OPEN: 'vmu_custom_section_open'
     };
 
     function getSetting(key, defaultValue) {
@@ -89,26 +86,19 @@
     let isHideFoldersEnabled = getSetting(STORAGE_KEYS.HIDE_FOLDERS_BAR, true);
     let isHideCallsEnabled = getSetting(STORAGE_KEYS.HIDE_CALLS, false);
     let isHideVideoMsgsEnabled = getSetting(STORAGE_KEYS.HIDE_VIDEO_MSGS, false);
-    let isDiffChatThemesEnabled = getSetting(STORAGE_KEYS.DIFF_CHAT_THEMES, false);
-    let currentChatPreset = getStringSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'classic');
-    let currentCustomChatColor = getStringSetting(STORAGE_KEYS.CUSTOM_CHAT_COLOR, '#2c2d2e');
-
-    const CHAT_COLOR_PRESETS = [
-        { key: 'classic', label: 'Тёмный', value: '#2c2d2e' },
-        { key: 'blue', label: 'Синий', value: '#2787F5' },
-        { key: 'pink', label: 'Розовый', value: '#E05282' },
-        { key: 'sky', label: 'Голубой', value: '#3F8AE0' },
-        { key: 'green', label: 'Зелёный', value: '#4BB34B' },
-        { key: 'sunset', label: 'Закат', value: 'linear-gradient(135deg, #FF5C77, #F58231)' },
-        { key: 'purple', label: 'Фиолетовый', value: 'linear-gradient(135deg, #7928CA, #FF0080)' },
-        { key: 'ocean', label: 'Океан', value: 'linear-gradient(135deg, #2E86DE, #00D2D3)' }
-    ];
 
     const DEFAULT_CUSTOM_PARAMS = {
+        global: { scale: 100, stroke: 1.5 },
+        home: { scale: 100, stroke: 1.5 },
+        search: { scale: 100, stroke: 1.5 },
         friends: { scale: 125, stroke: 1.6 },
         groups: { scale: 125, stroke: 1.6 },
         music: { scale: 125, stroke: 1.6 },
-        video: { scale: 125, stroke: 1.6 }
+        video: { scale: 125, stroke: 1.6 },
+        bookmarks: { scale: 100, stroke: 1.5 },
+        messages: { scale: 100, stroke: 1.5 },
+        clips: { scale: 100, stroke: 1.5 },
+        more: { scale: 100, stroke: 1.5 }
     };
 
     function getCustomIconParams() {
@@ -129,8 +119,9 @@
     }
 
     function getTabSvg(targetKey) {
+        const isIndividual = getSetting(STORAGE_KEYS.ICON_INDIVIDUAL_MODE, false);
         const customParams = getCustomIconParams();
-        const p = customParams[targetKey] || { scale: 125, stroke: 1.6 };
+        const p = isIndividual ? (customParams[targetKey] || DEFAULT_CUSTOM_PARAMS[targetKey] || { scale: 125, stroke: 1.6 }) : (customParams.global || { scale: 100, stroke: 1.5 });
         const s = (p.scale || 125) / 100;
         const st = (parseFloat(p.stroke) || 1.6).toFixed(1);
         const tx = (14 * (1 - s)).toFixed(2);
@@ -147,10 +138,44 @@
             case 'video':
                 return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--video_outline_28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})" fill="none" stroke="currentColor" stroke-width="${st}" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="6.5" width="14.5" height="15" rx="3"/><path d="M18 11.5L24.5 7.8v12.4L18 16.5"/></g></svg>`;
             case 'bookmarks':
-                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--bookmark_outline_28"><path fill="currentColor" fill-rule="evenodd" d="M7 4a3 3 0 0 0-3 3v16a1 1 0 0 0 1.55.83L14 18.25l8.45 5.58A1 1 0 0 0 24 23V7a3 3 0 0 0-3-3H7zm15 16.92-7.45-4.92a1 1 0 0 0-1.1 0L6 20.92V7a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v13.92z" clip-rule="evenodd"/></svg>`;
+                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--bookmark_outline_28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})"><path fill="currentColor" fill-rule="evenodd" d="M7 4a3 3 0 0 0-3 3v16a1 1 0 0 0 1.55.83L14 18.25l8.45 5.58A1 1 0 0 0 24 23V7a3 3 0 0 0-3-3H7zm15 16.92-7.45-4.92a1 1 0 0 0-1.1 0L6 20.92V7a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v13.92z" clip-rule="evenodd"/></g></svg>`;
             case 'search':
             default:
-                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--search_outline_28"><path fill="currentColor" fill-rule="evenodd" d="M12.5 3.5a9 9 0 1 0 5.7 15.98l4.41 4.41a1 1 0 0 0 1.42-1.42l-4.41-4.41A9 9 0 0 0 12.5 3.5ZM5.5 12.5a7 7 0 1 1 14 0 7 7 0 0 1-14 0Z" clip-rule="evenodd"/></svg>`;
+                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--search_outline_28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})"><path fill="currentColor" fill-rule="evenodd" d="M12.5 3.5a9 9 0 1 0 5.7 15.98l4.41 4.41a1 1 0 0 0 1.42-1.42l-4.41-4.41A9 9 0 0 0 12.5 3.5ZM5.5 12.5a7 7 0 1 1 14 0 7 7 0 0 1-14 0Z" clip-rule="evenodd"/></g></svg>`;
+        }
+    }
+
+    function getIconPreviewSvg(targetKey, scale, stroke) {
+        const s = (scale || 100) / 100;
+        const st = (parseFloat(stroke) || 1.5).toFixed(1);
+        const tx = (14 * (1 - s)).toFixed(2);
+        const ty = (14 * (1 - s)).toFixed(2);
+        const sStr = s.toFixed(2);
+
+        switch (targetKey) {
+            case 'search':
+                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--search_outline_28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})"><path fill="currentColor" fill-rule="evenodd" d="M12.5 3.5a9 9 0 1 0 5.7 15.98l4.41 4.41a1 1 0 0 0 1.42-1.42l-4.41-4.41A9 9 0 0 0 12.5 3.5ZM5.5 12.5a7 7 0 1 1 14 0 7 7 0 0 1-14 0Z" clip-rule="evenodd"/></g></svg>`;
+            case 'bookmarks':
+                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--bookmark_outline_28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})"><path fill="currentColor" fill-rule="evenodd" d="M7 4a3 3 0 0 0-3 3v16a1 1 0 0 0 1.55.83L14 18.25l8.45 5.58A1 1 0 0 0 24 23V7a3 3 0 0 0-3-3H7zm15 16.92-7.45-4.92a1 1 0 0 0-1.1 0L6 20.92V7a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v13.92z" clip-rule="evenodd"/></g></svg>`;
+            case 'home':
+                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})" fill="none" stroke="currentColor" stroke-width="${st}" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 12.5L14 5.5l8.5 7v10a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-4.5a1.5 1.5 0 0 0-3 0V22.5a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1v-10z"/></g></svg>`;
+            case 'friends':
+                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_outline_28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})" fill="none" stroke="currentColor" stroke-width="${st}" stroke-linecap="round" stroke-linejoin="round"><circle cx="11.75" cy="9" r="3.5"/><path d="M5.75 21.5c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M18.75 7a3 3 0 0 1 0 5"/><path d="M18.75 16c2 .5 3.5 2 3.5 4.5"/></g></svg>`;
+            case 'groups':
+                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--users_3_outline_28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})" fill="none" stroke="currentColor" stroke-width="${st}" stroke-linecap="round" stroke-linejoin="round"><circle cx="14" cy="9" r="3.5"/><path d="M7 8a2.5 2.5 0 0 0 0 5"/><path d="M21 8a2.5 2.5 0 0 1 0 5"/><path d="M8.5 21.5c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5"/><path d="M4 21.5c0-2 1.5-3.8 3.5-4.2"/><path d="M24 21.5c0-2-1.5-3.8-3.5-4.2"/></g></svg>`;
+            case 'music':
+                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--music_outline_28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})" fill="none" stroke="currentColor" stroke-width="${st}" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="9" cy="18.3" rx="3.5" ry="2.8"/><ellipse cx="19" cy="16" rx="3.5" ry="2.8"/><path d="M12.5 18.3V8.3L22.5 6V16"/><path d="M12.5 11L22.5 8.7"/></g></svg>`;
+            case 'video':
+                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--video_outline_28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})" fill="none" stroke="currentColor" stroke-width="${st}" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="6.5" width="14.5" height="15" rx="3"/><path d="M18 11.5L24.5 7.8v12.4L18 16.5"/></g></svg>`;
+            case 'messages':
+                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})" fill="none" stroke="currentColor" stroke-width="${st}" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4.5C8.2 4.5 3.5 8.5 3.5 13.5c0 2.8 1.5 5.3 3.9 7-.2 1.4-.8 2.8-1.7 3.8a.5.5 0 0 0 .4.8c2.8 0 5-1.4 6.2-2.3.6.1 1.1.2 1.7.2 5.8 0 10.5-4 10.5-9s-4.7-9-10.5-9z"/></g></svg>`;
+            case 'clips':
+                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})" fill="none" stroke="currentColor" stroke-width="${st}" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="4.5" width="19" height="19" rx="4"/><path d="M4.5 10.5h19"/><path d="M10.5 4.5l-3 6"/><path d="M17.5 4.5l-3 6"/><polygon points="12,13.5 17,16.5 12,19.5" fill="currentColor"/></g></svg>`;
+            case 'more':
+                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})" fill="none" stroke="currentColor" stroke-width="${st}" stroke-linecap="round" stroke-linejoin="round"><line x1="5.5" y1="8.5" x2="22.5" y2="8.5"/><line x1="5.5" y1="14" x2="22.5" y2="14"/><line x1="5.5" y1="19.5" x2="22.5" y2="19.5"/></g></svg>`;
+            case 'all':
+            default:
+                return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28"><g transform="matrix(${sStr}, 0, 0, ${sStr}, ${tx}, ${ty})" fill="none" stroke="currentColor" stroke-width="${st}" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="3"/><circle cx="20" cy="8" r="3"/><circle cx="8" cy="20" r="3"/><circle cx="20" cy="20" r="3"/></g></svg>`;
         }
     }
 
@@ -585,222 +610,6 @@
         body.vmu-page-mail-settings .vkuiCell:has(a[href*="act=theme"]),
         body.vmu-page-mail-settings [class*="Cell"]:has(a[href*="act=theme"]) {
             display: none !important;
-        }
-
-        /* 13. КАСТОМНОЕ ОФОРМЛЕНИЕ ЧАТОВ («СВОЁ ОФОРМЛЕНИЕ») */
-        :root {
-            --vmu-custom-chat-bubble: #2c2d2e;
-            --vmu-custom-chat-bubble-gradient: none;
-            --vmu-custom-chat-bubble-color: #2c2d2e;
-        }
-
-        /* Полное аннулирование CSS-переменных нативных обоев и фонов VK */
-        body.vmu-theme-custom-active {
-            --theme-chat-background: none !important;
-            --theme-wallpaper-url: none !important;
-            --theme_wallpaper_url: none !important;
-            --vkui--theme_chat_wallpaper: none !important;
-            --im-chat-wallpaper: none !important;
-            --vkui--im_theme_background: none !important;
-            --vkui--color_chat_background: transparent !important;
-        }
-
-        /* Нативные контейнеры обоев скрываются, если кастомный фон НЕ установлен */
-        body.vmu-theme-custom-active:not(.vmu-has-custom-chat-bg) .vkmChatWallpaper,
-        body.vmu-theme-custom-active:not(.vmu-has-custom-chat-bg) .vkmChat__wallpaper,
-        body.vmu-theme-custom-active:not(.vmu-has-custom-chat-bg) [class*="vkmChatWallpaper"],
-        body.vmu-theme-custom-active:not(.vmu-has-custom-chat-bg) [class*="ChatWallpaper"],
-        body.vmu-theme-custom-active:not(.vmu-has-custom-chat-bg) [class*="im-chat-wallpaper"],
-        body.vmu-theme-custom-active:not(.vmu-has-custom-chat-bg) [data-testid="chat-wallpaper"],
-        body.vmu-theme-custom-active:not(.vmu-has-custom-chat-bg) [class*="ChatBackground__image"] {
-            display: none !important;
-            opacity: 0 !important;
-            visibility: hidden !important;
-            background-image: none !important;
-            background: transparent !important;
-            pointer-events: none !important;
-            z-index: -9999 !important;
-            width: 0 !important;
-            height: 0 !important;
-        }
-
-        /* Нативные картинки стандартных обоев внутри чата скрываются всегда в режиме «Своё» */
-        body.vmu-theme-custom-active .vkmChatWallpaper img,
-        body.vmu-theme-custom-active .vkmChatWallpaper picture,
-        body.vmu-theme-custom-active [class*="ChatWallpaper"] img,
-        body.vmu-theme-custom-active [class*="ChatWallpaper"] picture,
-        body.vmu-theme-custom-active [class*="im-chat-wallpaper"] img,
-        body.vmu-theme-custom-active [class*="im-chat-wallpaper"] picture,
-        body.vmu-theme-custom-active img[src*="theme_wallpaper"],
-        body.vmu-theme-custom-active img[src*="im_theme"],
-        body.vmu-theme-custom-active img[src*="im-theme"],
-        body.vmu-theme-custom-active img[src*="im/theme"] {
-            display: none !important;
-            opacity: 0 !important;
-            visibility: hidden !important;
-            width: 0 !important;
-            height: 0 !important;
-        }
-
-        /* Прозрачность промежуточных слоев списка сообщений и правильные z-index слои */
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkmChat__history,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="MessagesList"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="MessageStack"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="Conversation"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatRoot"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="Chat__content"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg [class*="ChatHistory"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkmChat,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkuiPanel:has([class*="WriteBar"]) [class*="Panel__in"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkuiPanel:has([class*="ChatHistory"]) [class*="Panel__in"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkuiPanel:has(.vkmChat) [class*="Panel__in"],
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkuiPanel:has([class*="WriteBar"]),
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkuiPanel:has([class*="ChatHistory"]),
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg .vkuiPanel:has(.vkmChat) {
-            background-color: transparent !important;
-            background: transparent !important;
-            background-image: none !important;
-            position: relative !important;
-            z-index: 50 !important;
-        }
-
-        /* Сообщения поверх слоя обоев */
-        body.vmu-theme-custom-active .vkmMessage,
-        body.vmu-theme-custom-active [class*="vkmMessage"],
-        body.vmu-theme-custom-active [class*="Message--"],
-        body.vmu-theme-custom-active [class*="Message_"],
-        body.vmu-theme-custom-active [class*="im-mess"] {
-            position: relative !important;
-            z-index: 60 !important;
-        }
-
-        /* Сохранение непрозрачного фона шапки и строки ввода */
-        body.vmu-theme-custom-active .vkuiPanelHeader,
-        body.vmu-theme-custom-active [class*="PanelHeader"],
-        body.vmu-theme-custom-active .vkmChatHeader,
-        body.vmu-theme-custom-active [class*="vkmChatHeader"],
-        body.vmu-theme-custom-active [class*="ChatHeader"],
-        body.vmu-theme-custom-active [class*="WriteBar"],
-        body.vmu-theme-custom-active [class*="writeBar"],
-        body.vmu-theme-custom-active .vkuiWriteBar,
-        body.vmu-theme-custom-active [class*="im-chat-input"] {
-            position: relative !important;
-            z-index: 800 !important;
-            background-image: none !important;
-            background-color: var(--vkui--color_background_content, #19191a) !important;
-            background: var(--vkui--color_background_content, #19191a) !important;
-        }
-
-        /* Статичный слой кастомного фона */
-        #vmu-chat-custom-wallpaper,
-        #vmu-chat-panel-wallpaper {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            z-index: 5 !important;
-            pointer-events: none !important;
-            background-size: cover !important;
-            background-position: center center !important;
-            background-repeat: no-repeat !important;
-            background-attachment: fixed !important;
-            display: none !important;
-        }
-
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat #vmu-chat-custom-wallpaper,
-        body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat #vmu-chat-panel-wallpaper {
-            display: block !important;
-            opacity: 1 !important;
-            visibility: visible !important;
-        }
-
-        /* 1. Фон накладывается на пузыри исходящих текстовых и голосовых сообщений */
-        body.vmu-theme-custom-active .vkmMessage--out:not([class*="--video"]):not([class*="--photo"]) > .vkmMessage__bubble,
-        body.vmu-theme-custom-active .vkmMessage--out:not([class*="--video"]):not([class*="--photo"]) .vkmMessage__bubble,
-        body.vmu-theme-custom-active .vkmMessage_out:not([class*="--video"]):not([class*="--photo"]) .vkmMessage__bubble,
-        body.vmu-theme-custom-active [class*="vkmMessage--out"]:not([class*="--video"]):not([class*="--photo"]) > [class*="vkmMessage__bubble"],
-        body.vmu-theme-custom-active [class*="vkmMessage--out"]:not([class*="--video"]):not([class*="--photo"]) .vkmMessage__bubble,
-        body.vmu-theme-custom-active [class*="vkmMessage_out"]:not([class*="--video"]):not([class*="--photo"]) .vkmMessage__bubble,
-        body.vmu-theme-custom-active [class*="Message--out"]:not([class*="--video"]):not([class*="--photo"]) > [class*="Message__bubble"],
-        body.vmu-theme-custom-active [class*="Message--out"]:not([class*="--video"]):not([class*="--photo"]) .Message__bubble,
-        body.vmu-theme-custom-active .im-mess_out:not([class*="--video"]):not([class*="--photo"]) .im-mess--bubble,
-        body.vmu-theme-custom-active [class*="im-mess_out"]:not([class*="--video"]):not([class*="--photo"]) .im-mess--bubble,
-        body.vmu-theme-custom-active [class*="MessageBubble--outgoing"]:not([class*="--video"]):not([class*="--photo"]),
-        body.vmu-theme-custom-active [class*="MessageBubble--out"]:not([class*="--video"]):not([class*="--photo"]) {
-            background: var(--vmu-custom-chat-bubble, #2c2d2e) !important;
-            background-color: var(--vmu-custom-chat-bubble-color, #2c2d2e) !important;
-            background-image: var(--vmu-custom-chat-bubble-gradient, none) !important;
-            color: #ffffff !important;
-        }
-
-        /* 2. Все внутренние контейнеры текста, контента и вложений ДОЛЖНЫ быть прозрачными */
-        body.vmu-theme-custom-active .vkmMessage--out .vkmMessage__content,
-        body.vmu-theme-custom-active .vkmMessage--out .vkmMessage__text,
-        body.vmu-theme-custom-active .vkmMessage--out .vkmMessage__in,
-        body.vmu-theme-custom-active [class*="vkmMessage--out"] [class*="content" i],
-        body.vmu-theme-custom-active [class*="vkmMessage--out"] [class*="text" i],
-        body.vmu-theme-custom-active [class*="Message--out"] [class*="content" i],
-        body.vmu-theme-custom-active [class*="Message--out"] [class*="text" i],
-        body.vmu-theme-custom-active [class*="im-mess_out"] [class*="content" i],
-        body.vmu-theme-custom-active [class*="im-mess_out"] [class*="text" i] {
-            background: transparent !important;
-            background-color: transparent !important;
-            background-image: none !important;
-            color: #ffffff !important;
-        }
-
-        /* 3. Кнопка действий «...» слева от сообщения НЕ должна иметь фона */
-        body.vmu-theme-custom-active .vkmMessage__actions,
-        body.vmu-theme-custom-active [class*="vkmMessage__actions"],
-        body.vmu-theme-custom-active [class*="vkmMessage__action"],
-        body.vmu-theme-custom-active [class*="Message__actions"],
-        body.vmu-theme-custom-active [class*="im-mess__actions"] {
-            background: transparent !important;
-            background-color: transparent !important;
-            background-image: none !important;
-        }
-
-        /* 4. Вложения медиа (видео, фото, карточки) не должны иметь цветной заливки */
-        body.vmu-theme-custom-active [class*="vkmMessage"] [class*="attachment" i],
-        body.vmu-theme-custom-active [class*="vkmMessage"] [class*="VideoCard" i],
-        body.vmu-theme-custom-active [class*="vkmMessage"] [class*="Snippet" i],
-        body.vmu-theme-custom-active [class*="vkmMessage"] [class*="WallPost" i],
-        body.vmu-theme-custom-active [class*="Message"] [class*="attachment" i],
-        body.vmu-theme-custom-active [class*="Message"] [class*="VideoCard" i] {
-            background-color: transparent !important;
-        }
-
-        /* Визуальное отключение активного состояния стандартных тем при выборе «Своё» */
-        body.vmu-theme-custom-active [class*="HorizontalScroll"] [class*="Radio"]:not(#vmu-custom-theme-card) [class*="icon" i],
-        body.vmu-theme-custom-active [class*="HorizontalScroll"] [class*="Radio"]:not(#vmu-custom-theme-card) [class*="check" i],
-        body.vmu-theme-custom-active [class*="HorizontalScroll"] [class*="Radio"]:not(#vmu-custom-theme-card) [class*="badge" i],
-        body.vmu-theme-custom-active [class*="HorizontalScroll"] [class*="Radio"]:not(#vmu-custom-theme-card) svg,
-        body.vmu-theme-custom-active [class*="HorizontalScroll"] [role="radio"]:not(#vmu-custom-theme-card) [class*="icon" i],
-        body.vmu-theme-custom-active [class*="HorizontalScroll"] [role="radio"]:not(#vmu-custom-theme-card) [class*="check" i],
-        body.vmu-theme-custom-active [class*="HorizontalScroll"] [role="radio"]:not(#vmu-custom-theme-card) [class*="badge" i],
-        body.vmu-theme-custom-active [class*="HorizontalScroll"] [role="radio"]:not(#vmu-custom-theme-card) svg,
-        body.vmu-theme-custom-active [class*="HorizontalScroll"] label:not(#vmu-custom-theme-card) svg,
-        body.vmu-theme-custom-active [class*="HorizontalScroll"] div:not(#vmu-custom-theme-card):not(#vmu-live-chat-preview) > div > svg {
-            display: none !important;
-            visibility: hidden !important;
-            opacity: 0 !important;
-        }
-
-        body.vmu-theme-custom-active [class*="HorizontalScroll"] [class*="Radio"]:not(#vmu-custom-theme-card) [class*="Radio__content"],
-        body.vmu-theme-custom-active [class*="HorizontalScroll"] [role="radio"]:not(#vmu-custom-theme-card) > div,
-        body.vmu-theme-custom-active [class*="HorizontalScroll"] [class*="Radio"]:not(#vmu-custom-theme-card) > div {
-            border-color: rgba(255, 255, 255, 0.12) !important;
-        }
-
-        /* Предотвращение мигания карточек в карусели */
-        .vmu-custom-theme-carousel-item {
-            transition: transform 0.15s ease, opacity 0.15s ease;
-        }
-        .vmu-custom-theme-carousel-item:active {
-            transform: scale(0.96);
         }
     `;
 
@@ -1384,17 +1193,10 @@
         return (path.startsWith('/settings') && search.includes('act=vmu_debug')) || window.location.hash === '#vmu_debug';
     }
 
-    function isCustomThemeEditorPage() {
-        const path = window.location.pathname.toLowerCase();
-        const search = window.location.search.toLowerCase();
-        const hash = window.location.hash.toLowerCase();
-        return (path.includes('/mail/settings/theme') || path.includes('/settings')) && (search.includes('act=vmu_custom_theme') || hash === '#vmu_custom_theme');
-    }
-
     function isMailAppearancePage() {
         const path = window.location.pathname.toLowerCase();
         const search = window.location.search.toLowerCase();
-        return (path.includes('/mail/settings/theme') || path.includes('/settings/appearance/im') || search.includes('act=vmu_mail_theme')) && !isCustomThemeEditorPage();
+        return path.includes('/mail/settings/theme') || path.includes('/settings/appearance/im') || search.includes('act=vmu_mail_theme');
     }
 
     function isMailSettingsPage() {
@@ -1929,46 +1731,52 @@
         return row;
     }
 
-    function processUploadedImage(file, callback) {
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                const maxDim = 1440;
-                let width = img.width;
-                let height = img.height;
+    function applyBottomTabIconParams(items) {
+        if (!items || items.length === 0) {
+            items = getAllBottomNavItems();
+        }
+        if (!items || items.length === 0) return;
 
-                if (width > maxDim || height > maxDim) {
-                    if (width > height) {
-                        height = Math.round((height * maxDim) / width);
-                        width = maxDim;
-                    } else {
-                        width = Math.round((width * maxDim) / height);
-                        height = maxDim;
+        const isIndividual = getSetting(STORAGE_KEYS.ICON_INDIVIDUAL_MODE, false);
+        const customParams = getCustomIconParams();
+
+        items.forEach((item, index) => {
+            let key = 'global';
+            if (isIndividual) {
+                if (index === 0) key = 'home';
+                else if (index === 1) key = currentTabSearch || 'search';
+                else if (index === 2) key = 'messages';
+                else if (index === 3) key = 'clips';
+                else if (index >= 4) key = 'more';
+            }
+
+            const p = isIndividual ? (customParams[key] || DEFAULT_CUSTOM_PARAMS[key] || { scale: 100, stroke: 1.5 }) : (customParams.global || { scale: 100, stroke: 1.5 });
+            const scaleVal = (p.scale || 100) / 100;
+            const strokeVal = parseFloat(p.stroke) || 1.5;
+
+            const svgs = item.querySelectorAll('svg');
+            for (let i = 0; i < svgs.length; i++) {
+                const svg = svgs[i];
+                if (svg.closest('.vkuiCounter, [class*="Counter"], .vkuiBadge, [class*="Badge"], .vmu-restored-badge')) {
+                    continue;
+                }
+
+                if (svg.dataset.vmuSvg && (svg.dataset.vmuSvg === 'friends' || svg.dataset.vmuSvg === 'groups' || svg.dataset.vmuSvg === 'music' || svg.dataset.vmuSvg === 'video')) {
+                    svg.style.transform = '';
+                } else {
+                    svg.style.transform = scaleVal !== 1 ? `scale(${scaleVal})` : '';
+                    svg.style.transformOrigin = 'center center';
+                }
+
+                const strokeEls = svg.querySelectorAll('[stroke], [stroke-width]');
+                for (let j = 0; j < strokeEls.length; j++) {
+                    const el = strokeEls[j];
+                    if (el.getAttribute('stroke') !== 'none') {
+                        el.setAttribute('stroke-width', String(strokeVal));
                     }
                 }
-
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-
-                let dataUrl = canvas.toDataURL('image/jpeg', 0.82);
-                if (dataUrl.length > 2200000) {
-                    const smallCanvas = document.createElement('canvas');
-                    smallCanvas.width = Math.round(width * 0.75);
-                    smallCanvas.height = Math.round(height * 0.75);
-                    const sCtx = smallCanvas.getContext('2d');
-                    sCtx.drawImage(img, 0, 0, smallCanvas.width, smallCanvas.height);
-                    dataUrl = smallCanvas.toDataURL('image/jpeg', 0.75);
-                }
-                callback(dataUrl);
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
+            }
+        });
     }
 
     function createCustomIconsSection() {
@@ -1982,8 +1790,9 @@
         `;
 
         let isOpen = getSetting(STORAGE_KEYS.CUSTOM_SECTION_OPEN, true);
+        let isIndividual = getSetting(STORAGE_KEYS.ICON_INDIVIDUAL_MODE, false);
 
-        // Header (Click to toggle)
+        // Header (Click to toggle accordion)
         const header = document.createElement('div');
         header.style.cssText = `
             display: flex;
@@ -1999,12 +1808,12 @@
         titleCol.style.cssText = 'flex: 1; padding-right: 10px; pointer-events: none;';
 
         const titleText = document.createElement('div');
-        titleText.style.cssText = 'font-size: 16px; font-weight: 500; color: var(--vkui--color_text_primary, #ffffff); display: flex; align-items: center; gap: 8px;';
-        titleText.innerHTML = '<span>🛠️ Размер значков на нижней панели</span> <span style="font-size: 11px; font-weight: 600; padding: 2px 6px; border-radius: 6px; background: rgba(39, 135, 245, 0.2); color: var(--vkui--color_text_accent, #71aaeb);">ручная настройка</span>';
+        titleText.style.cssText = 'font-size: 16px; font-weight: 500; color: var(--vkui--color_text_primary, #ffffff);';
+        titleText.textContent = 'Размер значков';
 
         const descText = document.createElement('div');
         descText.style.cssText = 'font-size: 13px; color: var(--vkui--color_text_secondary, #999999); margin-top: 3px;';
-        descText.textContent = 'Размер и толщина линий (Друзья, Сообщества, Музыка, Видео)';
+        descText.textContent = 'Ручная настройка размера и толщины значков на нижней панели';
 
         titleCol.appendChild(titleText);
         titleCol.appendChild(descText);
@@ -2031,33 +1840,33 @@
             border-top: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08));
         `;
 
-        const iconsList = [
-            { key: 'friends', name: 'Друзья' },
-            { key: 'groups', name: 'Сообщества' },
-            { key: 'music', name: 'Музыка' },
-            { key: 'video', name: 'Видео' }
-        ];
-
         let customParams = getCustomIconParams();
-        const previewMap = {};
-        const badgeMap = {};
 
         function refreshAll() {
             setCustomIconParams(customParams);
-            iconsList.forEach(item => {
-                if (previewMap[item.key]) {
-                    previewMap[item.key].innerHTML = getTabSvg(item.key);
-                }
-                if (badgeMap[item.key]) {
-                    const p = customParams[item.key] || { scale: 100, stroke: 1.5 };
-                    badgeMap[item.key].textContent = `${p.scale}% • ${Number(p.stroke).toFixed(1)}px`;
-                }
-            });
-            updateSummary();
             try { updateCustomTabs(); } catch(e) {}
+            try { applyBottomTabIconParams(getAllBottomNavItems()); } catch(e) {}
         }
 
-        iconsList.forEach(item => {
+        // Toggle row for "По отдельности"
+        const toggleRow = createSwitchRow(
+            'По отдельности',
+            'Индивидуальная настройка каждого значка',
+            isIndividual,
+            (checked) => {
+                isIndividual = checked;
+                setSetting(STORAGE_KEYS.ICON_INDIVIDUAL_MODE, isIndividual);
+                renderBodyContent();
+                refreshAll();
+            }
+        );
+        toggleRow.style.cssText += 'margin-top: 6px; padding: 10px 0; border-bottom: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08));';
+        body.appendChild(toggleRow);
+
+        const contentContainer = document.createElement('div');
+        body.appendChild(contentContainer);
+
+        function createIconCard(itemKey, itemName, paramObj, onParamChange) {
             const card = document.createElement('div');
             card.style.cssText = `
                 margin-top: 10px;
@@ -2085,12 +1894,11 @@
                 background: rgba(255, 255, 255, 0.08);
                 color: var(--vkui--color_text_accent, #71aaeb);
             `;
-            prevBox.innerHTML = getTabSvg(item.key);
-            previewMap[item.key] = prevBox;
+            prevBox.innerHTML = getIconPreviewSvg(itemKey, paramObj.scale, paramObj.stroke);
 
             const nameEl = document.createElement('div');
             nameEl.style.cssText = 'font-size: 15px; font-weight: 500; color: var(--vkui--color_text_primary, #ffffff);';
-            nameEl.textContent = item.name;
+            nameEl.textContent = itemName;
 
             leftBox.appendChild(prevBox);
             leftBox.appendChild(nameEl);
@@ -2105,13 +1913,17 @@
                 color: var(--vkui--color_text_primary, #ffffff);
                 font-family: monospace;
             `;
-            const initP = customParams[item.key] || { scale: 105, stroke: 1.5 };
-            badge.textContent = `${initP.scale}% • ${Number(initP.stroke).toFixed(1)}px`;
-            badgeMap[item.key] = badge;
+            badge.textContent = `${paramObj.scale}% • ${Number(paramObj.stroke).toFixed(1)}px`;
 
             cardHeader.appendChild(leftBox);
             cardHeader.appendChild(badge);
             card.appendChild(cardHeader);
+
+            function updateCardView() {
+                prevBox.innerHTML = getIconPreviewSvg(itemKey, paramObj.scale, paramObj.stroke);
+                badge.textContent = `${paramObj.scale}% • ${Number(paramObj.stroke).toFixed(1)}px`;
+                onParamChange();
+            }
 
             // Controls 1: Размер
             const scaleRow = document.createElement('div');
@@ -2119,7 +1931,7 @@
 
             const scaleLabelRow = document.createElement('div');
             scaleLabelRow.style.cssText = 'display: flex; justify-content: space-between; font-size: 12px; color: var(--vkui--color_text_secondary, #999); margin-bottom: 4px;';
-            scaleLabelRow.innerHTML = `<span>Размер</span><span id="vmu-scale-val-${item.key}">${initP.scale}%</span>`;
+            scaleLabelRow.innerHTML = `<span>Размер</span><span>${paramObj.scale}%</span>`;
 
             const scaleControl = document.createElement('div');
             scaleControl.style.cssText = 'display: flex; align-items: center; gap: 8px;';
@@ -2130,10 +1942,10 @@
 
             const scaleSlider = document.createElement('input');
             scaleSlider.type = 'range';
-            scaleSlider.min = '80';
-            scaleSlider.max = '150';
+            scaleSlider.min = '70';
+            scaleSlider.max = '160';
             scaleSlider.step = '1';
-            scaleSlider.value = String(initP.scale);
+            scaleSlider.value = String(paramObj.scale);
             scaleSlider.style.cssText = 'flex: 1; accent-color: #2787F5; cursor: pointer;';
 
             const btnScalePlus = document.createElement('button');
@@ -2142,27 +1954,27 @@
 
             btnScaleMinus.onclick = (e) => {
                 e.preventDefault();
-                let v = Math.max(80, (customParams[item.key].scale || 100) - 5);
-                customParams[item.key].scale = v;
+                let v = Math.max(70, (paramObj.scale || 100) - 5);
+                paramObj.scale = v;
                 scaleSlider.value = String(v);
                 scaleLabelRow.lastElementChild.textContent = `${v}%`;
-                refreshAll();
+                updateCardView();
             };
 
             btnScalePlus.onclick = (e) => {
                 e.preventDefault();
-                let v = Math.min(150, (customParams[item.key].scale || 100) + 5);
-                customParams[item.key].scale = v;
+                let v = Math.min(160, (paramObj.scale || 100) + 5);
+                paramObj.scale = v;
                 scaleSlider.value = String(v);
                 scaleLabelRow.lastElementChild.textContent = `${v}%`;
-                refreshAll();
+                updateCardView();
             };
 
             scaleSlider.oninput = (e) => {
                 let v = parseInt(e.target.value, 10);
-                customParams[item.key].scale = v;
+                paramObj.scale = v;
                 scaleLabelRow.lastElementChild.textContent = `${v}%`;
-                refreshAll();
+                updateCardView();
             };
 
             scaleControl.appendChild(btnScaleMinus);
@@ -2178,7 +1990,7 @@
 
             const strokeLabelRow = document.createElement('div');
             strokeLabelRow.style.cssText = 'display: flex; justify-content: space-between; font-size: 12px; color: var(--vkui--color_text_secondary, #999); margin-bottom: 4px;';
-            strokeLabelRow.innerHTML = `<span>Толщина линий</span><span id="vmu-stroke-val-${item.key}">${Number(initP.stroke).toFixed(1)}px</span>`;
+            strokeLabelRow.innerHTML = `<span>Толщина линий</span><span>${Number(paramObj.stroke).toFixed(1)}px</span>`;
 
             const strokeControl = document.createElement('div');
             strokeControl.style.cssText = 'display: flex; align-items: center; gap: 8px;';
@@ -2192,7 +2004,7 @@
             strokeSlider.min = '0.5';
             strokeSlider.max = '3.5';
             strokeSlider.step = '0.1';
-            strokeSlider.value = String(initP.stroke);
+            strokeSlider.value = String(paramObj.stroke);
             strokeSlider.style.cssText = 'flex: 1; accent-color: #2787F5; cursor: pointer;';
 
             const btnStrokePlus = document.createElement('button');
@@ -2201,27 +2013,27 @@
 
             btnStrokeMinus.onclick = (e) => {
                 e.preventDefault();
-                let v = Math.max(0.5, Math.round(((customParams[item.key].stroke || 1.5) - 0.1) * 10) / 10);
-                customParams[item.key].stroke = v;
+                let v = Math.max(0.5, Math.round(((paramObj.stroke || 1.5) - 0.1) * 10) / 10);
+                paramObj.stroke = v;
                 strokeSlider.value = String(v);
                 strokeLabelRow.lastElementChild.textContent = `${v.toFixed(1)}px`;
-                refreshAll();
+                updateCardView();
             };
 
             btnStrokePlus.onclick = (e) => {
                 e.preventDefault();
-                let v = Math.min(3.5, Math.round(((customParams[item.key].stroke || 1.5) + 0.1) * 10) / 10);
-                customParams[item.key].stroke = v;
+                let v = Math.min(3.5, Math.round(((paramObj.stroke || 1.5) + 0.1) * 10) / 10);
+                paramObj.stroke = v;
                 strokeSlider.value = String(v);
                 strokeLabelRow.lastElementChild.textContent = `${v.toFixed(1)}px`;
-                refreshAll();
+                updateCardView();
             };
 
             strokeSlider.oninput = (e) => {
                 let v = Math.round(parseFloat(e.target.value) * 10) / 10;
-                customParams[item.key].stroke = v;
+                paramObj.stroke = v;
                 strokeLabelRow.lastElementChild.textContent = `${v.toFixed(1)}px`;
-                refreshAll();
+                updateCardView();
             };
 
             strokeControl.appendChild(btnStrokeMinus);
@@ -2231,94 +2043,91 @@
             strokeRow.appendChild(strokeControl);
             card.appendChild(strokeRow);
 
-            body.appendChild(card);
-        });
-
-        // Summary Box & Copy Button
-        const summaryCard = document.createElement('div');
-        summaryCard.style.cssText = `
-            margin-top: 14px;
-            padding: 10px 12px;
-            border-radius: 8px;
-            background: rgba(0,0,0,0.25);
-            border: 1px dashed rgba(255,255,255,0.15);
-        `;
-
-        const summaryText = document.createElement('div');
-        summaryText.style.cssText = 'font-size: 12px; color: var(--vkui--color_text_primary, #fff); font-family: monospace; word-break: break-all; margin-bottom: 8px; line-height: 1.4;';
-
-        function getSummaryString() {
-            return `Друзья: ${customParams.friends.scale}% / ${Number(customParams.friends.stroke).toFixed(1)}px | Сообщества: ${customParams.groups.scale}% / ${Number(customParams.groups.stroke).toFixed(1)}px | Музыка: ${customParams.music.scale}% / ${Number(customParams.music.stroke).toFixed(1)}px | Видео: ${customParams.video.scale}% / ${Number(customParams.video.stroke).toFixed(1)}px`;
+            return card;
         }
 
-        function updateSummary() {
-            summaryText.textContent = getSummaryString();
-        }
-        updateSummary();
+        function renderBodyContent() {
+            contentContainer.innerHTML = '';
 
-        const actionsRow = document.createElement('div');
-        actionsRow.style.cssText = 'display: flex; gap: 8px; align-items: center; justify-content: space-between;';
+            if (!isIndividual) {
+                // Общий режим (2 ползунка для всех иконок)
+                if (!customParams.global) {
+                    customParams.global = { scale: 100, stroke: 1.5 };
+                }
+                const globalCard = createIconCard('all', 'Все значки панели', customParams.global, refreshAll);
+                contentContainer.appendChild(globalCard);
 
-        const copyBtn = document.createElement('button');
-        copyBtn.textContent = '📋 Скопировать параметры';
-        copyBtn.style.cssText = `
-            padding: 6px 12px;
-            border-radius: 6px;
-            border: none;
-            background: var(--vkui--color_background_accent, #2787F5);
-            color: #ffffff;
-            font-size: 12px;
-            font-weight: 500;
-            cursor: pointer;
-            touch-action: manipulation;
-        `;
-        copyBtn.onclick = (e) => {
-            e.preventDefault();
-            const str = getSummaryString();
-            try {
-                navigator.clipboard.writeText(str).then(() => {
-                    const orig = copyBtn.textContent;
-                    copyBtn.textContent = '✓ Скопировано!';
-                    setTimeout(() => { copyBtn.textContent = orig; }, 2000);
+                const resetBtn = document.createElement('button');
+                resetBtn.textContent = '↺ Сбросить до стандартных';
+                resetBtn.style.cssText = `
+                    margin-top: 12px;
+                    width: 100%;
+                    padding: 10px 14px;
+                    border-radius: 8px;
+                    border: 1px solid rgba(255, 255, 255, 0.15);
+                    background: rgba(255, 255, 255, 0.05);
+                    color: var(--vkui--color_text_primary, #ffffff);
+                    font-size: 13px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    touch-action: manipulation;
+                `;
+                resetBtn.onclick = (e) => {
+                    e.preventDefault();
+                    customParams.global = { scale: 100, stroke: 1.5 };
+                    renderBodyContent();
+                    refreshAll();
+                };
+                contentContainer.appendChild(resetBtn);
+            } else {
+                // Индивидуальный режим (по отдельности для каждого значка)
+                const iconsList = [
+                    { key: 'home', name: 'Главная' },
+                    { key: 'search', name: 'Поиск' },
+                    { key: 'friends', name: 'Друзья' },
+                    { key: 'groups', name: 'Сообщества' },
+                    { key: 'music', name: 'Музыка' },
+                    { key: 'video', name: 'Видео' },
+                    { key: 'bookmarks', name: 'Закладки' },
+                    { key: 'messages', name: 'Мессенджер' },
+                    { key: 'clips', name: 'Клипы' },
+                    { key: 'more', name: 'Ещё' }
+                ];
+
+                iconsList.forEach(item => {
+                    if (!customParams[item.key]) {
+                        customParams[item.key] = Object.assign({}, DEFAULT_CUSTOM_PARAMS[item.key] || { scale: 100, stroke: 1.5 });
+                    }
+                    const iconCard = createIconCard(item.key, item.name, customParams[item.key], refreshAll);
+                    contentContainer.appendChild(iconCard);
                 });
-            } catch (err) {
-                const textarea = document.createElement('textarea');
-                textarea.value = str;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                textarea.remove();
-                copyBtn.textContent = '✓ Скопировано!';
-                setTimeout(() => { copyBtn.textContent = '📋 Скопировать параметры'; }, 2000);
+
+                const resetBtn = document.createElement('button');
+                resetBtn.textContent = '↺ Сбросить все настройки';
+                resetBtn.style.cssText = `
+                    margin-top: 12px;
+                    width: 100%;
+                    padding: 10px 14px;
+                    border-radius: 8px;
+                    border: 1px solid rgba(255, 255, 255, 0.15);
+                    background: rgba(255, 255, 255, 0.05);
+                    color: var(--vkui--color_text_primary, #ffffff);
+                    font-size: 13px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    touch-action: manipulation;
+                `;
+                resetBtn.onclick = (e) => {
+                    e.preventDefault();
+                    customParams = JSON.parse(JSON.stringify(DEFAULT_CUSTOM_PARAMS));
+                    renderBodyContent();
+                    refreshAll();
+                };
+                contentContainer.appendChild(resetBtn);
             }
-        };
+        }
 
-        const resetBtn = document.createElement('button');
-        resetBtn.textContent = '↺ Сброс';
-        resetBtn.style.cssText = `
-            padding: 6px 10px;
-            border-radius: 6px;
-            border: 1px solid rgba(255,255,255,0.15);
-            background: transparent;
-            color: var(--vkui--color_text_secondary, #999);
-            font-size: 12px;
-            cursor: pointer;
-            touch-action: manipulation;
-        `;
-        resetBtn.onclick = (e) => {
-            e.preventDefault();
-            customParams = JSON.parse(JSON.stringify(DEFAULT_CUSTOM_PARAMS));
-            refreshAll();
-            scheduleFixes();
-        };
-
-        actionsRow.appendChild(copyBtn);
-        actionsRow.appendChild(resetBtn);
-
-        summaryCard.appendChild(summaryText);
-        summaryCard.appendChild(actionsRow);
-        body.appendChild(summaryCard);
-
+        renderBodyContent();
         container.appendChild(body);
 
         header.addEventListener('click', () => {
@@ -2765,7 +2574,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.25.4</div>
+            <div>• <b>Script Version:</b> v2.27.0</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>Hide Labels:</b> ${isHideLabelsEnabled}</div>
@@ -2835,677 +2644,12 @@
         cleanupCustomPageErrors();
     }
 
-    const CUSTOM_THEME_EDITOR_UI_ID = 'vmu-custom-theme-editor-overlay';
-
-    function findThemesCarouselRow() {
-        // 1. Ищем любую из стандартных тем (Поле, Ковёр, Пиксели, Чёрный, etc.)
-        const candidateNames = ['Поле', 'Ковёр', 'Ковер', 'Пиксели', 'Чёрный', 'Черный', 'Классический', 'Неон', 'Графика', 'Космос'];
-        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-        let node;
-        let foundCardItem = null;
-
-        while ((node = walker.nextNode())) {
-            const txt = node.nodeValue ? node.nodeValue.trim() : '';
-            if (candidateNames.includes(txt)) {
-                let cur = node.parentElement;
-                // Поднимаемся до уровня элемента-карточки темы
-                while (cur && cur !== document.body) {
-                    if (cur.matches && (cur.matches('.vkuiRadio, [class*="Radio"], [role="radio"], .vkuiTappable') || cur.querySelector('input[type="radio"]'))) {
-                        foundCardItem = cur;
-                        break;
-                    }
-                    if (cur.parentElement && cur.parentElement.children.length >= 2) {
-                        const style = window.getComputedStyle(cur.parentElement);
-                        if (style.display.includes('flex') && (style.flexDirection === 'row' || !style.flexDirection || style.flexDirection === 'normal')) {
-                            foundCardItem = cur;
-                            break;
-                        }
-                    }
-                    cur = cur.parentElement;
-                }
-                if (foundCardItem) break;
-            }
-        }
-
-        if (foundCardItem && foundCardItem.parentElement) {
-            return foundCardItem.parentElement;
-        }
-
-        // 2. Вторичный поиск по точным селекторам VKUI HorizontalScroll
-        const scrolls = document.querySelectorAll(
-            '.vkuiHorizontalScroll__content, [class*="HorizontalScroll__content"], .vkuiHorizontalScroll__in > div, [class*="HorizontalScroll__in"] > div'
-        );
-        for (let i = 0; i < scrolls.length; i++) {
-            if (scrolls[i].children.length >= 2) {
-                return scrolls[i];
-            }
-        }
-
-        return null;
-    }
-
-    function injectCustomThemeOptionInCarousel() {
-        if (!isMailAppearancePage()) return;
-
-        const carouselRow = findThemesCarouselRow();
-        if (!carouselRow) return;
-
-        let customCard = document.getElementById('vmu-custom-theme-card');
-        const isCustomActive = (currentChatPreset === 'custom');
-        let customBg = null;
-        try { customBg = localStorage.getItem(STORAGE_KEYS.CUSTOM_CHAT_BG); } catch(e) {}
-        let customColor = getStringSetting(STORAGE_KEYS.CUSTOM_CHAT_COLOR, '#2c2d2e');
-
-        if (!customCard) {
-            customCard = document.createElement('div');
-            customCard.id = 'vmu-custom-theme-card';
-            customCard.className = 'vmu-custom-theme-carousel-item';
-            carouselRow.insertBefore(customCard, carouselRow.firstElementChild);
-        } else {
-            if (customCard.parentElement !== carouselRow || carouselRow.firstElementChild !== customCard) {
-                carouselRow.insertBefore(customCard, carouselRow.firstElementChild);
-            }
-        }
-
-        const bgStyle = customBg ? `background-image: url("${customBg}"); background-size: cover; background-position: center;` : `background: #19191a;`;
-
-        customCard.style.cssText = `
-            display: inline-flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: flex-start !important;
-            margin-right: 12px !important;
-            cursor: pointer !important;
-            user-select: none !important;
-            flex-shrink: 0 !important;
-            -webkit-tap-highlight-color: transparent !important;
-            vertical-align: top !important;
-            width: auto !important;
-        `;
-
-        customCard.innerHTML = `
-            <div style="position: relative; width: 84px; height: 84px; border-radius: 14px; overflow: hidden; border: ${isCustomActive ? '2.5px solid var(--vkui--color_text_accent, #FF5C5C)' : '1px solid rgba(255,255,255,0.12)'}; ${bgStyle}; box-shadow: 0 4px 12px rgba(0,0,0,0.3); box-sizing: border-box;">
-                <div style="position: absolute; right: 8px; top: 18px; width: 44px; height: 16px; border-radius: 8px; background: ${customColor}; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>
-                <div style="position: absolute; left: 8px; bottom: 18px; width: 48px; height: 16px; border-radius: 8px; background: rgba(255,255,255,0.22); box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>
-                ${isCustomActive ? `
-                    <div style="position: absolute; top: 6px; left: 6px; width: 22px; height: 22px; border-radius: 50%; background: #ffffff; color: #000000; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; box-shadow: 0 2px 6px rgba(0,0,0,0.4);">✓</div>
-                ` : ''}
-            </div>
-            <div style="font-size: 13px; color: ${isCustomActive ? 'var(--vkui--color_text_accent, #FF5C5C)' : 'var(--vkui--color_text_primary, #ffffff)'}; font-weight: ${isCustomActive ? '600' : '400'}; margin-top: 6px; text-align: center;">Своё</div>
-        `;
-
-        clearNativeThemeCheckmarks();
-
-        customCard.onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            currentChatPreset = 'custom';
-            setSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'custom');
-            applyCustomChatBackground();
-            clearNativeThemeCheckmarks();
-            injectCustomThemeOptionInCarousel();
-            window.history.pushState(null, '', '/mail/settings/theme?act=vmu_custom_theme');
-            renderCustomThemeEditorPage();
-        };
-
-        if (!carouselRow.dataset.vmuNativeListener) {
-            carouselRow.dataset.vmuNativeListener = 'true';
-            carouselRow.addEventListener('click', (e) => {
-                const target = e.target;
-                if (!target) return;
-                const clickedCustom = target.closest('#vmu-custom-theme-card');
-                if (!clickedCustom) {
-                    // Пользователь кликнул по любой стандартной теме в карусели
-                    currentChatPreset = 'native';
-                    setSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'native');
-                    applyCustomChatBackground();
-                    injectCustomThemeOptionInCarousel();
-                }
-            }, true);
-        }
-    }
-
-    function clearNativeThemeCheckmarks() {
-        currentChatPreset = getStringSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'classic');
-        const carouselRow = findThemesCarouselRow();
-        if (!carouselRow) return;
-
-        if (currentChatPreset !== 'custom') {
-            // Восстанавливаем видимость галочек/иконок на стандартных темах, если ранее мы их скрывали
-            const hiddenEls = carouselRow.querySelectorAll('[data-vmu-hidden-check]');
-            for (let i = 0; i < hiddenEls.length; i++) {
-                const el = hiddenEls[i];
-                el.style.removeProperty('display');
-                el.style.removeProperty('visibility');
-                el.style.removeProperty('opacity');
-                delete el.dataset.vmuHiddenCheck;
-            }
-            return;
-        }
-
-        const cards = carouselRow.children;
-        for (let i = 0; i < cards.length; i++) {
-            const card = cards[i];
-            if (card.id === 'vmu-custom-theme-card' || card.contains(document.getElementById('vmu-custom-theme-card'))) {
-                continue;
-            }
-
-            card.classList.remove('vkuiRadio--checked');
-            card.removeAttribute('checked');
-            card.setAttribute('aria-checked', 'false');
-            const radioInput = card.querySelector('input[type="radio"]');
-            if (radioInput) radioInput.checked = false;
-
-            const allChildren = card.querySelectorAll('*');
-            for (let j = 0; j < allChildren.length; j++) {
-                const el = allChildren[j];
-                if (el.textContent && el.textContent.trim() === '✓') {
-                    el.dataset.vmuHiddenCheck = 'true';
-                    el.style.setProperty('display', 'none', 'important');
-                    el.style.setProperty('visibility', 'hidden', 'important');
-                    el.style.setProperty('opacity', '0', 'important');
-                }
-                if (el.tagName && el.tagName.toLowerCase() === 'svg') {
-                    el.dataset.vmuHiddenCheck = 'true';
-                    el.style.setProperty('display', 'none', 'important');
-                    el.style.setProperty('visibility', 'hidden', 'important');
-                    el.style.setProperty('opacity', '0', 'important');
-                }
-                const cls = (el.className && typeof el.className === 'string') ? el.className.toLowerCase() : '';
-                if (cls.includes('icon') || cls.includes('check') || cls.includes('badge') || cls.includes('indicator')) {
-                    el.dataset.vmuHiddenCheck = 'true';
-                    el.style.setProperty('display', 'none', 'important');
-                    el.style.setProperty('visibility', 'hidden', 'important');
-                    el.style.setProperty('opacity', '0', 'important');
-                }
-            }
-            const borderEl = card.querySelector('[class*="content" i], div');
-            if (borderEl) {
-                borderEl.style.setProperty('border-color', 'rgba(255, 255, 255, 0.12)', 'important');
-            }
-        }
-    }
-
-    let customThemeActiveTab = 'bg'; // 'bg' | 'color'
-
-    function closeCustomThemeEditor() {
-        const overlay = document.getElementById(CUSTOM_THEME_EDITOR_UI_ID);
-        if (overlay) overlay.remove();
-        if (window.location.search.includes('act=vmu_custom_theme') || window.location.hash === '#vmu_custom_theme') {
-            window.history.replaceState(null, '', '/mail/settings/theme');
-        }
-        injectCustomThemeOptionInCarousel();
-    }
-
-    function renderCustomThemeEditorPage() {
-        let overlay = document.getElementById(CUSTOM_THEME_EDITOR_UI_ID);
-        if (!overlay) {
-            overlay = document.createElement('div');
-            overlay.id = CUSTOM_THEME_EDITOR_UI_ID;
-            document.body.appendChild(overlay);
-        }
-
-        let customBg = null;
-        try { customBg = localStorage.getItem(STORAGE_KEYS.CUSTOM_CHAT_BG); } catch(e) {}
-        let customColor = getStringSetting(STORAGE_KEYS.CUSTOM_CHAT_COLOR, '#2c2d2e');
-
-        overlay.innerHTML = '';
-        overlay.style.cssText = `
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            background: var(--vkui--color_background_content, #19191a) !important;
-            color: var(--vkui--color_text_primary, #ffffff) !important;
-            z-index: 99999 !important;
-            overflow-y: auto !important;
-            -webkit-overflow-scrolling: touch !important;
-            box-sizing: border-box !important;
-            display: flex !important;
-            flex-direction: column !important;
-            font-family: var(--vkui--font_family_base, -apple-system, BlinkMacSystemFont, "Roboto", "Helvetica Neue", sans-serif) !important;
-            user-select: none !important;
-        `;
-
-        // 1. Шапка страницы
-        const topNav = document.createElement('div');
-        topNav.style.cssText = `
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            background: var(--vkui--color_background_content, #19191a);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            border-bottom: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.08));
-        `;
-
-        const backBtn = document.createElement('button');
-        backBtn.style.cssText = `
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: none;
-            border: none;
-            color: var(--vkui--color_text_accent, #FF5C5C);
-            font-size: 15px;
-            font-weight: 500;
-            cursor: pointer;
-            padding: 6px 8px;
-            margin: -6px -8px;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-        `;
-        backBtn.innerHTML = `
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-        `;
-        backBtn.onclick = (e) => {
-            e.preventDefault();
-            closeCustomThemeEditor();
-        };
-
-        const pageTitle = document.createElement('div');
-        pageTitle.style.cssText = 'font-size: 18px; font-weight: 600; color: var(--vkui--color_text_primary, #ffffff);';
-        pageTitle.textContent = 'Своё оформление';
-
-        topNav.appendChild(backBtn);
-        topNav.appendChild(pageTitle);
-        overlay.appendChild(topNav);
-
-        // 2. Интерактивный предпросмотр чата (Live Preview)
-        const previewContainer = document.createElement('div');
-        previewContainer.id = 'vmu-live-chat-preview';
-        const liveBgStyle = customBg ? `background-image: url("${customBg}"); background-size: cover; background-position: center;` : `background: #101010;`;
-        previewContainer.style.cssText = `
-            position: relative;
-            margin: 16px;
-            height: 360px;
-            border-radius: 16px;
-            overflow: hidden;
-            ${liveBgStyle};
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding: 12px;
-            box-sizing: border-box;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-            flex-shrink: 0;
-        `;
-
-        previewContainer.innerHTML = `
-            <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
-                <!-- Входящее сообщение 1 (Лиза) -->
-                <div style="display: flex; align-items: flex-end; gap: 8px; max-width: 82%;">
-                    <div style="width: 28px; height: 28px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #6c5ce7; display: flex; align-items: center; justify-content: center;">
-                        <svg width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="14" fill="#8854d0"/><circle cx="14" cy="11" r="5" fill="#ffeaa7"/><path d="M6 25c0-4.4 3.6-8 8-8s8 3.6 8 8" fill="#ffeaa7"/></svg>
-                    </div>
-                    <div style="background: #232324; border-radius: 16px 16px 16px 4px; padding: 8px 12px; color: #ffffff; font-size: 14px; line-height: 1.35; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
-                        <div style="color: var(--vkui--color_text_accent, #FF5C5C); font-weight: 600; font-size: 12px; margin-bottom: 2px;">Лиза</div>
-                        <div>Привет! Как тебе новое оформление? ✨</div>
-                        <div style="text-align: right; font-size: 11px; opacity: 0.6; margin-top: 3px;">19:24</div>
-                    </div>
-                </div>
-
-                <!-- Исходящее сообщение 1 -->
-                <div style="align-self: flex-end; max-width: 80%; background: ${customColor}; border-radius: 16px 16px 4px 16px; padding: 8px 12px; color: #ffffff; font-size: 14px; line-height: 1.35; position: relative; box-shadow: 0 2px 6px rgba(0,0,0,0.3);" class="vmu-preview-out-bubble">
-                    <div>Выглядит просто супер! 🔥</div>
-                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 3px; font-size: 11px; opacity: 0.75; margin-top: 3px;">
-                        <span>19:24</span>
-                        <span>✓✓</span>
-                    </div>
-                </div>
-
-                <!-- Входящее сообщение 2 (Лиза) -->
-                <div style="display: flex; align-items: flex-end; gap: 8px; max-width: 82%;">
-                    <div style="width: 28px; height: 28px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: #6c5ce7; display: flex; align-items: center; justify-content: center;">
-                        <svg width="28" height="28" viewBox="0 0 28 28"><circle cx="14" cy="14" r="14" fill="#8854d0"/><circle cx="14" cy="11" r="5" fill="#ffeaa7"/><path d="M6 25c0-4.4 3.6-8 8-8s8 3.6 8 8" fill="#ffeaa7"/></svg>
-                    </div>
-                    <div style="background: #232324; border-radius: 16px 16px 16px 4px; padding: 8px 12px; color: #ffffff; font-size: 14px; line-height: 1.35; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">
-                        <div>Цвет сообщений и фон идеально сочетаются)</div>
-                        <div style="text-align: right; font-size: 11px; opacity: 0.6; margin-top: 3px;">19:25</div>
-                    </div>
-                </div>
-
-                <!-- Исходящее сообщение 2 -->
-                <div style="align-self: flex-end; max-width: 80%; background: ${customColor}; border-radius: 16px 16px 4px 16px; padding: 8px 12px; color: #ffffff; font-size: 14px; line-height: 1.35; position: relative; box-shadow: 0 2px 6px rgba(0,0,0,0.3);" class="vmu-preview-out-bubble">
-                    <div>Да, мне тоже очень нравится!</div>
-                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 3px; font-size: 11px; opacity: 0.75; margin-top: 3px;">
-                        <span>19:25</span>
-                        <span>✓✓</span>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        overlay.appendChild(previewContainer);
-
-        // 3. Табы переключения: «Фон» | «Цвет»
-        const tabNav = document.createElement('div');
-        tabNav.style.cssText = `
-            display: flex;
-            align-items: center;
-            justify-content: space-around;
-            margin: 0 16px 14px 16px;
-            border-bottom: 1px solid var(--vkui--color_separator_primary, rgba(255, 255, 255, 0.1));
-            position: relative;
-            flex-shrink: 0;
-        `;
-
-        const tabBg = document.createElement('div');
-        tabBg.textContent = 'Фон';
-        tabBg.style.cssText = `
-            flex: 1;
-            text-align: center;
-            padding: 10px 0;
-            font-size: 15px;
-            font-weight: ${customThemeActiveTab === 'bg' ? '600' : '400'};
-            color: ${customThemeActiveTab === 'bg' ? 'var(--vkui--color_text_primary, #ffffff)' : 'var(--vkui--color_text_secondary, #828282)'};
-            cursor: pointer;
-            border-bottom: ${customThemeActiveTab === 'bg' ? '2.5px solid var(--vkui--color_text_accent, #FF5C5C)' : '2.5px solid transparent'};
-            transition: all 0.2s ease;
-        `;
-
-        const tabColor = document.createElement('div');
-        tabColor.textContent = 'Цвет';
-        tabColor.style.cssText = `
-            flex: 1;
-            text-align: center;
-            padding: 10px 0;
-            font-size: 15px;
-            font-weight: ${customThemeActiveTab === 'color' ? '600' : '400'};
-            color: ${customThemeActiveTab === 'color' ? 'var(--vkui--color_text_primary, #ffffff)' : 'var(--vkui--color_text_secondary, #828282)'};
-            cursor: pointer;
-            border-bottom: ${customThemeActiveTab === 'color' ? '2.5px solid var(--vkui--color_text_accent, #FF5C5C)' : '2.5px solid transparent'};
-            transition: all 0.2s ease;
-        `;
-
-        tabNav.appendChild(tabBg);
-        tabNav.appendChild(tabColor);
-        overlay.appendChild(tabNav);
-
-        // 4. Скрытый file input для галереи
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = 'image/*';
-        fileInput.style.display = 'none';
-
-        fileInput.onchange = (e) => {
-            const file = e.target.files && e.target.files[0];
-            if (file) {
-                processUploadedImage(file, (dataUrl) => {
-                    try {
-                        localStorage.setItem(STORAGE_KEYS.CUSTOM_CHAT_BG, dataUrl);
-                        currentChatPreset = 'custom';
-                        setSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'custom');
-                    } catch(err) {
-                        alert('Превышен лимит размера памяти браузера. Пожалуйста, выберите другое изображение.');
-                    }
-                    applyCustomChatBackground();
-                    renderCustomThemeEditorPage();
-                });
-            }
-        };
-        overlay.appendChild(fileInput);
-
-        // 5. Контейнер содержимого табов
-        const tabContentContainer = document.createElement('div');
-        tabContentContainer.style.cssText = 'margin: 0 16px 40px 16px; flex-shrink: 0;';
-
-        function updateTabContent() {
-            tabContentContainer.innerHTML = '';
-
-            if (customThemeActiveTab === 'bg') {
-                const bgRow = document.createElement('div');
-                bgRow.style.cssText = `
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    overflow-x: auto;
-                    padding: 6px 0 14px 0;
-                    -webkit-overflow-scrolling: touch;
-                `;
-
-                // Кнопка 1: Выбрать фото из галереи
-                const uploadBtn = document.createElement('div');
-                uploadBtn.style.cssText = `
-                    width: 80px;
-                    height: 80px;
-                    border-radius: 14px;
-                    background: rgba(255, 255, 255, 0.06);
-                    border: 1.5px dashed rgba(255, 255, 255, 0.25);
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    flex-shrink: 0;
-                    transition: transform 0.15s ease;
-                `;
-                uploadBtn.innerHTML = `
-                    <div style="font-size: 24px; margin-bottom: 2px;">🖼️</div>
-                    <div style="font-size: 11px; color: var(--vkui--color_text_accent, #FF5C5C); font-weight: 500;">Галерея</div>
-                `;
-                uploadBtn.onclick = (e) => {
-                    e.preventDefault();
-                    fileInput.click();
-                };
-                bgRow.appendChild(uploadBtn);
-
-                // Кнопка 2: Текущее фото (если загружено)
-                if (customBg) {
-                    const activePhotoCard = document.createElement('div');
-                    activePhotoCard.style.cssText = `
-                        position: relative;
-                        width: 80px;
-                        height: 80px;
-                        border-radius: 14px;
-                        background-image: url("${customBg}");
-                        background-size: cover;
-                        background-position: center;
-                        border: 2px solid var(--vkui--color_text_accent, #FF5C5C);
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.35);
-                        cursor: pointer;
-                        flex-shrink: 0;
-                    `;
-                    activePhotoCard.innerHTML = `
-                        <div style="position: absolute; top: 6px; left: 6px; width: 20px; height: 20px; border-radius: 50%; background: #ffffff; color: #000000; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">✓</div>
-                    `;
-                    bgRow.appendChild(activePhotoCard);
-
-                    // Кнопка 3: Удалить фото
-                    const deleteBtn = document.createElement('div');
-                    deleteBtn.style.cssText = `
-                        width: 80px;
-                        height: 80px;
-                        border-radius: 14px;
-                        background: rgba(255, 92, 92, 0.1);
-                        border: 1px solid rgba(255, 92, 92, 0.3);
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        cursor: pointer;
-                        flex-shrink: 0;
-                    `;
-                    deleteBtn.innerHTML = `
-                        <div style="font-size: 20px; margin-bottom: 2px;">🗑️</div>
-                        <div style="font-size: 11px; color: #FF5C5C; font-weight: 500;">Сбросить</div>
-                    `;
-                    deleteBtn.onclick = (e) => {
-                        e.preventDefault();
-                        try { localStorage.removeItem(STORAGE_KEYS.CUSTOM_CHAT_BG); } catch(err) {}
-                        applyCustomChatBackground();
-                        renderCustomThemeEditorPage();
-                    };
-                    bgRow.appendChild(deleteBtn);
-                } else {
-                    // Карточка "Без фона"
-                    const noBgCard = document.createElement('div');
-                    noBgCard.style.cssText = `
-                        position: relative;
-                        width: 80px;
-                        height: 80px;
-                        border-radius: 14px;
-                        background: #19191a;
-                        border: 2px solid var(--vkui--color_text_accent, #FF5C5C);
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        color: #ffffff;
-                        font-size: 12px;
-                        cursor: pointer;
-                        flex-shrink: 0;
-                    `;
-                    noBgCard.innerHTML = `
-                        <div style="position: absolute; top: 6px; left: 6px; width: 20px; height: 20px; border-radius: 50%; background: #ffffff; color: #000000; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">✓</div>
-                        <div style="opacity: 0.7;">Без фона</div>
-                    `;
-                    bgRow.appendChild(noBgCard);
-                }
-
-                tabContentContainer.appendChild(bgRow);
-            } else {
-                // Вкладка «Цвет»
-                const colorRow = document.createElement('div');
-                colorRow.style.cssText = `
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    overflow-x: auto;
-                    padding: 8px 0 16px 0;
-                    -webkit-overflow-scrolling: touch;
-                `;
-
-                CHAT_COLOR_PRESETS.forEach(preset => {
-                    const isSelected = (currentCustomChatColor.toLowerCase() === preset.value.toLowerCase());
-                    const swatch = document.createElement('div');
-                    swatch.title = preset.label;
-                    swatch.style.cssText = `
-                        width: 44px;
-                        height: 44px;
-                        border-radius: 50%;
-                        background: ${preset.value};
-                        border: ${isSelected ? '3px solid #ffffff' : '1px solid rgba(255,255,255,0.2)'};
-                        box-shadow: ${isSelected ? '0 0 0 2px var(--vkui--color_text_accent, #FF5C5C), 0 4px 8px rgba(0,0,0,0.3)' : '0 2px 5px rgba(0,0,0,0.2)'};
-                        cursor: pointer;
-                        flex-shrink: 0;
-                        transition: transform 0.15s ease;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                    `;
-
-                    if (isSelected) {
-                        swatch.innerHTML = '<span style="color: #ffffff; font-size: 14px; font-weight: bold; text-shadow: 0 1px 2px rgba(0,0,0,0.6);">✓</span>';
-                    }
-
-                    swatch.onclick = (e) => {
-                        e.preventDefault();
-                        currentCustomChatColor = preset.value;
-                        setSetting(STORAGE_KEYS.CUSTOM_CHAT_COLOR, preset.value);
-                        currentChatPreset = 'custom';
-                        setSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'custom');
-
-                        const outBubbles = previewContainer.querySelectorAll('.vmu-preview-out-bubble');
-                        outBubbles.forEach(b => {
-                            b.style.background = preset.value;
-                            b.style.backgroundColor = preset.value;
-                        });
-
-                        applyCustomChatBackground();
-                        updateTabContent();
-                    };
-
-                    colorRow.appendChild(swatch);
-                });
-
-                // Палитра выбора произвольного цвета (Color picker)
-                const customColorPicker = document.createElement('label');
-                customColorPicker.title = 'Свой цвет';
-                customColorPicker.style.cssText = `
-                    width: 44px;
-                    height: 44px;
-                    border-radius: 50%;
-                    background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);
-                    border: 1px solid rgba(255,255,255,0.3);
-                    cursor: pointer;
-                    flex-shrink: 0;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-                    position: relative;
-                    overflow: hidden;
-                `;
-
-                const hiddenColorInput = document.createElement('input');
-                hiddenColorInput.type = 'color';
-                hiddenColorInput.value = currentCustomChatColor.startsWith('#') ? currentCustomChatColor : '#2c2d2e';
-                hiddenColorInput.style.cssText = 'position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer;';
-
-                hiddenColorInput.onchange = (e) => {
-                    const chosen = e.target.value;
-                    currentCustomChatColor = chosen;
-                    setSetting(STORAGE_KEYS.CUSTOM_CHAT_COLOR, chosen);
-                    currentChatPreset = 'custom';
-                    setSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'custom');
-
-                    const outBubbles = previewContainer.querySelectorAll('.vmu-preview-out-bubble');
-                    outBubbles.forEach(b => {
-                        b.style.background = chosen;
-                        b.style.backgroundColor = chosen;
-                    });
-
-                    applyCustomChatBackground();
-                    updateTabContent();
-                };
-
-                customColorPicker.appendChild(hiddenColorInput);
-                colorRow.appendChild(customColorPicker);
-
-                tabContentContainer.appendChild(colorRow);
-            }
-        }
-
-        tabBg.onclick = (e) => {
-            e.preventDefault();
-            customThemeActiveTab = 'bg';
-            tabBg.style.fontWeight = '600';
-            tabBg.style.color = 'var(--vkui--color_text_primary, #ffffff)';
-            tabBg.style.borderBottom = '2.5px solid var(--vkui--color_text_accent, #FF5C5C)';
-            tabColor.style.fontWeight = '400';
-            tabColor.style.color = 'var(--vkui--color_text_secondary, #828282)';
-            tabColor.style.borderBottom = '2.5px solid transparent';
-            updateTabContent();
-        };
-
-        tabColor.onclick = (e) => {
-            e.preventDefault();
-            customThemeActiveTab = 'color';
-            tabColor.style.fontWeight = '600';
-            tabColor.style.color = 'var(--vkui--color_text_primary, #ffffff)';
-            tabColor.style.borderBottom = '2.5px solid var(--vkui--color_text_accent, #FF5C5C)';
-            tabBg.style.fontWeight = '400';
-            tabBg.style.color = 'var(--vkui--color_text_secondary, #828282)';
-            tabBg.style.borderBottom = '2.5px solid transparent';
-            updateTabContent();
-        };
-
-        updateTabContent();
-        overlay.appendChild(tabContentContainer);
-    }
-
     function renderMailAppearancePage() {
         if (!isMailAppearancePage()) return;
 
         // Фиксируем кнопку «Назад» в шапке нативной страницы
         const backBtns = document.querySelectorAll(
-            '.vkuiPanelHeaderBack, [class*="PanelHeaderBack"], [aria-label*="Назад" i], [aria-label*="назад" i], [data-testid="header-back"], .vkuiPanelHeader__before a, .vkuiPanelHeader__before button, .vkuiPanelHeader__before [role="button"]'
+            '.vkuiPanelHeaderBack, [class*=PanelHeaderBack], [aria-label*=Назад i], [aria-label*=назад i], [data-testid=header-back], .vkuiPanelHeader__before a, .vkuiPanelHeader__before button, .vkuiPanelHeader__before [role=button]'
         );
         for (let b = 0; b < backBtns.length; b++) {
             const btn = backBtns[b];
@@ -3518,346 +2662,19 @@
                 };
             }
         }
-
-        // Удаляем старую отдельную карточку, если осталась
-        const oldCard = document.getElementById(MAIL_APPEARANCE_UI_ID);
-        if (oldCard) oldCard.remove();
-
-        // Внедряем пункт «Своё» в карусель тем
-        injectCustomThemeOptionInCarousel();
     }
 
-    const CUSTOM_BG_STYLE_TAG_ID = 'vmu-custom-chat-bg-style';
-
-    function applyCustomChatBackground() {
-        currentChatPreset = getStringSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'classic');
-        const isCustom = (currentChatPreset === 'custom');
-        let customBg = null;
-        let customColor = getStringSetting(STORAGE_KEYS.CUSTOM_CHAT_COLOR, '#2c2d2e');
-
-        try {
-            customBg = localStorage.getItem(STORAGE_KEYS.CUSTOM_CHAT_BG);
-        } catch(e) {}
-
-        const html = document.documentElement;
-        if (html) {
-            html.style.setProperty('--vmu-custom-chat-bubble', customColor);
-            html.style.setProperty('--vmu-custom-chat-bubble-gradient', customColor.startsWith('linear-gradient') ? customColor : 'none');
-            html.style.setProperty('--vmu-custom-chat-bubble-color', customColor.startsWith('linear-gradient') ? '#2c2d2e' : customColor);
+    function cleanupLegacyCustomTheme() {
+        const bgLayer = document.getElementById('vmu-chat-custom-wallpaper');
+        if (bgLayer) bgLayer.remove();
+        const bgStyle = document.getElementById('vmu-custom-chat-bg-style');
+        if (bgStyle) bgStyle.remove();
+        const panelWallpapers = document.querySelectorAll('#vmu-chat-panel-wallpaper, #vmu-custom-theme-editor-overlay');
+        for (let i = 0; i < panelWallpapers.length; i++) {
+            panelWallpapers[i].remove();
         }
-
         if (document.body) {
-            document.body.style.setProperty('--vmu-custom-chat-bubble', customColor);
-            document.body.style.setProperty('--vmu-custom-chat-bubble-gradient', customColor.startsWith('linear-gradient') ? customColor : 'none');
-            document.body.style.setProperty('--vmu-custom-chat-bubble-color', customColor.startsWith('linear-gradient') ? '#2c2d2e' : customColor);
-
-            if (isCustom) {
-                if (!document.body.classList.contains('vmu-theme-custom-active')) {
-                    document.body.classList.add('vmu-theme-custom-active');
-                }
-                if (customBg) {
-                    document.body.classList.add('vmu-has-custom-chat-bg');
-                } else {
-                    document.body.classList.remove('vmu-has-custom-chat-bg');
-                }
-            } else {
-                document.body.classList.remove('vmu-theme-custom-active');
-                document.body.classList.remove('vmu-has-custom-chat-bg');
-                document.body.classList.remove('vmu-in-chat');
-            }
-        }
-
-        // Внедряем прямой <style> тег с изображением фона без промежуточных CSS-переменных
-        let bgStyleTag = document.getElementById(CUSTOM_BG_STYLE_TAG_ID);
-        if (isCustom && customBg) {
-            if (!bgStyleTag) {
-                bgStyleTag = document.createElement('style');
-                bgStyleTag.id = CUSTOM_BG_STYLE_TAG_ID;
-                (document.head || document.documentElement).appendChild(bgStyleTag);
-            }
-            bgStyleTag.textContent = `
-                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat #vmu-chat-custom-wallpaper,
-                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat #vmu-chat-panel-wallpaper,
-                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiPanel:not([class*="hidden"]) .vkmChat,
-                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiPanel:not([class*="hidden"]) .vkmChatWallpaper,
-                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiPanel:not([class*="hidden"]) .vkmChat__wallpaper,
-                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiPanel:not([class*="hidden"]) [class*="ChatWallpaper"],
-                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiPanel:not([class*="hidden"]) [class*="vkmChatWallpaper"],
-                body.vmu-theme-custom-active.vmu-has-custom-chat-bg.vmu-in-chat .vkuiPanel:not([class*="hidden"]) [class*="im-chat-wallpaper"] {
-                    background-image: url("${customBg}") !important;
-                    background-size: cover !important;
-                    background-position: center center !important;
-                    background-repeat: no-repeat !important;
-                    background-attachment: fixed !important;
-                    display: block !important;
-                    opacity: 1 !important;
-                    visibility: visible !important;
-                }
-            `;
-        } else {
-            if (bgStyleTag) bgStyleTag.remove();
-        }
-
-        try { fixChatElementsDirectly(); } catch (e) {}
-    }
-
-    function fixChatElementsDirectly() {
-        currentChatPreset = getStringSetting(STORAGE_KEYS.CHAT_THEME_PRESET, 'classic');
-        const isCustom = (currentChatPreset === 'custom');
-
-        let bgLayer = document.getElementById('vmu-chat-custom-wallpaper');
-
-        if (!isCustom) {
-            // Пользователь вернулся на стандартную/нативную тему VK: очищаем все кастомные модификации
-            if (bgLayer) {
-                bgLayer.remove();
-            }
-            const panelWallpapers = document.querySelectorAll('#vmu-chat-panel-wallpaper');
-            for (let i = 0; i < panelWallpapers.length; i++) {
-                panelWallpapers[i].remove();
-            }
-
-            const modifiedElements = document.querySelectorAll('[data-vmu-custom-modified]');
-            for (let i = 0; i < modifiedElements.length; i++) {
-                const el = modifiedElements[i];
-                el.style.removeProperty('display');
-                el.style.removeProperty('opacity');
-                el.style.removeProperty('visibility');
-                el.style.removeProperty('background-image');
-                el.style.removeProperty('background-size');
-                el.style.removeProperty('background-position');
-                el.style.removeProperty('background-repeat');
-                el.style.removeProperty('background-attachment');
-                el.style.removeProperty('background-color');
-                el.style.removeProperty('background');
-                el.style.removeProperty('position');
-                el.style.removeProperty('z-index');
-                delete el.dataset.vmuCustomModified;
-            }
-
-            const hiddenMedia = document.querySelectorAll('[data-vmu-hidden-media]');
-            for (let i = 0; i < hiddenMedia.length; i++) {
-                const el = hiddenMedia[i];
-                el.style.removeProperty('display');
-                el.style.removeProperty('opacity');
-                el.style.removeProperty('visibility');
-                el.style.removeProperty('width');
-                el.style.removeProperty('height');
-                delete el.dataset.vmuHiddenMedia;
-            }
-
-            const customBubbles = document.querySelectorAll('[data-vmu-custom-bubble]');
-            for (let i = 0; i < customBubbles.length; i++) {
-                const el = customBubbles[i];
-                el.style.removeProperty('background');
-                el.style.removeProperty('background-color');
-                el.style.removeProperty('background-image');
-                el.style.removeProperty('color');
-                delete el.dataset.vmuCustomBubble;
-            }
-
-            return;
-        }
-
-        let customBg = null;
-        let customColor = getStringSetting(STORAGE_KEYS.CUSTOM_CHAT_COLOR, '#2c2d2e');
-        try {
-            customBg = localStorage.getItem(STORAGE_KEYS.CUSTOM_CHAT_BG);
-        } catch(e) {}
-
-        const inChat = isChatPage();
-
-        // 2. Управление обоями в чате
-        if (inChat) {
-            document.body.classList.add('vmu-in-chat');
-
-            // 1. Подавление картинок нативных обоев
-            const nativeWallpaperImgs = document.querySelectorAll(
-                '.vkmChatWallpaper img, .vkmChatWallpaper picture, [class*="ChatWallpaper"] img, [class*="ChatWallpaper"] picture, [class*="im-chat-wallpaper"] img, [class*="im-chat-wallpaper"] picture, img[src*="theme_wallpaper"], img[src*="im_theme"], img[src*="im-theme"], img[src*="im/theme"]'
-            );
-            for (let i = 0; i < nativeWallpaperImgs.length; i++) {
-                const img = nativeWallpaperImgs[i];
-                img.dataset.vmuHiddenMedia = 'true';
-                img.style.setProperty('display', 'none', 'important');
-                img.style.setProperty('opacity', '0', 'important');
-                img.style.setProperty('visibility', 'hidden', 'important');
-                img.style.setProperty('width', '0px', 'important');
-                img.style.setProperty('height', '0px', 'important');
-            }
-
-            // 2. Нативные контейнеры обоев
-            const nativeWallpapers = document.querySelectorAll(
-                '.vkmChatWallpaper, .vkmChat__wallpaper, [class*="vkmChatWallpaper"], [class*="ChatWallpaper"], [class*="im-chat-wallpaper"], [data-testid="chat-wallpaper"], [class*="ChatBackground__image"]'
-            );
-            for (let i = 0; i < nativeWallpapers.length; i++) {
-                const wp = nativeWallpapers[i];
-                wp.dataset.vmuCustomModified = 'true';
-                if (customBg) {
-                    wp.style.setProperty('display', 'block', 'important');
-                    wp.style.setProperty('opacity', '1', 'important');
-                    wp.style.setProperty('visibility', 'visible', 'important');
-                    wp.style.setProperty('background-image', `url("${customBg}")`, 'important');
-                    wp.style.setProperty('background-size', 'cover', 'important');
-                    wp.style.setProperty('background-position', 'center center', 'important');
-                    wp.style.setProperty('background-repeat', 'no-repeat', 'important');
-                    wp.style.setProperty('background-attachment', 'fixed', 'important');
-                } else {
-                    wp.style.setProperty('display', 'none', 'important');
-                    wp.style.setProperty('opacity', '0', 'important');
-                    wp.style.setProperty('visibility', 'hidden', 'important');
-                    wp.style.setProperty('background-image', 'none', 'important');
-                    wp.style.setProperty('z-index', '-9999', 'important');
-                }
-            }
-
-            if (customBg) {
-                // А. Глобальный фиксированный оверлей #vmu-chat-custom-wallpaper
-                if (!bgLayer) {
-                    bgLayer = document.createElement('div');
-                    bgLayer.id = 'vmu-chat-custom-wallpaper';
-                    document.body.prepend(bgLayer);
-                }
-                bgLayer.style.setProperty('background-image', `url("${customBg}")`, 'important');
-                bgLayer.style.setProperty('display', 'block', 'important');
-                bgLayer.style.setProperty('opacity', '1', 'important');
-                bgLayer.style.setProperty('visibility', 'visible', 'important');
-                bgLayer.style.setProperty('z-index', '5', 'important');
-
-                // Б. Локальный фоновый слой внутри контейнеров активной панели чата
-                const activePanels = document.querySelectorAll('.vkuiPanel:not([class*="hidden"]):not([style*="display: none"]):not([style*="display:none"])');
-                for (let p = 0; p < activePanels.length; p++) {
-                    const panel = activePanels[p];
-                    if (panel.querySelector('[class*="WriteBar"], [class*="writeBar"], .vkuiWriteBar, .vkmChat, [class*="ChatHistory"]')) {
-                        const chatRoots = panel.querySelectorAll('.vkmChat, [class*="im-page--chat"]');
-                        for (let r = 0; r < chatRoots.length; r++) {
-                            const root = chatRoots[r];
-                            root.dataset.vmuCustomModified = 'true';
-                            root.style.setProperty('background-image', `url("${customBg}")`, 'important');
-                            root.style.setProperty('background-size', 'cover', 'important');
-                            root.style.setProperty('background-position', 'center center', 'important');
-                            root.style.setProperty('background-repeat', 'no-repeat', 'important');
-                            root.style.setProperty('background-attachment', 'fixed', 'important');
-                        }
-
-                        let localWp = panel.querySelector('#vmu-chat-panel-wallpaper');
-                        if (!localWp) {
-                            localWp = document.createElement('div');
-                            localWp.id = 'vmu-chat-panel-wallpaper';
-                            panel.insertBefore(localWp, panel.firstChild);
-                        }
-                        localWp.style.setProperty('background-image', `url("${customBg}")`, 'important');
-                        localWp.style.setProperty('display', 'block', 'important');
-                        localWp.style.setProperty('opacity', '1', 'important');
-                        localWp.style.setProperty('visibility', 'visible', 'important');
-                        localWp.style.setProperty('z-index', '5', 'important');
-                    }
-                }
-
-                // В. Очищаем фон внутренних списков сообщений и поднимаем их над фоном
-                const innerScrolls = document.querySelectorAll(
-                    '.vkmChat__history, [class*="MessagesList"], [class*="MessageStack"], [class*="Conversation"], [class*="ChatRoot"], [class*="Chat__content"], [class*="ChatHistory"]'
-                );
-                for (let i = 0; i < innerScrolls.length; i++) {
-                    innerScrolls[i].dataset.vmuCustomModified = 'true';
-                    innerScrolls[i].style.setProperty('background-color', 'transparent', 'important');
-                    innerScrolls[i].style.setProperty('background', 'transparent', 'important');
-                    innerScrolls[i].style.setProperty('background-image', 'none', 'important');
-                    innerScrolls[i].style.setProperty('position', 'relative', 'important');
-                    innerScrolls[i].style.setProperty('z-index', '50', 'important');
-                }
-            } else {
-                if (bgLayer) {
-                    bgLayer.style.setProperty('display', 'none', 'important');
-                }
-                const panelWallpapers = document.querySelectorAll('#vmu-chat-panel-wallpaper');
-                for (let i = 0; i < panelWallpapers.length; i++) {
-                    panelWallpapers[i].remove();
-                }
-                const activeChatRoots = document.querySelectorAll('.vkmChat, [class*="im-page--chat"]');
-                for (let r = 0; r < activeChatRoots.length; r++) {
-                    activeChatRoots[r].style.setProperty('background-image', 'none', 'important');
-                    activeChatRoots[r].style.setProperty('background-color', 'var(--vkui--color_background_content, #19191a)', 'important');
-                }
-            }
-        } else {
-            document.body.classList.remove('vmu-in-chat');
-            if (bgLayer) {
-                bgLayer.remove();
-            }
-            const panelWallpapers = document.querySelectorAll('#vmu-chat-panel-wallpaper');
-            for (let i = 0; i < panelWallpapers.length; i++) {
-                panelWallpapers[i].remove();
-            }
-        }
-
-        // 3. Динамическая покраска ТОЛЬКО текстовых исходящих сообщений
-        const isGrad = customColor.startsWith('linear-gradient');
-        const outRows = document.querySelectorAll(
-            '[class*="vkmMessage--out"], [class*="vkmMessage_out"], [class*="Message--out"], [class*="Message_out"], [class*="Message--outgoing"], [class*="im-mess_out"], [class*="im-mess--out"], [data-testid*="outgoing"], [class*="MessageBubble--outgoing"], [class*="MessageBubble--out"]'
-        );
-        for (let i = 0; i < outRows.length; i++) {
-            const row = outRows[i];
-
-            // Проверяем типы сообщения
-            const isAudioMsg = !!row.querySelector('[class*="AudioMessage" i], .vkmAudioMessage, [class*="audio" i], [class*="voice" i], [class*="waveform" i]');
-            const hasText = !!(row.querySelector('.vkmMessage__text, [class*="text" i]') && row.querySelector('.vkmMessage__text, [class*="text" i]').textContent.trim());
-            const isStandaloneMedia = !hasText && !isAudioMsg && !!row.querySelector('[class*="VideoCard" i], [class*="Photo" i], video, iframe, [class*="Snippet" i], [class*="WallPost" i]');
-
-            // Очищаем кнопку действий «...» слева от пузыря
-            const actions = row.querySelectorAll('[class*="actions" i], [class*="action" i], [class*="tools" i]');
-            for (let a = 0; a < actions.length; a++) {
-                actions[a].style.setProperty('background', 'transparent', 'important');
-                actions[a].style.setProperty('background-color', 'transparent', 'important');
-                actions[a].style.setProperty('background-image', 'none', 'important');
-            }
-
-            // Находим ТОЛЬКО главный пузырь сообщения
-            let bubble = row.querySelector('.vkmMessage__bubble, .im-mess--bubble, .Message__bubble, [class*="MessageBubble"]');
-            if (!bubble) {
-                const children = row.children;
-                for (let c = 0; c < children.length; c++) {
-                    const ch = children[c];
-                    const cls = (ch.className && typeof ch.className === 'string') ? ch.className.toLowerCase() : '';
-                    if (!cls.includes('action') && !cls.includes('tool') && !cls.includes('avatar') && !cls.includes('author')) {
-                        bubble = ch;
-                        break;
-                    }
-                }
-            }
-
-            if (bubble) {
-                bubble.dataset.vmuCustomBubble = 'true';
-                if (isStandaloneMedia) {
-                    // Чистое медиа-вложение: не красим фон пузыря
-                    bubble.style.setProperty('background', 'transparent', 'important');
-                    bubble.style.setProperty('background-color', 'transparent', 'important');
-                    bubble.style.setProperty('background-image', 'none', 'important');
-                } else {
-                    // Обычное текстовое или голосовое сообщение: красим пузырь
-                    if (isGrad) {
-                        bubble.style.setProperty('background', customColor, 'important');
-                        bubble.style.setProperty('background-image', customColor, 'important');
-                    } else {
-                        bubble.style.setProperty('background', customColor, 'important');
-                        bubble.style.setProperty('background-color', customColor, 'important');
-                        bubble.style.setProperty('background-image', 'none', 'important');
-                    }
-                    bubble.style.setProperty('color', '#ffffff', 'important');
-
-                    // Очищаем внутренний текст/контент, чтобы не было вложенного прямоугольника (не трогая аудиоплеер)
-                    const innerContents = bubble.querySelectorAll('.vkmMessage__text, .vkmMessage__content, .vkmMessage__in, [class*="content" i], [class*="text" i]');
-                    for (let ic = 0; ic < innerContents.length; ic++) {
-                        const icEl = innerContents[ic];
-                        if (icEl.matches && (icEl.matches('[class*="AudioMessage" i]') || icEl.matches('.vkmAudioMessage') || icEl.matches('[class*="waveform" i]'))) {
-                            continue;
-                        }
-                        icEl.style.setProperty('background', 'transparent', 'important');
-                        icEl.style.setProperty('background-color', 'transparent', 'important');
-                        icEl.style.setProperty('background-image', 'none', 'important');
-                        icEl.style.setProperty('color', '#ffffff', 'important');
-                    }
-                }
-            }
+            document.body.classList.remove('vmu-theme-custom-active', 'vmu-has-custom-chat-bg', 'vmu-in-chat');
         }
     }
 
@@ -3894,8 +2711,8 @@
             const children = containers[c].children;
             for (let i = 0; i < children.length; i++) {
                 const child = children[i];
-                if (child.id !== SCRIPT_MENU_UI_ID && child.id !== DEBUG_SCRIPT_UI_ID && child.id !== SETTINGS_UI_ID && child.id !== CUSTOM_THEME_EDITOR_UI_ID) {
-                    if (!child.contains(document.getElementById(SCRIPT_MENU_UI_ID)) && !child.contains(document.getElementById(DEBUG_SCRIPT_UI_ID)) && !child.contains(document.getElementById(CUSTOM_THEME_EDITOR_UI_ID))) {
+                if (child.id !== SCRIPT_MENU_UI_ID && child.id !== DEBUG_SCRIPT_UI_ID && child.id !== SETTINGS_UI_ID) {
+                    if (!child.contains(document.getElementById(SCRIPT_MENU_UI_ID)) && !child.contains(document.getElementById(DEBUG_SCRIPT_UI_ID))) {
                         child.style.setProperty('display', 'none', 'important');
                         child.style.setProperty('visibility', 'hidden', 'important');
                         child.style.setProperty('height', '0', 'important');
@@ -3916,7 +2733,7 @@
         }
         for (let i = 0; i < nodesToHide.length; i++) {
             const parent = nodesToHide[i];
-            if (parent && !parent.closest('#' + SCRIPT_MENU_UI_ID) && !parent.closest('#' + DEBUG_SCRIPT_UI_ID) && !parent.closest('#' + CUSTOM_THEME_EDITOR_UI_ID)) {
+            if (parent && !parent.closest('#' + SCRIPT_MENU_UI_ID) && !parent.closest('#' + DEBUG_SCRIPT_UI_ID)) {
                 const topBlock = parent.closest('.vkuiSnackbar, [class*="Snackbar"], .vkuiBanner, [class*="Banner"], .vkuiPlaceholder, [class*="Placeholder"], .vkuiFormStatus, [class*="FormStatus"], [role="alert"], .vkuiAlert, [class*="Alert"], .vkuiGroup, [class*="Group"], .vkuiSimpleCell, [class*="SimpleCell"], .vkuiPopoutWrapper, [class*="PopoutWrapper"], .vkuiModalCard, [class*="ModalCard"]') || parent;
                 topBlock.style.setProperty('display', 'none', 'important');
                 topBlock.style.setProperty('visibility', 'hidden', 'important');
@@ -3933,7 +2750,7 @@
         );
         for (let i = 0; i < errorCandidates.length; i++) {
             const el = errorCandidates[i];
-            if (!el.closest('#' + SCRIPT_MENU_UI_ID) && !el.closest('#' + DEBUG_SCRIPT_UI_ID) && !el.closest('#' + CUSTOM_THEME_EDITOR_UI_ID)) {
+            if (!el.closest('#' + SCRIPT_MENU_UI_ID) && !el.closest('#' + DEBUG_SCRIPT_UI_ID)) {
                 el.style.setProperty('display', 'none', 'important');
                 el.style.setProperty('visibility', 'hidden', 'important');
                 el.style.setProperty('height', '0', 'important');
@@ -3948,13 +2765,11 @@
         const isAppearance = isAppearancePage();
         const isScriptMenu = isScriptMenuPage();
         const isDebugScript = isDebugScriptPage();
-        const isCustomEditor = isCustomThemeEditorPage();
         const isMailApp = isMailAppearancePage();
 
         const existingCard = document.getElementById(SETTINGS_UI_ID);
         const existingMenuCard = document.getElementById(SCRIPT_MENU_UI_ID);
         const existingDebugCard = document.getElementById(DEBUG_SCRIPT_UI_ID);
-        const existingEditorCard = document.getElementById(CUSTOM_THEME_EDITOR_UI_ID);
         const existingMailCard = document.getElementById(MAIL_APPEARANCE_UI_ID);
 
         if (!isAppearance && existingCard) {
@@ -3965,9 +2780,6 @@
         }
         if (!isDebugScript && existingDebugCard) {
             existingDebugCard.remove();
-        }
-        if (!isCustomEditor && existingEditorCard) {
-            existingEditorCard.remove();
         }
         if (!isMailApp && existingMailCard) {
             existingMailCard.remove();
@@ -3983,11 +2795,6 @@
 
         if (isDebugScript) {
             renderDebugScriptPage();
-            return;
-        }
-
-        if (isCustomEditor) {
-            renderCustomThemeEditorPage();
             return;
         }
 
@@ -4072,10 +2879,10 @@
         );
         card.appendChild(rowTheme);
 
-        // 2. Мессенджер (переход в оформление всех чатов и фон из галереи)
+        // 2. Мессенджер (переход в оформление всех чатов)
         const rowMessenger = createNavRow(
             'Мессенджер',
-            'Оформление всех чатов и фон из галереи',
+            'Оформление всех чатов',
             () => {
                 try {
                     const a = document.createElement('a');
@@ -4555,6 +3362,7 @@
         const searchItem = items[1];
         searchItem.dataset.vmuSlot = 'search';
         applySearchTabCustomization(searchItem);
+        applyBottomTabIconParams(items);
 
         // Управление активным состоянием табов при кастомизации
         if (currentTabSearch !== 'search') {
@@ -4662,9 +3470,8 @@
             try { updatePageBodyClasses(); } catch (e) {}
             try { applyStyles(); } catch (e) {}
             try { syncCurrentTheme(); } catch (e) {}
-            try { applyCustomChatBackground(); } catch (e) {}
-            try { clearNativeThemeCheckmarks(); } catch (e) {}
-            try { fixChatElementsDirectly(); } catch (e) {}
+            try { cleanupLegacyCustomTheme(); } catch (e) {}
+            try { applyBottomTabIconParams(); } catch (e) {}
             try { hideMailSettingsAppearanceItem(); } catch (e) {}
             try { updateSettingsVisibility(); } catch (e) {}
             try { handleUnreadFilter(); } catch (e) {}
