@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.28.0
+// @version      2.28.1
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -222,6 +222,22 @@
     const TYPING_PATTERNS = ['setactivity', 'act=a_typing', 'act=set_activity', 'type=typing', 'type=audiomessage', '"type":"typing"'];
     const READ_PATTERNS = ['markasread', 'act=a_read_message', 'act=a_mark_read', 'act=mark_as_read', 'markaslistened', 'act=read'];
 
+    const AD_NETWORK_PATTERNS = [
+        'act=get_audio_ad',
+        'act=stat_audio_ad',
+        'act=get_ad',
+        'act=ad_view',
+        'audio_ad',
+        'stat_ad',
+        'ad.mail.ru',
+        'ads.vk.com',
+        'top-fwz1.mail.ru',
+        'ad_params',
+        'audio.getadparams',
+        'audio.getpromo'
+    ];
+
+
     function extractStringBody(body) {
         if (!body) return '';
         if (typeof body === 'string') return body;
@@ -315,7 +331,27 @@
                     });
                 }
 
-                // Нечиталка
+
+                // Всегда активная блокировка рекламы в музыке и аналитики рекламы
+                if (matchesPattern(combined, AD_NETWORK_PATTERNS)) {
+                    return new Response(JSON.stringify({ response: 0, payload: [0, []], ads: false }), {
+                        status: 200,
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                }
+
+    
+            // Всегда активная блокировка рекламы в музыке и аналитики рекламы
+            if (matchesPattern(combined, AD_NETWORK_PATTERNS)) {
+                Object.defineProperty(this, 'readyState', { value: 4, writable: true });
+                Object.defineProperty(this, 'status', { value: 200, writable: true });
+                Object.defineProperty(this, 'responseText', { value: '{"response":0,"payload":[0,[]],"ads":false}', writable: true });
+                if (typeof this.onreadystatechange === 'function') this.onreadystatechange();
+                if (typeof this.onload === 'function') this.onload();
+                return;
+            }
+
+            // Нечиталка
                 if (isGhostReadEnabled && matchesPattern(combined, READ_PATTERNS)) {
                     return new Response(JSON.stringify({ response: 1, payload: [0, []] }), {
                         status: 200,
@@ -357,6 +393,17 @@
                 Object.defineProperty(this, 'readyState', { value: 4, writable: true });
                 Object.defineProperty(this, 'status', { value: 200, writable: true });
                 Object.defineProperty(this, 'responseText', { value: '{"response":1,"payload":[0,[]]}', writable: true });
+                if (typeof this.onreadystatechange === 'function') this.onreadystatechange();
+                if (typeof this.onload === 'function') this.onload();
+                return;
+            }
+
+
+            // Всегда активная блокировка рекламы в музыке и аналитики рекламы
+            if (matchesPattern(combined, AD_NETWORK_PATTERNS)) {
+                Object.defineProperty(this, 'readyState', { value: 4, writable: true });
+                Object.defineProperty(this, 'status', { value: 200, writable: true });
+                Object.defineProperty(this, 'responseText', { value: '{"response":0,"payload":[0,[]],"ads":false}', writable: true });
                 if (typeof this.onreadystatechange === 'function') this.onreadystatechange();
                 if (typeof this.onload === 'function') this.onload();
                 return;
@@ -685,6 +732,39 @@
     //     БАЗОВЫЕ ИСПРАВЛЕНИЯ UI (ВСЕГДА АКТИВНЫ)
     // ==========================================
     const FIXES_CSS = `
+        /* БЛОКИРОВКА РЕКЛАМЫ В ЛЕНТЕ И МУЗЫКЕ (ПОСТОЯННО АКТИВНО) */
+        .ads_ad_box,
+        ._ads_promoted_post,
+        .post_ad,
+        [data-ad-block],
+        [data-ad-view],
+        [data-ad-target],
+        [data-ad],
+        .wall_marked_as_ads,
+        [class*="AdsPost"],
+        [class*="PromotedPost"],
+        [class*="FeedBlock--ad"],
+        [class*="Feed__ad"],
+        [class*="FeedBlockAd"],
+        [class*="ads_"],
+        .BannerAds,
+        .vkuiBanner--ad,
+        [class*="MusicPromo"],
+        [class*="SubscriptionPromo"],
+        [class*="AudioAd"],
+        .audio_ad_block,
+        [data-testid="ad-banner"],
+        .feed_ad_promoted {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            pointer-events: none !important;
+        }
+
         /* СТИЛИ ДЛЯ СОХРАНЁННЫХ УДАЛЁННЫХ СООБЩЕНИЙ */
         .vmu-deleted-msg {
             border: 1px dashed rgba(255, 92, 92, 0.6) !important;
@@ -3127,7 +3207,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.28.0</div>
+            <div>• <b>Script Version:</b> v2.28.1</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>Stealth Features:</b> Ghost typing: ${isGhostTypingEnabled}, Ghost read: ${isGhostReadEnabled}, Save deleted: ${isSaveDeletedMsgsEnabled}</div>
@@ -4056,6 +4136,36 @@
         }
     }
 
+    
+    // Постоянная очистка ленты новостей от рекламных постов
+    function removeAdPostsFromFeed() {
+        const posts = document.querySelectorAll('.post, .wall_item, [data-post-id], [class*="Post"], [class*="FeedBlock"]');
+        for (let i = 0; i < posts.length; i++) {
+            const p = posts[i];
+            if (p.classList.contains('vmu-ad-processed')) continue;
+            
+            // Проверка на рекламу по классам и атрибутам
+            const isAd = p.classList.contains('wall_marked_as_ads') ||
+                         p.classList.contains('ads_ad_box') ||
+                         p.hasAttribute('data-ad-block') ||
+                         p.hasAttribute('data-ad-view') ||
+                         p.querySelector('.wall_marked_as_ads, .ads_ad_box, [data-ad-view], [class*="AdsPost"], [class*="PromotedPost"]');
+            
+            if (isAd) {
+                p.classList.add('vmu-ad-processed');
+                p.style.setProperty('display', 'none', 'important');
+                continue;
+            }
+
+            // Проверка по тексту "Реклама" в шапке поста
+            const headerLabel = p.querySelector('[class*="PostHeader__label"], [class*="Header__label"], [class*="Post__author"], .author');
+            if (headerLabel && headerLabel.textContent.trim().toLowerCase() === 'реклама') {
+                p.classList.add('vmu-ad-processed');
+                p.style.setProperty('display', 'none', 'important');
+            }
+        }
+    }
+
     function runAllFixes() {
         if (isRunningFixes) return;
         isRunningFixes = true;
@@ -4073,6 +4183,7 @@
             try { hideCallsAndVideoMessages(); } catch (e) {}
             try { updateCustomTabs(); } catch (e) {}
             try { decorateDeletedMessagesInChat(); } catch (e) {}
+            try { removeAdPostsFromFeed(); } catch (e) {}
             try { cleanupCustomPageErrors(); } catch (e) {}
         } finally {
             isRunningFixes = false;
