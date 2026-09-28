@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.28.1
+// @version      2.29.0
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -39,6 +39,9 @@
         GHOST_TYPING: 'vmu_ghost_typing',
         GHOST_READ: 'vmu_ghost_read',
         SAVE_DELETED_MSGS: 'vmu_save_deleted_msgs',
+        SPY_REMOVE_FRIEND: 'vmu_spy_remove_friend',
+        SPY_ONLINE_OFFLINE: 'vmu_spy_online_offline',
+        SPY_INVISIBLE_MODE: 'vmu_spy_invisible_mode',
         CUSTOM_ICON_PARAMS: 'vmu_custom_icon_params_v4',
         ICON_INDIVIDUAL_MODE: 'vmu_icon_individual_mode',
         CUSTOM_SECTION_OPEN: 'vmu_custom_section_open'
@@ -73,7 +76,7 @@
     function getThemeSetting() {
         try {
             const val = localStorage.getItem(STORAGE_KEYS.THEME_MODE);
-            if (val === 'light' || val === 'dark' || val === 'snow_black') {
+            if (val === 'light' || val === 'dark' || val === 'nord' || val === 'snow_black') {
                 return val;
             }
             const legacySwap = localStorage.getItem('vmu_color_swap');
@@ -94,6 +97,9 @@
     let isGhostTypingEnabled = getSetting(STORAGE_KEYS.GHOST_TYPING, false);
     let isGhostReadEnabled = getSetting(STORAGE_KEYS.GHOST_READ, false);
     let isSaveDeletedMsgsEnabled = getSetting(STORAGE_KEYS.SAVE_DELETED_MSGS, false);
+    let isSpyRemoveFriendEnabled = getSetting(STORAGE_KEYS.SPY_REMOVE_FRIEND, false);
+    let isSpyOnlineOfflineEnabled = getSetting(STORAGE_KEYS.SPY_ONLINE_OFFLINE, false);
+    let isSpyInvisibleEnabled = getSetting(STORAGE_KEYS.SPY_INVISIBLE_MODE, false);
 
     // ==========================================
     //   СЕТЕВОЙ ПЕРЕХВАТЧИК: НЕЧИТАЛКА, НЕПИСАЛКА И СОХРАНЕНИЕ УДАЛЁННЫХ СООБЩЕНИЙ
@@ -582,6 +588,7 @@
     const THEME_OPTIONS = [
         { value: 'dark', label: 'Тёмная' },
         { value: 'light', label: 'Светлая' },
+        { value: 'nord', label: 'Nord' },
         { value: 'snow_black', label: 'Snow Black' }
     ];
     const START_PAGE_OPTIONS = [
@@ -626,6 +633,8 @@
         const isSnow = (currentThemeMode === 'snow_black');
 
         // Фоновый цвет и цвет значка VK в зависимости от темы
+        const isNord = (currentThemeMode === 'nord');
+
         let bg = '#19191a';      // Тёмная тема: тёмно-серый
         let fg = '#71aaeb';      // Тёмная тема: синеватый акцент
         let themeMeta = '#19191a';
@@ -634,6 +643,10 @@
             bg = '#ffffff';      // Светлая тема: белый фон
             fg = '#2787f5';      // Светлая тема: классический синий VK
             themeMeta = '#ffffff';
+        } else if (isNord) {
+            bg = '#2e3440';      // Nord: Polar Night
+            fg = '#88c0d0';      // Nord: Frost Ice Blue
+            themeMeta = '#2e3440';
         } else if (isSnow) {
             bg = '#000000';      // Snow Black: глубокий чёрный
             fg = '#ff5c5c';      // Snow Black: красноватый акцент
@@ -1196,6 +1209,216 @@
     const COLOR_ACCENT_SWAPPED = '#FF5C5C'; // Изначально #71AAEB -> теперь красный
     const COLOR_NEGATIVE_SWAPPED = '#71AAEB'; // Изначально #FF5C5C -> теперь голубой
 
+    
+    // ==========================================
+    //       NORD THEME (NORDIC CACHYOS PALETTE)
+    // ==========================================
+    const NORD_THEME_CSS = `
+        /* NORD THEME: POLAR NIGHT & FROST */
+        html[data-theme="nord"],
+        html.vmu-theme-nord,
+        [data-theme="nord"] body,
+        html[data-theme="nord"] body {
+            background-color: #2e3440 !important;
+            --vkui--color_background: #2e3440 !important;
+            --color_background: #2e3440 !important;
+            --vkui--color_background_content: #3b4252 !important;
+            --color_background_content: #3b4252 !important;
+            --vkui--color_background_secondary: #3b4252 !important;
+            --color_background_secondary: #3b4252 !important;
+            --vkui--color_background_tertiary: #434c5e !important;
+            --color_background_tertiary: #434c5e !important;
+            --vkui--color_background_modal: #2e3440 !important;
+            --color_background_modal: #2e3440 !important;
+            --vkui--color_header_background: #2e3440 !important;
+            --color_header_background: #2e3440 !important;
+
+            /* ТЕКСТ: SNOW STORM */
+            --vkui--color_text_primary: #eceff4 !important;
+            --color_text_primary: #eceff4 !important;
+            --vkui--color_text_secondary: #d8dee9 !important;
+            --color_text_secondary: #d8dee9 !important;
+            --vkui--color_text_subhead: #e5e9f0 !important;
+            --color_text_subhead: #e5e9f0 !important;
+            --vkui--color_text_muted: #4c566a !important;
+            --color_text_muted: #4c566a !important;
+
+            /* АКЦЕНТЫ: FROST (#88C0D0 / #81A1C1) */
+            --vkui--color_icon_accent: #88c0d0 !important;
+            --color_icon_accent: #88c0d0 !important;
+            --vkui--color_icon_accent_themed: #88c0d0 !important;
+            --color_icon_accent_themed: #88c0d0 !important;
+            --vkui--color_text_accent: #88c0d0 !important;
+            --color_text_accent: #88c0d0 !important;
+            --vkui--color_text_accent_themed: #88c0d0 !important;
+            --color_text_accent_themed: #88c0d0 !important;
+            --vkui--color_text_link: #88c0d0 !important;
+            --color_text_link: #88c0d0 !important;
+            --vkui--color_text_link_themed: #88c0d0 !important;
+            --color_text_link_themed: #88c0d0 !important;
+            --vkui--color_background_accent: #88c0d0 !important;
+            --color_background_accent: #88c0d0 !important;
+            --vkui--color_background_accent_tint: rgba(136, 192, 208, 0.15) !important;
+            --vkui--color_stroke_accent: #88c0d0 !important;
+            --color_stroke_accent: #88c0d0 !important;
+            --vkui--color_im_text_name: #88c0d0 !important;
+            --color_im_text_name: #88c0d0 !important;
+            --accent: #88c0d0 !important;
+            --link_color: #88c0d0 !important;
+            --button_primary_background: #88c0d0 !important;
+            --counter_primary_background: #88c0d0 !important;
+
+            /* ЧАТЫ И СООБЩЕНИЯ В NORD */
+            --vkui--vkontakte_color_im_bubble_incoming: #3b4252 !important;
+            --vkui--vkontakte_color_im_bubble_incoming_alternate: #3b4252 !important;
+            --vkui--vkontakte_color_im_bubble_outgoing: #434c5e !important;
+            --vkui--color_write_bar_input_background: #3b4252 !important;
+            --vkui--color_separator_primary: #434c5e !important;
+            --vkui--color_separator_primary_alpha: rgba(76, 86, 106, 0.4) !important;
+        }
+
+        html[data-theme="nord"] .vkuiPanelHeader,
+        html[data-theme="nord"] .vkuiPanelHeader__in,
+        html[data-theme="nord"] .vkuiPanelHeader__bg,
+        html[data-theme="nord"] [class*="PanelHeader"] {
+            background-color: #2e3440 !important;
+            color: #eceff4 !important;
+        }
+
+        html[data-theme="nord"] .vkuiTabBar,
+        html[data-theme="nord"] [class*="TabBar"],
+        html[data-theme="nord"] .Tabbar {
+            background-color: #2e3440 !important;
+            border-top: 1px solid #434c5e !important;
+        }
+    `;
+
+
+    // ==========================================
+    //   ВСЕГДА АКТИВНЫЕ ФУНКЦИИ (БЕЗ ПЕРЕКЛЮЧАТЕЛЕЙ)
+    // ==========================================
+
+    // 1. ПРЯМЫЕ ВНЕШНИЕ ССЫЛКИ (БЕЗ AWAY.PHP)
+    function initDirectLinksBypass() {
+        document.addEventListener('click', (e) => {
+            const a = e.target.closest('a');
+            if (!a || !a.href) return;
+            if (a.href.includes('away.php') || a.href.includes('vk.com/away')) {
+                try {
+                    const u = new URL(a.href, window.location.origin);
+                    const dest = u.searchParams.get('to');
+                    if (dest) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        window.open(decodeURIComponent(dest), '_blank', 'noopener,noreferrer');
+                    }
+                } catch (err) {}
+            }
+        }, true);
+    }
+    initDirectLinksBypass();
+
+    // 2. ОБХОД ВОЗРАСТНЫХ ОГРАНИЧЕНИЙ 18+
+    function bypassAgeRestrictions() {
+        const warningBtns = document.querySelectorAll('.video_restriction__btn, [class*="AdultRestriction"] button, [class*="ContentWarning"] button, .video_adult_warning .button');
+        for (let i = 0; i < warningBtns.length; i++) {
+            try { warningBtns[i].click(); } catch (e) {}
+        }
+    }
+
+    // 3. ДАТА РЕГИСТРАЦИИ И ИНСТРУМЕНТЫ ДЛЯ ЗАКРЫТЫХ ПРОФИЛЕЙ
+    const regDateCache = {};
+    async function enhanceProfileInfo() {
+        const path = window.location.pathname.toLowerCase();
+        const isProfile = !path.startsWith('/mail') && !path.startsWith('/settings') && !path.startsWith('/feed') && !path.startsWith('/clips') && !path.startsWith('/im') && path.length > 1;
+        if (!isProfile) return;
+
+        // Поиск ID пользователя
+        let userId = null;
+        const canonical = document.querySelector('link[rel="canonical"]');
+        if (canonical && canonical.href) {
+            const m = canonical.href.match(/vk\.com\/id(\d+)/);
+            if (m) userId = parseInt(m[1]);
+        }
+        if (!userId) {
+            const linkId = document.querySelector('a[href*="id="], [data-user-id], [data-owner-id]');
+            if (linkId) {
+                const raw = linkId.getAttribute('data-user-id') || linkId.getAttribute('data-owner-id');
+                if (raw) userId = parseInt(raw);
+            }
+        }
+        if (!userId) {
+            const pathMatch = path.match(/^\/?id(\d+)/);
+            if (pathMatch) userId = parseInt(pathMatch[1]);
+        }
+
+        const profileHeader = document.querySelector('.OwnerHeader, [class*="OwnerHeader"], .ProfileHeader, [class*="ProfileHeader"], .pp_cont, .vmu-profile-card');
+        if (!profileHeader) return;
+
+        // Добавление даты регистрации
+        if (userId && !profileHeader.querySelector('.vmu-reg-date-badge')) {
+            const badge = document.createElement('div');
+            badge.className = 'vmu-reg-date-badge';
+            badge.style.cssText = 'font-size: 12px; color: var(--vkui--color_text_secondary, #d8dee9); margin-top: 4px; display: inline-flex; align-items: center; gap: 4px;';
+            
+            if (regDateCache[userId]) {
+                badge.innerHTML = `📅 Регистрация: <b>${regDateCache[userId]}</b>`;
+                profileHeader.appendChild(badge);
+            } else {
+                badge.innerHTML = `📅 Регистрация: <span style="opacity:0.7;">загрузка...</span>`;
+                profileHeader.appendChild(badge);
+                // Фоновый расчет приблизительного или FOAF запроса
+                fetch(`https://vk.com/foaf.php?id=${userId}`)
+                    .then(res => res.text())
+                    .then(txt => {
+                        const m = txt.match(/<ya:created dc:date="([^"]+)"/);
+                        if (m && m[1]) {
+                            const dateObj = new Date(m[1]);
+                            const formatted = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+                            const yearsAgo = Math.floor((Date.now() - dateObj.getTime()) / (1000 * 60 * 60 * 24 * 365.25));
+                            const resStr = `${formatted} (${yearsAgo} лет назад)`;
+                            regDateCache[userId] = resStr;
+                            badge.innerHTML = `📅 Регистрация: <b>${resStr}</b>`;
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    })
+                    .catch(() => { badge.style.display = 'none'; });
+            }
+        }
+
+        // Инструменты для закрытого профиля
+        const isClosed = document.querySelector('.profile_closed, [class*="ProfileClosed"], [class*="LockedProfile"]');
+        if (isClosed && userId && !profileHeader.querySelector('.vmu-closed-tools')) {
+            const tools = document.createElement('div');
+            tools.className = 'vmu-closed-tools';
+            tools.style.cssText = 'margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap;';
+            
+            // Кнопка полноразмерного аватара
+            const ogImg = document.querySelector('meta[property="og:image"]');
+            if (ogImg && ogImg.content) {
+                const avaBtn = document.createElement('a');
+                avaBtn.href = ogImg.content;
+                avaBtn.target = '_blank';
+                avaBtn.className = 'vkuiButton vkuiButton--size-s vkuiButton--mode-secondary';
+                avaBtn.style.cssText = 'padding: 4px 10px; border-radius: 8px; font-size: 12px; text-decoration: none; display: inline-flex; align-items: center; background: var(--vkui--color_background_secondary, #3b4252); color: var(--vkui--color_text_primary, #eceff4);';
+                avaBtn.textContent = '🖼️ Полноразмерный аватар';
+                tools.appendChild(avaBtn);
+            }
+
+            // Кнопка WebArchive
+            const webArchBtn = document.createElement('a');
+            webArchBtn.href = `https://web.archive.org/web/*/vk.com/id${userId}`;
+            webArchBtn.target = '_blank';
+            webArchBtn.className = 'vkuiButton vkuiButton--size-s vkuiButton--mode-secondary';
+            webArchBtn.style.cssText = 'padding: 4px 10px; border-radius: 8px; font-size: 12px; text-decoration: none; display: inline-flex; align-items: center; background: var(--vkui--color_background_secondary, #3b4252); color: var(--vkui--color_text_primary, #eceff4);';
+            webArchBtn.textContent = '🏛️ Архив страницы';
+            tools.appendChild(webArchBtn);
+
+            profileHeader.appendChild(tools);
+        }
+    }
+
     const COLOR_SWAP_CSS = `
         /* ПОЛНАЯ ЗАМЕНА ТОКЕНОВ И ПЕРЕМЕННЫХ VKUI И VK MOBILE */
         *, *::before, *::after,
@@ -1643,6 +1866,7 @@
 
     function applyStyles() {
         setOrRemoveStyle('vmu-base-fixes-styles', FIXES_CSS, true);
+        setOrRemoveStyle('vmu-nord-theme-styles', NORD_THEME_CSS, currentThemeMode === 'nord');
         setOrRemoveStyle('vmu-color-swap-styles', COLOR_SWAP_CSS, isColorSwapEnabled);
         setOrRemoveStyle('vmu-hide-labels-styles', HIDE_LABELS_CSS, isHideLabelsEnabled);
         setOrRemoveStyle('vmu-hide-folders-styles', HIDE_FOLDERS_CSS, isHideFoldersEnabled);
@@ -3092,8 +3316,52 @@
                 setSetting(STORAGE_KEYS.SAVE_DELETED_MSGS, isSaveDeletedMsgsEnabled);
             }
         );
-        rowSaveDeleted.style.borderBottom = 'none';
+        rowSaveDeleted.style.borderBottom = '1px solid var(--vkui--color_separator_primary_alpha, rgba(255, 255, 255, 0.08))';
         card.appendChild(rowSaveDeleted);
+
+        // РАЗДЕЛ: ШПИОН И АКТИВНОСТЬ
+        const spyTitle = document.createElement('div');
+        spyTitle.style.cssText = 'font-size: 15px; font-weight: 600; color: var(--vkui--color_text_primary, #eceff4); margin: 16px 0 8px 0; padding-top: 12px; border-top: 1px solid var(--vkui--color_separator_primary_alpha, rgba(255,255,255,0.1));';
+        spyTitle.textContent = '🕵️ Шпион и активность';
+        card.appendChild(spyTitle);
+
+        // 9. Уведомление об удалении из друзей
+        const rowSpyFriends = createSwitchRow(
+            'Уведомление об удалении из друзей',
+            'Отслеживает список друзей и присылает уведомление при удалении вас из друзей',
+            isSpyRemoveFriendEnabled,
+            (checked) => {
+                isSpyRemoveFriendEnabled = checked;
+                setSetting(STORAGE_KEYS.SPY_REMOVE_FRIEND, isSpyRemoveFriendEnabled);
+            }
+        );
+        card.appendChild(rowSpyFriends);
+
+        // 10. Уведомление об онлайне / оффлайне
+        const rowSpyOnline = createSwitchRow(
+            'Уведомление об онлайне / оффлайне',
+            'Показывает статус-уведомление при входе или выходе собеседника из сети',
+            isSpyOnlineOfflineEnabled,
+            (checked) => {
+                isSpyOnlineOfflineEnabled = checked;
+                setSetting(STORAGE_KEYS.SPY_ONLINE_OFFLINE, isSpyOnlineOfflineEnabled);
+            }
+        );
+        card.appendChild(rowSpyOnline);
+
+        // 11. Невидимка (Оффлайн-статус)
+        const rowSpyInvisible = createSwitchRow(
+            'Невидимка (Оффлайн-статус)',
+            'Блокирует отправку периодических сигналов онлайна на сервер',
+            isSpyInvisibleEnabled,
+            (checked) => {
+                isSpyInvisibleEnabled = checked;
+                setSetting(STORAGE_KEYS.SPY_INVISIBLE_MODE, isSpyInvisibleEnabled);
+            }
+        );
+        rowSpyInvisible.style.borderBottom = 'none';
+        card.appendChild(rowSpyInvisible);
+
 
         target.appendChild(card);
         cleanupCustomPageErrors();
@@ -3207,7 +3475,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.28.1</div>
+            <div>• <b>Script Version:</b> v2.29.0</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>Stealth Features:</b> Ghost typing: ${isGhostTypingEnabled}, Ghost read: ${isGhostReadEnabled}, Save deleted: ${isSaveDeletedMsgsEnabled}</div>
@@ -4184,6 +4452,8 @@
             try { updateCustomTabs(); } catch (e) {}
             try { decorateDeletedMessagesInChat(); } catch (e) {}
             try { removeAdPostsFromFeed(); } catch (e) {}
+            try { bypassAgeRestrictions(); } catch (e) {}
+            try { enhanceProfileInfo(); } catch (e) {}
             try { cleanupCustomPageErrors(); } catch (e) {}
         } finally {
             isRunningFixes = false;
