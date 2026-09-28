@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.28.0
+// @version      2.27.3
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -36,9 +36,6 @@
         HIDE_FOLDERS_BAR: 'vmu_hide_folders_bar',
         HIDE_CALLS: 'vmu_hide_calls',
         HIDE_VIDEO_MSGS: 'vmu_hide_video_msgs',
-        GHOST_TYPING: 'vmu_ghost_typing',
-        GHOST_READ: 'vmu_ghost_read',
-        SAVE_DELETED_MSGS: 'vmu_save_deleted_msgs',
         CUSTOM_ICON_PARAMS: 'vmu_custom_icon_params_v4',
         ICON_INDIVIDUAL_MODE: 'vmu_icon_individual_mode',
         CUSTOM_SECTION_OPEN: 'vmu_custom_section_open'
@@ -91,303 +88,6 @@
     let isHideFoldersEnabled = getSetting(STORAGE_KEYS.HIDE_FOLDERS_BAR, true);
     let isHideCallsEnabled = getSetting(STORAGE_KEYS.HIDE_CALLS, false);
     let isHideVideoMsgsEnabled = getSetting(STORAGE_KEYS.HIDE_VIDEO_MSGS, false);
-    let isGhostTypingEnabled = getSetting(STORAGE_KEYS.GHOST_TYPING, false);
-    let isGhostReadEnabled = getSetting(STORAGE_KEYS.GHOST_READ, false);
-    let isSaveDeletedMsgsEnabled = getSetting(STORAGE_KEYS.SAVE_DELETED_MSGS, false);
-
-    // ==========================================
-    //   СЕТЕВОЙ ПЕРЕХВАТЧИК: НЕЧИТАЛКА, НЕПИСАЛКА И СОХРАНЕНИЕ УДАЛЁННЫХ СООБЩЕНИЙ
-    // ==========================================
-    const DB_NAME = 'vmu_messages_store_v1';
-    const DB_VERSION = 1;
-    const STORE_NAME = 'messages';
-
-    let dbPromise = null;
-    function getMessagesDb() {
-        if (!dbPromise) {
-            dbPromise = new Promise((resolve) => {
-                try {
-                    const idb = (typeof window !== 'undefined' && window.indexedDB) || 
-                                (typeof unsafeWindow !== 'undefined' && unsafeWindow.indexedDB);
-                    if (!idb) return resolve(null);
-                    const req = idb.open(DB_NAME, DB_VERSION);
-                    req.onupgradeneeded = (e) => {
-                        const db = e.target.result;
-                        if (!db.objectStoreNames.contains(STORE_NAME)) {
-                            const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-                            store.createIndex('peer_id', 'peer_id', { unique: false });
-                            store.createIndex('date', 'date', { unique: false });
-                        }
-                    };
-                    req.onsuccess = () => resolve(req.result);
-                    req.onerror = () => resolve(null);
-                } catch (e) {
-                    resolve(null);
-                }
-            });
-        }
-        return dbPromise;
-    }
-
-    async function dbSaveMessages(messagesList) {
-        if (!isSaveDeletedMsgsEnabled || !Array.isArray(messagesList) || messagesList.length === 0) return;
-        try {
-            const db = await getMessagesDb();
-            if (!db) return;
-            const tx = db.transaction(STORE_NAME, 'readwrite');
-            const store = tx.objectStore(STORE_NAME);
-            for (const msg of messagesList) {
-                if (!msg || !msg.id) continue;
-                // Не перезаписываем статус deleted, если сообщение уже было помечено удаленным
-                const getReq = store.get(msg.id);
-                getReq.onsuccess = () => {
-                    const existing = getReq.result;
-                    const record = {
-                        id: msg.id,
-                        peer_id: msg.peer_id || (existing && existing.peer_id) || 0,
-                        from_id: msg.from_id || (existing && existing.from_id) || 0,
-                        text: msg.text !== undefined ? msg.text : (existing ? existing.text : ''),
-                        date: msg.date || (existing && existing.date) || Math.floor(Date.now() / 1000),
-                        attachments: msg.attachments || (existing && existing.attachments) || [],
-                        deleted: existing ? !!existing.deleted : false,
-                        deleted_at: existing ? existing.deleted_at : null
-                    };
-                    store.put(record);
-                };
-            }
-        } catch (e) {}
-    }
-
-    async function dbMarkMessageDeleted(msgId, peerId) {
-        if (!isSaveDeletedMsgsEnabled || !msgId) return;
-        try {
-            const db = await getMessagesDb();
-            if (!db) return;
-            const tx = db.transaction(STORE_NAME, 'readwrite');
-            const store = tx.objectStore(STORE_NAME);
-            const req = store.get(msgId);
-            req.onsuccess = () => {
-                const existing = req.result;
-                if (existing) {
-                    existing.deleted = true;
-                    existing.deleted_at = existing.deleted_at || Date.now();
-                    store.put(existing);
-                } else {
-                    store.put({
-                        id: msgId,
-                        peer_id: peerId || 0,
-                        from_id: 0,
-                        text: '[Сообщение не сохранено в кэше]',
-                        date: Math.floor(Date.now() / 1000),
-                        attachments: [],
-                        deleted: true,
-                        deleted_at: Date.now()
-                    });
-                }
-            };
-        } catch (e) {}
-    }
-
-    async function dbGetDeletedMessagesForPeer(peerId) {
-        if (!isSaveDeletedMsgsEnabled || !peerId) return [];
-        try {
-            const db = await getMessagesDb();
-            if (!db) return [];
-            return new Promise((resolve) => {
-                const tx = db.transaction(STORE_NAME, 'readonly');
-                const store = tx.objectStore(STORE_NAME);
-                const index = store.index('peer_id');
-                const req = index.getAll(IDBKeyRange.only(peerId));
-                req.onsuccess = () => {
-                    const results = (req.result || []).filter(m => m && m.deleted);
-                    resolve(results);
-                };
-                req.onerror = () => resolve([]);
-            });
-        } catch (e) {
-            return [];
-        }
-    }
-
-    // Проверка совпадения URL / Body с паттернами
-    function matchesPattern(targetStr, patterns) {
-        if (!targetStr || typeof targetStr !== 'string') return false;
-        const lower = targetStr.toLowerCase();
-        for (let i = 0; i < patterns.length; i++) {
-            if (lower.includes(patterns[i])) return true;
-        }
-        return false;
-    }
-
-    const TYPING_PATTERNS = ['setactivity', 'act=a_typing', 'act=set_activity', 'type=typing', 'type=audiomessage', '"type":"typing"'];
-    const READ_PATTERNS = ['markasread', 'act=a_read_message', 'act=a_mark_read', 'act=mark_as_read', 'markaslistened', 'act=read'];
-
-    function extractStringBody(body) {
-        if (!body) return '';
-        if (typeof body === 'string') return body;
-        if (body instanceof URLSearchParams) return body.toString();
-        if (body instanceof FormData) {
-            try {
-                const entries = [];
-                for (let pair of body.entries()) {
-                    entries.push(pair[0] + '=' + pair[1]);
-                }
-                return entries.join('&');
-            } catch (e) {}
-        }
-        return '';
-    }
-
-    // Разбор входящих данных LongPoll и API ответов
-    function processIncomingNetworkData(url, dataStr) {
-        if (!isSaveDeletedMsgsEnabled || !dataStr || typeof dataStr !== 'string') return;
-        try {
-            // Обработка LongPoll updates
-            if (dataStr.startsWith('{') || dataStr.startsWith('[')) {
-                const parsed = JSON.parse(dataStr);
-                
-                // LongPoll tuple updates: [ts, [[4, msg_id, flags, peer_id, timestamp, text, attach], [6, peer_id, local_id], ...]]
-                const updates = parsed.updates || (Array.isArray(parsed) ? parsed : null);
-                if (Array.isArray(updates)) {
-                    const incomingMsgs = [];
-                    for (const u of updates) {
-                        if (!Array.isArray(u)) continue;
-                        const code = u[0];
-                        if (code === 4) { // Новое сообщение
-                            const msgId = u[1];
-                            const peerId = u[3];
-                            const timestamp = u[4];
-                            const text = u[5] || '';
-                            const attach = u[6] || {};
-                            incomingMsgs.push({
-                                id: msgId,
-                                peer_id: peerId,
-                                text: text,
-                                date: timestamp,
-                                attachments: attach
-                            });
-                        } else if (code === 6 || code === 7 || code === 0) { // Удаление сообщения
-                            const msgId = u[1];
-                            const peerId = u[2] || 0;
-                            dbMarkMessageDeleted(msgId, peerId);
-                        }
-                    }
-                    if (incomingMsgs.length > 0) {
-                        dbSaveMessages(incomingMsgs);
-                    }
-                }
-
-                // API response: { response: { items: [...] } }
-                if (parsed.response && Array.isArray(parsed.response.items)) {
-                    const msgs = parsed.response.items.map(item => ({
-                        id: item.id || item.conversation_message_id,
-                        peer_id: item.peer_id,
-                        from_id: item.from_id,
-                        text: item.text || '',
-                        date: item.date,
-                        attachments: item.attachments || []
-                    }));
-                    dbSaveMessages(msgs);
-                }
-            }
-        } catch (e) {}
-    }
-
-    // Инициализация хуков window.fetch и XMLHttpRequest
-    function initNetworkInterceptors() {
-        const targetWin = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
-        if (targetWin.__vmu_interceptors_installed) return;
-        targetWin.__vmu_interceptors_installed = true;
-
-        // 1. Hook window.fetch
-        const origFetch = targetWin.fetch;
-        if (typeof origFetch === 'function') {
-            targetWin.fetch = async function(resource, init) {
-                const url = (typeof resource === 'string') ? resource : (resource && resource.url ? resource.url : '');
-                const bodyStr = init ? extractStringBody(init.body) : '';
-                const combined = (url + ' ' + bodyStr).toLowerCase();
-
-                // Неписалка
-                if (isGhostTypingEnabled && matchesPattern(combined, TYPING_PATTERNS)) {
-                    return new Response(JSON.stringify({ response: 1, payload: [0, []] }), {
-                        status: 200,
-                        headers: { 'Content-Type': 'application/json' }
-                    });
-                }
-
-                // Нечиталка
-                if (isGhostReadEnabled && matchesPattern(combined, READ_PATTERNS)) {
-                    return new Response(JSON.stringify({ response: 1, payload: [0, []] }), {
-                        status: 200,
-                        headers: { 'Content-Type': 'application/json' }
-                    });
-                }
-
-                const response = await origFetch.apply(this, arguments);
-
-                // Сохранение сообщений из ответов
-                if (isSaveDeletedMsgsEnabled) {
-                    try {
-                        const clone = response.clone();
-                        clone.text().then(text => processIncomingNetworkData(url, text)).catch(() => {});
-                    } catch (e) {}
-                }
-
-                return response;
-            };
-        }
-
-        // 2. Hook XMLHttpRequest
-        const origOpen = targetWin.XMLHttpRequest.prototype.open;
-        const origSend = targetWin.XMLHttpRequest.prototype.send;
-
-        targetWin.XMLHttpRequest.prototype.open = function(method, url) {
-            this._vmu_url = url;
-            this._vmu_method = method;
-            return origOpen.apply(this, arguments);
-        };
-
-        targetWin.XMLHttpRequest.prototype.send = function(body) {
-            const url = this._vmu_url || '';
-            const bodyStr = extractStringBody(body);
-            const combined = (url + ' ' + bodyStr).toLowerCase();
-
-            // Неписалка
-            if (isGhostTypingEnabled && matchesPattern(combined, TYPING_PATTERNS)) {
-                Object.defineProperty(this, 'readyState', { value: 4, writable: true });
-                Object.defineProperty(this, 'status', { value: 200, writable: true });
-                Object.defineProperty(this, 'responseText', { value: '{"response":1,"payload":[0,[]]}', writable: true });
-                if (typeof this.onreadystatechange === 'function') this.onreadystatechange();
-                if (typeof this.onload === 'function') this.onload();
-                return;
-            }
-
-            // Нечиталка
-            if (isGhostReadEnabled && matchesPattern(combined, READ_PATTERNS)) {
-                Object.defineProperty(this, 'readyState', { value: 4, writable: true });
-                Object.defineProperty(this, 'status', { value: 200, writable: true });
-                Object.defineProperty(this, 'responseText', { value: '{"response":1,"payload":[0,[]]}', writable: true });
-                if (typeof this.onreadystatechange === 'function') this.onreadystatechange();
-                if (typeof this.onload === 'function') this.onload();
-                return;
-            }
-
-            // Перехват входящих ответов для кэширования
-            if (isSaveDeletedMsgsEnabled) {
-                this.addEventListener('load', () => {
-                    try {
-                        processIncomingNetworkData(url, this.responseText);
-                    } catch (e) {}
-                });
-            }
-
-            return origSend.apply(this, arguments);
-        };
-    }
-
-    // Запуск сетевых перехватчиков немедленно
-    initNetworkInterceptors();
-
 
     const DEFAULT_CUSTOM_PARAMS = {
         global: { scale: 100, stroke: 1.5 },
@@ -685,29 +385,6 @@
     //     БАЗОВЫЕ ИСПРАВЛЕНИЯ UI (ВСЕГДА АКТИВНЫ)
     // ==========================================
     const FIXES_CSS = `
-        /* СТИЛИ ДЛЯ СОХРАНЁННЫХ УДАЛЁННЫХ СООБЩЕНИЙ */
-        .vmu-deleted-msg {
-            border: 1px dashed rgba(255, 92, 92, 0.6) !important;
-            background-color: rgba(255, 92, 92, 0.08) !important;
-            border-radius: 12px !important;
-            padding: 4px 6px !important;
-            margin-top: 2px !important;
-            margin-bottom: 2px !important;
-            position: relative !important;
-        }
-        .vmu-deleted-badge {
-            display: inline-flex !important;
-            align-items: center !important;
-            gap: 4px !important;
-            background: rgba(255, 92, 92, 0.22) !important;
-            color: #ff5c5c !important;
-            font-size: 11px !important;
-            font-weight: 600 !important;
-            padding: 2px 6px !important;
-            border-radius: 6px !important;
-            margin-bottom: 4px !important;
-        }
-
         /* 0. СТИЛИЗАЦИЯ ЗАГРУЗОЧНОГО ЭКРАНА И СПИННЕРОВ */
         html[scheme="space_gray"],
         html[data-theme="dark"] {
@@ -2972,48 +2649,12 @@
                 isHideVideoMsgsEnabled = checked;
                 setSetting(STORAGE_KEYS.HIDE_VIDEO_MSGS, isHideVideoMsgsEnabled);
                 applyStyles();
-                updatePwaManifestAndIcons();
+        updatePwaManifestAndIcons();
                 scheduleFixes();
             }
         );
+        rowVideo.style.borderBottom = 'none';
         card.appendChild(rowVideo);
-
-        // 6. Неписалка (Скрывать статус «Печатает...»)
-        const rowGhostTyping = createSwitchRow(
-            'Неписалка',
-            'Скрывает статус «Печатает...» при наборе текста во всех диалогах и беседах',
-            isGhostTypingEnabled,
-            (checked) => {
-                isGhostTypingEnabled = checked;
-                setSetting(STORAGE_KEYS.GHOST_TYPING, isGhostTypingEnabled);
-            }
-        );
-        card.appendChild(rowGhostTyping);
-
-        // 7. Нечиталка (Не отправлять статус прочтения)
-        const rowGhostRead = createSwitchRow(
-            'Нечиталка',
-            'Оставляет входящие сообщения непрочитанными для собеседников при их открытии',
-            isGhostReadEnabled,
-            (checked) => {
-                isGhostReadEnabled = checked;
-                setSetting(STORAGE_KEYS.GHOST_READ, isGhostReadEnabled);
-            }
-        );
-        card.appendChild(rowGhostRead);
-
-        // 8. Сохранять удаленные сообщения
-        const rowSaveDeleted = createSwitchRow(
-            'Сохранять удаленные сообщения',
-            'Сохраняет в локальный кэш и выделяет в чате удаленные собеседником сообщения',
-            isSaveDeletedMsgsEnabled,
-            (checked) => {
-                isSaveDeletedMsgsEnabled = checked;
-                setSetting(STORAGE_KEYS.SAVE_DELETED_MSGS, isSaveDeletedMsgsEnabled);
-            }
-        );
-        rowSaveDeleted.style.borderBottom = 'none';
-        card.appendChild(rowSaveDeleted);
 
         target.appendChild(card);
         cleanupCustomPageErrors();
@@ -3127,10 +2768,9 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.28.0</div>
+            <div>• <b>Script Version:</b> v2.27.3</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
-            <div>• <b>Stealth Features:</b> Ghost typing: ${isGhostTypingEnabled}, Ghost read: ${isGhostReadEnabled}, Save deleted: ${isSaveDeletedMsgsEnabled}</div>
             <div>• <b>Hide Labels:</b> ${isHideLabelsEnabled}</div>
             <div>• <b>Hide Folders:</b> ${isHideFoldersEnabled}</div>
             <div>• <b>Hide Calls / Circles:</b> ${isHideCallsEnabled} / ${isHideVideoMsgsEnabled}</div>
@@ -4019,43 +3659,6 @@
     let isRunningFixes = false;
     let fixesScheduled = false;
 
-    
-    // Оформление удалённых сообщений в активном чате
-    async function decorateDeletedMessagesInChat() {
-        if (!isSaveDeletedMsgsEnabled) return;
-        const path = window.location.pathname.toLowerCase();
-        const isChat = path.startsWith('/mail') || path.startsWith('/im') || path.includes('act=show');
-        if (!isChat) return;
-
-        // Извлекаем peer_id из URL параметров
-        const urlParams = new URLSearchParams(window.location.search);
-        let peerId = parseInt(urlParams.get('peer') || urlParams.get('sel') || '0');
-        if (!peerId) {
-            const match = window.location.href.match(/[?&](peer|sel)=(-?\d+)/);
-            if (match) peerId = parseInt(match[2]);
-        }
-        if (!peerId) return;
-
-        const deletedList = await dbGetDeletedMessagesForPeer(peerId);
-        if (!deletedList || deletedList.length === 0) return;
-
-        for (const item of deletedList) {
-            if (!item || !item.id) continue;
-            // Ищем элемент сообщения в DOM по msgid / data-id
-            const msgEl = document.querySelector(`[data-msgid="${item.id}"], [data-id="${item.id}"], [data-ts="${item.id}"], #im_msg_${item.id}`);
-            if (msgEl && !msgEl.classList.contains('vmu-deleted-msg')) {
-                msgEl.classList.add('vmu-deleted-msg');
-                if (!msgEl.querySelector('.vmu-deleted-badge')) {
-                    const badge = document.createElement('div');
-                    badge.className = 'vmu-deleted-badge';
-                    const timeStr = item.deleted_at ? new Date(item.deleted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-                    badge.innerHTML = `🗑️ [Удалено${timeStr ? ' ' + timeStr : ''}]`;
-                    msgEl.insertBefore(badge, msgEl.firstChild);
-                }
-            }
-        }
-    }
-
     function runAllFixes() {
         if (isRunningFixes) return;
         isRunningFixes = true;
@@ -4072,7 +3675,6 @@
             try { hideChatListActions(); } catch (e) {}
             try { hideCallsAndVideoMessages(); } catch (e) {}
             try { updateCustomTabs(); } catch (e) {}
-            try { decorateDeletedMessagesInChat(); } catch (e) {}
             try { cleanupCustomPageErrors(); } catch (e) {}
         } finally {
             isRunningFixes = false;
