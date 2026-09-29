@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.29.21
+// @version      2.29.22
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -76,7 +76,7 @@
     function getThemeSetting() {
         try {
             const val = localStorage.getItem(STORAGE_KEYS.THEME_MODE);
-            if (val === 'light' || val === 'dark' || val === 'snow_black') {
+            if (val === 'light' || val === 'dark' || val === 'nord' || val === 'snow_black') {
                 return val;
             }
             const legacySwap = localStorage.getItem('vmu_color_swap');
@@ -588,6 +588,7 @@
     const THEME_OPTIONS = [
         { value: 'dark', label: 'Тёмная' },
         { value: 'light', label: 'Светлая' },
+        { value: 'nord', label: 'Nord' },
         { value: 'snow_black', label: 'Snow Black' }
     ];
     const START_PAGE_OPTIONS = [
@@ -631,6 +632,9 @@
         const isLight = (currentThemeMode === 'light');
         const isSnow = (currentThemeMode === 'snow_black');
 
+        // Фоновый цвет и цвет значка VK в зависимости от темы
+        const isNord = (currentThemeMode === 'nord');
+
         let bg = '#19191a';      // Тёмная тема: тёмно-серый
         let fg = '#71aaeb';      // Тёмная тема: синеватый акцент
         let themeMeta = '#19191a';
@@ -639,6 +643,10 @@
             bg = '#ffffff';      // Светлая тема: белый фон
             fg = '#2787f5';      // Светлая тема: классический синий VK
             themeMeta = '#ffffff';
+        } else if (isNord) {
+            bg = '#2e3440';      // Nord: Polar Night
+            fg = '#88c0d0';      // Nord: Frost Ice Blue
+            themeMeta = '#2e3440';
         } else if (isSnow) {
             bg = '#000000';      // Snow Black: глубокий чёрный
             fg = '#ff5c5c';      // Snow Black: красноватый акцент
@@ -816,11 +824,15 @@
             color: var(--vkui--color_icon_accent, #71aaeb) !important;
         }
 
-        /* 1. ИСПРАВЛЕНИЕ ОВАЛЬНЫХ СЧЕТЧИКОВ СООБЩЕНИЙ/УВЕДОМЛЕНИЙ -> ИДЕАЛЬНЫЙ КРУГ */
+        /* 1. ИСПРАВЛЕНИЕ ОВАЛЬНЫХ СЧЕТЧИКОВ СООБЩЕНИЙ/УВЕДОМЛЕНИЙ -> ИДЕАЛЬНЫЙ КРУГ, КРАСНЫЙ ФОН И БЕЛЫЙ ТЕКСТ */
         [class*="Counter"],
         .vkuiCounter,
         .im_peer_counter,
-        [class*="Badge"] {
+        [class*="Badge"],
+        .vkuiBadge,
+        .vkuiTabbarItem__indicator,
+        .vkuiTabbarItem__badge,
+        .vmu-restored-badge {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -832,6 +844,20 @@
             box-sizing: border-box !important;
             border-radius: 10px !important;
             flex-shrink: 0 !important;
+            background-color: var(--vkui--color_background_negative, #FF5C5C) !important;
+            color: #ffffff !important;
+        }
+
+        .vkuiCounter--mode-prominent,
+        [class*="Counter--mode-prominent"],
+        .vkuiCounter--mode-primary,
+        [class*="Counter--mode-primary"],
+        .im_peer_counter,
+        .vkuiBadge,
+        [class*="Badge"],
+        .vmu-restored-badge {
+            background-color: var(--vkui--color_background_negative, #FF5C5C) !important;
+            color: #ffffff !important;
         }
 
         [class*="Counter__in"],
@@ -846,7 +872,26 @@
             margin: 0 !important;
             line-height: 1 !important;
             height: 100% !important;
-            font-weight: 600 !important;
+            font-weight: 700 !important;
+            color: #ffffff !important;
+            fill: #ffffff !important;
+        }
+
+        /* Текст счетчиков всегда принудительно белый во всех темах */
+        [class*="Counter"],
+        [class*="Counter"] *,
+        .vkuiCounter,
+        .vkuiCounter *,
+        .im_peer_counter,
+        .im_peer_counter *,
+        [class*="Badge"],
+        [class*="Badge"] *,
+        .vkuiBadge,
+        .vkuiBadge *,
+        .vmu-restored-badge,
+        .vmu-restored-badge * {
+            color: #ffffff !important;
+            fill: #ffffff !important;
         }
 
         /* 2. АККУРАТНЫЙ ОТСТУП СПИСКА ДИАЛОГОВ ПОД ШТОРКОЙ КАТЕГОРИЙ */
@@ -855,6 +900,101 @@
         body.vmu-page-mail [class*="HorizontalScroll"],
         body.vmu-page-mail [class*="Tabs"] {
             margin-bottom: 6px !important;
+        }
+
+        /* Полная прозрачность элементов списка диалогов и сообщений (устранение темных рамок вокруг названий каналов и бейджей) */
+        body.vmu-page-mail [class*="ConvoList"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not(img):not(svg):not(canvas),
+        body.vmu-page-mail .vkuiSimpleCell *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not(img):not(svg):not(canvas),
+        body.vmu-page-mail [class*="SimpleCell"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not(img):not(svg):not(canvas),
+        body.vmu-page-mail .vkuiTypography,
+        body.vmu-page-mail [class*="Typography"],
+        body.vmu-page-mail .vkuiHeadline,
+        body.vmu-page-mail [class*="Headline"],
+        body.vmu-page-mail .vkuiFootnote,
+        body.vmu-page-mail [class*="Footnote"],
+        body.vmu-page-mail .vkuiSubhead,
+        body.vmu-page-mail [class*="Subhead"],
+        body.vmu-page-mail [class*="SimpleCell__children"],
+        body.vmu-page-mail [class*="SimpleCell__text"],
+        body.vmu-page-mail [class*="SimpleCell__middle"],
+        body.vmu-page-mail [class*="SimpleCell__content"],
+        [class*="EntityName"],
+        [class*="EntityName"] *,
+        [class*="Entity__title"],
+        [class*="Entity__title"] *,
+        [class*="Entity__name"],
+        [class*="Entity__name"] *,
+        [class*="Entity"],
+        [class*="ChannelTitle"],
+        [class*="ChannelTitle"] *,
+        [class*="author_name"],
+        [class*="author_name"] *,
+        [class*="AuthorName"],
+        [class*="AuthorName"] *,
+        [class*="im-mess--author"],
+        [class*="im-mess--author"] * {
+            background-color: transparent !important;
+            background: transparent !important;
+        }
+
+        /* 2.5. ПОЛНОЕ УСТРАНЕНИЕ ТЕМНЫХ ПЯТЕН И ГРАДИЕНТНЫХ МАСОК В ЛЕНТЕ И ПОСТАХ */
+        [class*="PostHeader"] [class*="fade" i],
+        [class*="PostHeader"] [class*="Fade" i],
+        [class*="PostHeader"] [class*="mask" i],
+        [class*="PostHeader"] [class*="Mask" i],
+        [class*="PostHeader"] [class*="gradient" i],
+        [class*="PostHeader"] [class*="Gradient" i],
+        [class*="PostHeader"] [class*="subscribe" i][class*="fade" i],
+        [class*="PostHeader"] [class*="action" i][class*="fade" i],
+        [class*="PostHeaderTitle"] [class*="fade" i],
+        [class*="PostHeaderTitle"] [class*="Fade" i],
+        [class*="PostHeaderTitle"] [class*="mask" i],
+        [class*="PostHeaderTitle"] [class*="Mask" i],
+        [class*="post_header"] [class*="fade" i],
+        [class*="post_header"] [class*="Fade" i],
+        [class*="PostOwner"] [class*="fade" i],
+        [class*="PostOwner"] [class*="Fade" i],
+        [class*="WallPost"] [class*="fade" i],
+        [class*="FeedBlock"] [class*="fade" i],
+        [class*="PostHeader"] *::after,
+        [class*="PostHeader"] *::before,
+        [class*="post_header"] *::after,
+        [class*="post_header"] *::before,
+        [class*="PostOwner"] *::after,
+        [class*="PostOwner"] *::before,
+        [class*="PostHeaderTitle"] *::after,
+        [class*="PostHeaderTitle"] *::before,
+        [class*="WallPost"] [class*="header" i] *::after,
+        [class*="WallPost"] [class*="header" i] *::before,
+        .vkuiHeadline--ellipsis::after,
+        .vkuiHeadline--ellipsis::before,
+        .vkuiTypography--ellipsis::after,
+        .vkuiTypography--ellipsis::before,
+        .vkuiSubhead--ellipsis::after,
+        .vkuiSubhead--ellipsis::before,
+        .vkuiText--ellipsis::after,
+        .vkuiText--ellipsis::before,
+        .vkuiTitle--ellipsis::after,
+        .vkuiTitle--ellipsis::before,
+        [class*="ellipsis"]::after,
+        [class*="ellipsis"]::before,
+        [class*="Ellipsis"]::after,
+        [class*="Ellipsis"]::before {
+            display: none !important;
+            content: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            width: 0 !important;
+            height: 0 !important;
+            background: transparent !important;
+            background-color: transparent !important;
+            background-image: none !important;
+            mask: none !important;
+            mask-image: none !important;
+            -webkit-mask: none !important;
+            -webkit-mask-image: none !important;
+            box-shadow: none !important;
+            border: none !important;
         }
 
         /* 3. СКРЫТИЕ НИЖНЕЙ ШТОРКИ "ТОЛЬКО НЕПРОЧИТАННЫЕ" */
@@ -1049,35 +1189,21 @@
             z-index: 1;
         }
 
-        /* 9. КАСТОМНАЯ ПОДСВЕТКА АКТИВНОЙ ВКЛАДКИ ПРИ ЗАМЕНЕ ПОИСКА */
-        .vkuiTabbarItem.vkuiTabbarItem--selected,
-        .vkuiTabbarItem.vmu-tab-selected,
-        [class*="TabbarItem"].vkuiTabbarItem--selected,
-        [class*="TabbarItem"].vmu-tab-selected {
-            color: var(--vkui--color_icon_accent, var(--vkui--color_text_accent, var(--color_icon_accent, #FF5C5C))) !important;
+        /* 9. КАСТОМНАЯ ПОДСВЕТКА АКТИВНОЙ ВКЛАДКИ */
+        :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav, [class*="FixedLayout--bottom"]) :is(.vkuiTabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item, [role="tab"]):is(.vkuiTabbarItem--selected, [class*="selected"], [class*="active"], [aria-selected="true"], .vmu-tab-selected, .bottom_nav__item--active) {
+            color: var(--vkui--color_icon_accent, var(--vkui--color_text_accent, var(--color_icon_accent, #71aaeb))) !important;
         }
 
-        .vkuiTabbarItem.vkuiTabbarItem--selected [class*="TabbarItem__icon"] > svg,
-        .vkuiTabbarItem.vkuiTabbarItem--selected [class*="TabbarItem__text"],
-        .vkuiTabbarItem.vkuiTabbarItem--selected [class*="TabbarItem__children"],
-        .vmu-tab-selected [class*="TabbarItem__icon"] > svg,
-        .vmu-tab-selected [class*="TabbarItem__text"],
-        .vmu-tab-selected [class*="TabbarItem__children"] {
-            color: var(--vkui--color_icon_accent, var(--vkui--color_text_accent, var(--color_icon_accent, #FF5C5C))) !important;
+        :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav, [class*="FixedLayout--bottom"]) :is(.vkuiTabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item, [role="tab"]):is(.vkuiTabbarItem--selected, [class*="selected"], [class*="active"], [aria-selected="true"], .vmu-tab-selected, .bottom_nav__item--active) :is(svg, [class*="icon"] svg, [class*="Icon"] svg, [class*="text"], [class*="Text"], [class*="children"], [class*="label"], [class*="Label"], span) {
+            color: var(--vkui--color_icon_accent, var(--vkui--color_text_accent, var(--color_icon_accent, #71aaeb))) !important;
             fill: currentColor !important;
         }
 
-        .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected),
-        .vmu-tab-unselected {
+        :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav, [class*="FixedLayout--bottom"]) :is(.vkuiTabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item, [role="tab"]):not(.vkuiTabbarItem--selected):not([class*="selected"]):not([class*="active"]):not([aria-selected="true"]):not(.vmu-tab-selected):not(.bottom_nav__item--active) {
             color: var(--vkui--color_icon_secondary, var(--vkui--color_text_secondary, #828282)) !important;
         }
 
-        .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected) [class*="TabbarItem__icon"] > svg,
-        .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected) [class*="TabbarItem__text"],
-        .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected) [class*="TabbarItem__children"],
-        .vmu-tab-unselected [class*="TabbarItem__icon"] > svg,
-        .vmu-tab-unselected [class*="TabbarItem__text"],
-        .vmu-tab-unselected [class*="TabbarItem__children"] {
+        :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav, [class*="FixedLayout--bottom"]) :is(.vkuiTabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item, [role="tab"]):not(.vkuiTabbarItem--selected):not([class*="selected"]):not([class*="active"]):not([aria-selected="true"]):not(.vmu-tab-selected):not(.bottom_nav__item--active) :is(svg, [class*="icon"] svg, [class*="Icon"] svg, [class*="text"], [class*="Text"], [class*="children"], [class*="label"], [class*="Label"], span) {
             color: var(--vkui--color_icon_secondary, var(--vkui--color_text_secondary, #828282)) !important;
             fill: currentColor !important;
         }
@@ -1202,6 +1328,256 @@
     const COLOR_NEGATIVE_SWAPPED = '#71AAEB'; // Изначально #FF5C5C -> теперь голубой
 
     
+        // ==========================================
+    //       NORD THEME (POLAR NIGHT & FROST)
+    // ==========================================
+    const NORD_THEME_CSS = `
+        /* ==========================================
+           NORD THEME (POLAR NIGHT, SNOW STORM, FROST)
+           ========================================== */
+        *, *::before, *::after,
+        :root, html, body,
+        html.vmu-theme-nord,
+        html[data-theme="nord"],
+        [data-theme="nord"] body,
+        html.vmu-theme-nord body,
+        .vk__page, .vkui__root, .vkuiRoot, .vkuiAppRoot,
+        [scheme], [data-theme="nord"], div#root, div#vk_wrap, #vk_area_wrap, .layout {
+            /* ФОНОВЫЕ ЦВЕТА (POLAR NIGHT) */
+            --vkui--color_background: #2e3440 !important;
+            --color_background: #2e3440 !important;
+            --vkui--color_background_content: #3b4252 !important;
+            --color_background_content: #3b4252 !important;
+            --vkui--color_background_secondary: #3b4252 !important;
+            --color_background_secondary: #3b4252 !important;
+            --vkui--color_background_secondary_alpha: rgba(59, 66, 82, 0.92) !important;
+            --vkui--color_background_tertiary: #434c5e !important;
+            --color_background_tertiary: #434c5e !important;
+            --vkui--color_background_modal: #2e3440 !important;
+            --color_background_modal: #2e3440 !important;
+            --vkui--color_header_background: #2e3440 !important;
+            --color_header_background: #2e3440 !important;
+            --vkui--color_background_header: #2e3440 !important;
+            --vkui--color_background_header_alternate: #2e3440 !important;
+            --header_background: #2e3440 !important;
+            --vkui--color_field_background: #3b4252 !important;
+            --vkui--color_write_bar_input_background: #3b4252 !important;
+            --background_page: #2e3440 !important;
+            --background_content: #3b4252 !important;
+
+            /* ТЕКСТ (SNOW STORM) */
+            --vkui--color_text_primary: #eceff4 !important;
+            --color_text_primary: #eceff4 !important;
+            --vkui--color_text_secondary: #d8dee9 !important;
+            --color_text_secondary: #d8dee9 !important;
+            --vkui--color_text_subhead: #e5e9f0 !important;
+            --color_text_subhead: #e5e9f0 !important;
+            --vkui--color_text_muted: #7b88a1 !important;
+            --color_text_muted: #7b88a1 !important;
+            --vkui--color_text_contrast: #2e3440 !important;
+
+            /* АКЦЕНТЫ (FROST: #88C0D0 / #81A1C1) */
+            --vkui--color_im_text_name: #88c0d0 !important;
+            --color_im_text_name: #88c0d0 !important;
+            --vkui--color_text_accent: #88c0d0 !important;
+            --color_text_accent: #88c0d0 !important;
+            --vkui--color_text_accent_themed: #88c0d0 !important;
+            --color_text_accent_themed: #88c0d0 !important;
+            --vkui--color_icon_accent: #88c0d0 !important;
+            --color_icon_accent: #88c0d0 !important;
+            --vkui--color_icon_accent_themed: #88c0d0 !important;
+            --color_icon_accent_themed: #88c0d0 !important;
+            --vkui--color_background_accent: #88c0d0 !important;
+            --color_background_accent: #88c0d0 !important;
+            --vkui--color_background_accent_themed: #88c0d0 !important;
+            --color_background_accent_themed: #88c0d0 !important;
+            --vkui--color_background_accent_tint: rgba(136, 192, 208, 0.16) !important;
+            --color_background_accent_tint: rgba(136, 192, 208, 0.16) !important;
+            --vkui--color_stroke_accent: #88c0d0 !important;
+            --color_stroke_accent: #88c0d0 !important;
+            --vkui--color_stroke_accent_themed: #88c0d0 !important;
+            --color_stroke_accent_themed: #88c0d0 !important;
+            --vkui--color_text_link: #88c0d0 !important;
+            --color_text_link: #88c0d0 !important;
+            --vkui--color_text_link_themed: #88c0d0 !important;
+            --color_text_link_themed: #88c0d0 !important;
+            --vkui--color_text_link_tint: rgba(136, 192, 208, 0.16) !important;
+            --color_text_link_tint: rgba(136, 192, 208, 0.16) !important;
+            --vkui--color_track_background: #88c0d0 !important;
+            --vkui--color_write_bar_icon: #88c0d0 !important;
+            --vkui--color_im_forward_line: #88c0d0 !important;
+            --vkui--color_im_quote_line: #88c0d0 !important;
+            --accent: #88c0d0 !important;
+            --accent_blue: #88c0d0 !important;
+            --link_color: #88c0d0 !important;
+            --button_primary_background: #88c0d0 !important;
+            --button_primary_foreground: #2e3440 !important;
+            --counter_primary_background: #bf616a !important;
+            --counter_primary_text: #ffffff !important;
+            --counter_secondary_text: #ffffff !important;
+
+            /* РАЗДЕЛИТЕЛИ И РАМКИ */
+            --vkui--color_separator_primary: #434c5e !important;
+            --vkui--color_separator_primary_alpha: rgba(76, 86, 106, 0.5) !important;
+            --vkui--color_separator_secondary: #4c566a !important;
+            --vkui--color_field_border_alpha: rgba(76, 86, 106, 0.4) !important;
+            --vkui--color_image_border_alpha: rgba(76, 86, 106, 0.3) !important;
+
+            /* ЧАТЫ И СООБЩЕНИЯ */
+            --vkui--vkontakte_color_im_bubble_incoming: #3b4252 !important;
+            --vkui--vkontakte_color_im_bubble_incoming_alternate: #3b4252 !important;
+            --vkui--vkontakte_color_im_bubble_outgoing: #434c5e !important;
+
+            /* AURORA (ПОЗИТИВ / НЕГАТИВ) */
+            --vkui--color_text_negative: #bf616a !important;
+            --color_text_negative: #bf616a !important;
+            --vkui--color_icon_negative: #bf616a !important;
+            --color_icon_negative: #bf616a !important;
+            --vkui--color_text_positive: #a3be8c !important;
+            --color_text_positive: #a3be8c !important;
+        }
+
+        /* NORD СТИЛИЗАЦИЯ ШАПКИ, ТАББАРА И ЭЛЕМЕНТОВ */
+        html.vmu-theme-nord body,
+        html[data-theme="nord"] body {
+            background-color: #2e3440 !important;
+            color: #eceff4 !important;
+        }
+
+        html.vmu-theme-nord body:not(.vmu-page-clips) .vkuiPanelHeader,
+        html.vmu-theme-nord body:not(.vmu-page-clips) .vkuiPanelHeader__in,
+        html.vmu-theme-nord body:not(.vmu-page-clips) .vkuiPanelHeader__bg,
+        html.vmu-theme-nord body:not(.vmu-page-clips) .vkuiPanelHeader__fixed,
+        html.vmu-theme-nord body:not(.vmu-page-clips) .vkuiFixedLayout--top,
+        html.vmu-theme-nord body:not(.vmu-page-clips) [class*="FixedLayout--top"],
+        html.vmu-theme-nord body:not(.vmu-page-clips) [class*="PanelHeader"],
+        html.vmu-theme-nord body:not(.vmu-page-clips) [class*="PanelHeader__in"],
+        html.vmu-theme-nord body:not(.vmu-page-clips) [class*="PanelHeader__bg"],
+        html.vmu-theme-nord body:not(.vmu-page-clips) [class*="PanelHeader__fixed"],
+        html.vmu-theme-nord body:not(.vmu-page-clips) .vkmListHeader,
+        html.vmu-theme-nord body:not(.vmu-page-clips) [class*="vkmListHeader"],
+        html.vmu-theme-nord body:not(.vmu-page-clips) [class*="ListHeader"],
+        html.vmu-theme-nord body:not(.vmu-page-clips) .im-page--header,
+        html.vmu-theme-nord body:not(.vmu-page-clips) header.layout__header,
+        html.vmu-theme-nord body:not(.vmu-page-clips) .layout__header,
+        html.vmu-theme-nord body:not(.vmu-page-clips) header,
+        html[data-theme="nord"] body:not(.vmu-page-clips) .vkuiPanelHeader,
+        html[data-theme="nord"] body:not(.vmu-page-clips) .vkuiPanelHeader__in,
+        html[data-theme="nord"] body:not(.vmu-page-clips) .vkuiPanelHeader__bg,
+        html[data-theme="nord"] body:not(.vmu-page-clips) .vkuiPanelHeader__fixed,
+        html[data-theme="nord"] body:not(.vmu-page-clips) .vkuiFixedLayout--top,
+        html[data-theme="nord"] body:not(.vmu-page-clips) [class*="FixedLayout--top"],
+        html[data-theme="nord"] body:not(.vmu-page-clips) [class*="PanelHeader"],
+        html[data-theme="nord"] body:not(.vmu-page-clips) [class*="PanelHeader__in"],
+        html[data-theme="nord"] body:not(.vmu-page-clips) [class*="PanelHeader__bg"],
+        html[data-theme="nord"] body:not(.vmu-page-clips) [class*="PanelHeader__fixed"],
+        html[data-theme="nord"] body:not(.vmu-page-clips) .vkmListHeader,
+        html[data-theme="nord"] body:not(.vmu-page-clips) [class*="vkmListHeader"],
+        html[data-theme="nord"] body:not(.vmu-page-clips) [class*="ListHeader"],
+        html[data-theme="nord"] body:not(.vmu-page-clips) .im-page--header,
+        html[data-theme="nord"] body:not(.vmu-page-clips) header.layout__header,
+        html[data-theme="nord"] body:not(.vmu-page-clips) .layout__header,
+        html[data-theme="nord"] body:not(.vmu-page-clips) header {
+            background-color: #2e3440 !important;
+            background: #2e3440 !important;
+            border: none !important;
+            border-bottom: none !important;
+            box-shadow: none !important;
+            text-decoration: none !important;
+            color: #eceff4 !important;
+        }
+
+        html.vmu-theme-nord .vkuiTabBar,
+        html.vmu-theme-nord [class*="TabBar"],
+        html.vmu-theme-nord .Tabbar,
+        html[data-theme="nord"] .vkuiTabBar,
+        html[data-theme="nord"] [class*="TabBar"],
+        html[data-theme="nord"] .Tabbar {
+            background-color: #2e3440 !important;
+            border-top: 1px solid #434c5e !important;
+            border-bottom: none !important;
+            box-shadow: none !important;
+        }
+
+        html.vmu-theme-nord .vkuiSearch,
+        html.vmu-theme-nord [class*="Search"],
+        html.vmu-theme-nord [class*="Search__field"],
+        html.vmu-theme-nord [class*="Search__input"],
+        html[data-theme="nord"] .vkuiSearch,
+        html[data-theme="nord"] [class*="Search"],
+        html[data-theme="nord"] [class*="Search__field"],
+        html[data-theme="nord"] [class*="Search__input"] {
+            background-color: #3b4252 !important;
+            color: #eceff4 !important;
+            border: none !important;
+        }
+
+        html.vmu-theme-nord .vkuiButton--mode-secondary,
+        html.vmu-theme-nord [class*="Button--mode-secondary"],
+        html[data-theme="nord"] .vkuiButton--mode-secondary,
+        html[data-theme="nord"] [class*="Button--mode-secondary"] {
+            background-color: #434c5e !important;
+            color: #eceff4 !important;
+            border: none !important;
+        }
+
+        html.vmu-theme-nord .vkuiCard,
+        html.vmu-theme-nord [class*="Card"],
+        html.vmu-theme-nord #vk-mobile-upgrade-settings-card,
+        html[data-theme="nord"] .vkuiCard,
+        html[data-theme="nord"] [class*="Card"],
+        html[data-theme="nord"] #vk-mobile-upgrade-settings-card {
+            background-color: #3b4252 !important;
+            color: #eceff4 !important;
+            border: none !important;
+        }
+
+        html.vmu-theme-nord .vkuiSimpleCell,
+        html.vmu-theme-nord [class*="SimpleCell"],
+        html[data-theme="nord"] .vkuiSimpleCell,
+        html[data-theme="nord"] [class*="SimpleCell"] {
+            color: #eceff4 !important;
+            border: none !important;
+        }
+
+        html.vmu-theme-nord .vkuiFormItem,
+        html.vmu-theme-nord [class*="FormItem"],
+        html[data-theme="nord"] .vkuiFormItem,
+        html[data-theme="nord"] [class*="FormItem"] {
+            color: #eceff4 !important;
+            border: none !important;
+        }
+
+        /* ТАББАР NORD */
+        html.vmu-theme-nord :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav, [class*="FixedLayout--bottom"]) :is(.vkuiTabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item, [role="tab"]):is(.vkuiTabbarItem--selected, [class*="selected"], [class*="active"], [aria-selected="true"], .vmu-tab-selected, .bottom_nav__item--active),
+        html[data-theme="nord"] :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav, [class*="FixedLayout--bottom"]) :is(.vkuiTabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item, [role="tab"]):is(.vkuiTabbarItem--selected, [class*="selected"], [class*="active"], [aria-selected="true"], .vmu-tab-selected, .bottom_nav__item--active) {
+            color: #88c0d0 !important;
+        }
+
+        html.vmu-theme-nord :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav, [class*="FixedLayout--bottom"]) :is(.vkuiTabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item, [role="tab"]):is(.vkuiTabbarItem--selected, [class*="selected"], [class*="active"], [aria-selected="true"], .vmu-tab-selected, .bottom_nav__item--active) :is(svg, [class*="icon"] svg, [class*="Icon"] svg, [class*="text"], [class*="Text"], [class*="children"], [class*="label"], [class*="Label"], span) {
+            color: #88c0d0 !important;
+            fill: #88c0d0 !important;
+        }
+
+        /* УБИРАЕМ ЛИШНИЕ ПОЛОСЫ И ПОДЧЕРКИВАНИЯ В ШАПКАХ */
+        html.vmu-theme-nord :is(.vkuiPanelHeader__separator, [class*="PanelHeader__separator"], .vkuiPanelHeader::after, [class*="PanelHeader"]::after, .vkuiPanelHeader__line, [class*="PanelHeader__line"], .vkmListHeader::after, [class*="vkmListHeader"]::after, .im-page--header::after),
+        html[data-theme="nord"] :is(.vkuiPanelHeader__separator, [class*="PanelHeader__separator"], .vkuiPanelHeader::after, [class*="PanelHeader"]::after, .vkuiPanelHeader__line, [class*="PanelHeader__line"], .vkmListHeader::after, [class*="vkmListHeader"]::after, .im-page--header::after) {
+            display: none !important;
+            opacity: 0 !important;
+            height: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        /* ССЫЛКИ В КОНТЕНТЕ */
+        html.vmu-theme-nord :is(.vkuiPanel__in, [class*="Panel__in"], main, article, .vkuiCard, [class*="Card"], [class*="Group"], .wall_post_text, [class*="PostText"]) a:not([class*="TabbarItem"]):not([class*="TabBarItem"]):not(.vkuiTabbarItem):not([class*="PanelHeader"]):not([class*="Header"]),
+        html[data-theme="nord"] :is(.vkuiPanel__in, [class*="Panel__in"], main, article, .vkuiCard, [class*="Card"], [class*="Group"], .wall_post_text, [class*="PostText"]) a:not([class*="TabbarItem"]):not([class*="TabBarItem"]):not(.vkuiTabbarItem):not([class*="PanelHeader"]):not([class*="Header"]) {
+            color: #88c0d0 !important;
+            text-decoration: none !important;
+        }
+    `;
+
+
     // ==========================================
     //   ВСЕГДА АКТИВНЫЕ ФУНКЦИИ (БЕЗ ПЕРЕКЛЮЧАТЕЛЕЙ)
     // ==========================================
@@ -1774,6 +2150,7 @@
 
     function applyStyles() {
         setOrRemoveStyle('vmu-base-fixes-styles', FIXES_CSS, true);
+        setOrRemoveStyle('vmu-nord-theme-styles', NORD_THEME_CSS, currentThemeMode === 'nord');
         setOrRemoveStyle('vmu-color-swap-styles', COLOR_SWAP_CSS, isColorSwapEnabled);
         setOrRemoveStyle('vmu-hide-labels-styles', HIDE_LABELS_CSS, isHideLabelsEnabled);
         setOrRemoveStyle('vmu-hide-folders-styles', HIDE_FOLDERS_CSS, isHideFoldersEnabled);
@@ -2107,8 +2484,10 @@
             cursor: pointer !important;
             user-select: none !important;
             margin: 0 1px !important;
-            color: var(--vkui--color_icon_secondary, #828282) !important;
+            color: var(--vkui--color_header_text, var(--vkui--color_icon_primary, #eceff4)) !important;
             background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
             transition: background-color 0.2s ease, color 0.2s ease !important;
             -webkit-tap-highlight-color: transparent !important;
             flex-shrink: 0 !important;
@@ -2133,11 +2512,19 @@
 
         function updateBtnVisual() {
             if (isUnread) {
-                btn.style.setProperty('background-color', 'rgba(255, 92, 92, 0.16)', 'important');
-                btn.style.setProperty('color', '#FF5C5C', 'important');
+                if (currentThemeMode === 'nord') {
+                    btn.style.setProperty('background-color', 'rgba(136, 192, 208, 0.18)', 'important');
+                    btn.style.setProperty('color', '#88c0d0', 'important');
+                } else if (currentThemeMode === 'snow_black') {
+                    btn.style.setProperty('background-color', 'rgba(255, 92, 92, 0.18)', 'important');
+                    btn.style.setProperty('color', '#FF5C5C', 'important');
+                } else {
+                    btn.style.setProperty('background-color', 'var(--vkui--color_background_accent_themed_alpha, rgba(113, 170, 235, 0.18))', 'important');
+                    btn.style.setProperty('color', 'var(--vkui--color_icon_accent, var(--vkui--color_accent_themed, #71aaeb))', 'important');
+                }
             } else {
                 btn.style.setProperty('background-color', 'transparent', 'important');
-                btn.style.setProperty('color', 'var(--vkui--color_icon_secondary, #828282)', 'important');
+                btn.style.setProperty('color', 'var(--vkui--color_header_text, var(--vkui--color_icon_primary, #eceff4))', 'important');
             }
         }
 
@@ -2856,9 +3243,12 @@
         setSetting(STORAGE_KEYS.THEME_MODE, mode);
         isColorSwapEnabled = (mode === 'snow_black');
 
-        const isLight = mode === 'light';
+        const isLight = (mode === 'light');
+        const isNord = (mode === 'nord');
+        const isSnow = (mode === 'snow_black');
+
         const vkuiTheme = isLight ? 'bright_light' : 'space_gray';
-        const vkTheme = isLight ? 'light' : 'dark';
+        const vkTheme = isLight ? 'light' : (isSnow ? 'snow_black' : (isNord ? 'nord' : 'dark'));
 
         try {
             localStorage.setItem('vkui_theme', vkuiTheme);
@@ -2874,15 +3264,20 @@
             html.setAttribute('scheme', vkuiTheme);
             html.setAttribute('data-theme', vkTheme);
             html.setAttribute('data-vkui-theme', vkuiTheme);
+            html.classList.toggle('vmu-color-swap', isSnow);
+            html.classList.toggle('vmu-theme-nord', isNord);
         }
         if (body) {
             body.setAttribute('scheme', vkuiTheme);
             body.setAttribute('data-theme', vkTheme);
             body.setAttribute('data-vkui-theme', vkuiTheme);
+            body.classList.toggle('vmu-color-swap', isSnow);
+            body.classList.toggle('vmu-theme-nord', isNord);
         }
 
         applyStyles();
         updatePwaManifestAndIcons();
+        scheduleFixes();
 
         // Синхронизируем с нативными переключателями VK, если есть
         const lightRadio = document.querySelector(
@@ -2902,27 +3297,26 @@
     }
 
     function syncCurrentTheme() {
-        const isLight = currentThemeMode === 'light';
+        const isLight = (currentThemeMode === 'light');
+        const isNord = (currentThemeMode === 'nord');
+        const isSnow = (currentThemeMode === 'snow_black');
+
         const vkuiTheme = isLight ? 'bright_light' : 'space_gray';
-        const vkTheme = isLight ? 'light' : 'dark';
+        const vkTheme = isLight ? 'light' : (isSnow ? 'snow_black' : (isNord ? 'nord' : 'dark'));
 
         try {
-            if (localStorage.getItem('vkui_theme') !== vkuiTheme) {
-                localStorage.setItem('vkui_theme', vkuiTheme);
-            }
-            if (localStorage.getItem('vk_theme') !== vkTheme) {
-                localStorage.setItem('vk_theme', vkTheme);
-            }
-            if (localStorage.getItem('scheme') !== vkuiTheme) {
-                localStorage.setItem('scheme', vkuiTheme);
-            }
+            if (localStorage.getItem('vkui_theme') !== vkuiTheme) localStorage.setItem('vkui_theme', vkuiTheme);
+            if (localStorage.getItem('vk_theme') !== vkTheme) localStorage.setItem('vk_theme', vkTheme);
+            if (localStorage.getItem('scheme') !== vkuiTheme) localStorage.setItem('scheme', vkuiTheme);
         } catch (e) {}
 
         const html = document.documentElement;
-        if (html && html.getAttribute('scheme') !== vkuiTheme) {
-            html.setAttribute('scheme', vkuiTheme);
-            html.setAttribute('data-theme', vkTheme);
-            html.setAttribute('data-vkui-theme', vkuiTheme);
+        if (html) {
+            if (html.getAttribute('scheme') !== vkuiTheme) html.setAttribute('scheme', vkuiTheme);
+            if (html.getAttribute('data-theme') !== vkTheme) html.setAttribute('data-theme', vkTheme);
+            if (html.getAttribute('data-vkui-theme') !== vkuiTheme) html.setAttribute('data-vkui-theme', vkuiTheme);
+            html.classList.toggle('vmu-color-swap', isSnow);
+            html.classList.toggle('vmu-theme-nord', isNord);
         }
     }
 
@@ -2969,7 +3363,7 @@
         itemMenu.setAttribute('href', '/settings?act=vmu_menu');
 
         const iconContainerMenu = itemMenu.querySelector('.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]');
-        const gearSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: var(--vkui--color_icon_accent, #FF5C5C) !important; margin: 0 auto !important;"><circle cx="14" cy="14" r="3.75" stroke="currentColor" stroke-width="2"/><path d="M14 2.5a1.5 1.5 0 0 1 1.45 1.1l.3 1.2a2 2 0 0 0 2.1 1.5l1.2-.3a1.5 1.5 0 0 1 1.7 1.7l-.3 1.2a2 2 0 0 0 1.5 2.1l1.2.3a1.5 1.5 0 0 1 1.1 1.45v1.5a1.5 1.5 0 0 1-1.1 1.45l-1.2.3a2 2 0 0 0-1.5 2.1l.3 1.2a1.5 1.5 0 0 1-1.7 1.7l-1.2-.3a2 2 0 0 0-2.1 1.5l-.3 1.2a1.5 1.5 0 0 1-1.45 1.1h-1.5a1.5 1.5 0 0 1-1.45-1.1l-.3-1.2a2 2 0 0 0-2.1-1.5l-1.2.3a1.5 1.5 0 0 1-1.7-1.7l.3-1.2a2 2 0 0 0-1.5-2.1l-1.2-.3a1.5 1.5 0 0 1-1.1-1.45v-1.5a1.5 1.5 0 0 1 1.1-1.45l1.2-.3a2 2 0 0 0 1.5-2.1l-.3-1.2a1.5 1.5 0 0 1 1.7-1.7l1.2.3a2 2 0 0 0 2.1-1.5l.3-1.2a1.5 1.5 0 0 1 1.45-1.1h1.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
+        const gearSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: #ffffff !important; margin: 0 auto !important;"><circle cx="14" cy="14" r="3.75" stroke="currentColor" stroke-width="2"/><path d="M14 2.5a1.5 1.5 0 0 1 1.45 1.1l.3 1.2a2 2 0 0 0 2.1 1.5l1.2-.3a1.5 1.5 0 0 1 1.7 1.7l-.3 1.2a2 2 0 0 0 1.5 2.1l1.2.3a1.5 1.5 0 0 1 1.1 1.45v1.5a1.5 1.5 0 0 1-1.1 1.45l-1.2.3a2 2 0 0 0-1.5 2.1l.3 1.2a1.5 1.5 0 0 1-1.7 1.7l-1.2-.3a2 2 0 0 0-2.1 1.5l-.3 1.2a1.5 1.5 0 0 1-1.45 1.1h-1.5a1.5 1.5 0 0 1-1.45-1.1l-.3-1.2a2 2 0 0 0-2.1-1.5l-1.2.3a1.5 1.5 0 0 1-1.7-1.7l.3-1.2a2 2 0 0 0-1.5-2.1l-1.2-.3a1.5 1.5 0 0 1-1.1-1.45v-1.5a1.5 1.5 0 0 1 1.1-1.45l1.2-.3a2 2 0 0 0 1.5-2.1l-.3-1.2a1.5 1.5 0 0 1 1.7-1.7l1.2.3a2 2 0 0 0 2.1-1.5l.3-1.2a1.5 1.5 0 0 1 1.45-1.1h1.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
         if (iconContainerMenu) {
             iconContainerMenu.innerHTML = gearSvg;
         }
@@ -3002,7 +3396,7 @@
         itemDebug.setAttribute('href', '/settings?act=vmu_debug');
 
         const iconContainerDebug = itemDebug.querySelector('.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]');
-        const bugSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: var(--vkui--color_icon_accent, #FF5C5C) !important; margin: 0 auto !important;"><path d="M11 8L8.5 4.5M17 8l2.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="8.5" y="8" width="11" height="13" rx="5.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 11.5h5M3.5 15h5M3.5 18.5h5M19.5 11.5h5M19.5 15h5M19.5 18.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 11.5v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+        const bugSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: #ffffff !important; margin: 0 auto !important;"><path d="M11 8L8.5 4.5M17 8l2.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="8.5" y="8" width="11" height="13" rx="5.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 11.5h5M3.5 15h5M3.5 18.5h5M19.5 11.5h5M19.5 15h5M19.5 18.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 11.5v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
         if (iconContainerDebug) {
             iconContainerDebug.innerHTML = bugSvg;
         }
@@ -3382,7 +3776,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.29.21</div>
+            <div>• <b>Script Version:</b> v2.29.1</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>Stealth Features:</b> Ghost typing: ${isGhostTypingEnabled}, Ghost read: ${isGhostReadEnabled}, Save deleted: ${isSaveDeletedMsgsEnabled}</div>
@@ -4175,7 +4569,7 @@
         applySearchTabCustomization(searchItem);
         applyBottomTabIconParams(items);
 
-        // Управление активным состоянием табов при кастомизации
+        // Управление активным состоянием табов при кастомизации кнопки «Поиск»
         if (currentTabSearch !== 'search') {
             const def = TAB_DEFINITIONS[currentTabSearch];
             if (def) {
@@ -4184,39 +4578,22 @@
                 const fullUrl = currentPath + currentSearch;
                 const isCustomTabActive = def.matchPaths.some(p => fullUrl.startsWith(p) || fullUrl.includes(p));
 
-                const menuItem = items[items.length - 1];
-
                 if (isCustomTabActive) {
-                    // 1. Подсвечиваем замененную кнопку (items[1]) как активную
                     searchItem.classList.add('vkuiTabbarItem--selected', 'vmu-tab-selected');
-                    searchItem.classList.remove('vmu-tab-unselected');
                     searchItem.setAttribute('aria-selected', 'true');
-
-                    // 2. Снимаем подсветку со ВСЕХ остальных вкладок на панели (Главная, Мессенджер, Клипы, Ещё)
                     for (let i = 0; i < items.length; i++) {
                         if (i !== 1) {
-                            items[i].classList.remove('vkuiTabbarItem--selected', 'vmu-tab-selected', 'bottom_nav__item--active');
-                            items[i].classList.add('vmu-tab-unselected');
+                            items[i].classList.remove('vkuiTabbarItem--selected');
                             items[i].setAttribute('aria-selected', 'false');
                         }
                     }
                 } else {
                     searchItem.classList.remove('vmu-tab-selected', 'vkuiTabbarItem--selected');
                     searchItem.setAttribute('aria-selected', 'false');
-                    for (let i = 0; i < items.length; i++) {
-                        if (i !== 1) {
-                            items[i].classList.remove('vmu-tab-unselected');
-                        }
-                    }
                 }
             }
         } else {
             searchItem.classList.remove('vmu-tab-selected');
-            for (let i = 0; i < items.length; i++) {
-                if (i !== 1) {
-                    items[i].classList.remove('vmu-tab-unselected');
-                }
-            }
         }
     }
 
@@ -4233,7 +4610,6 @@
             if (def && def.href) {
                 e.preventDefault();
                 e.stopPropagation();
-                e.stopImmediatePropagation();
                 if (e.type === 'click' || e.type === 'touchend') {
                     if (window.location.pathname !== def.href) {
                         try {
@@ -4246,7 +4622,7 @@
                         } catch (err) {
                             window.location.href = def.href;
                         }
-                        runAllFixes();
+                        scheduleFixes();
                     }
                 }
             }
@@ -4334,6 +4710,35 @@
         }
     }
 
+    // Принудительное скрытие градиентных наложений на авторах постов в ленте
+    function fixPostHeaderFades() {
+        const fades = document.querySelectorAll(
+            '[class*="PostHeader"] [class*="fade" i], [class*="PostHeader"] [class*="mask" i], [class*="PostHeader"] [class*="gradient" i], ' +
+            '[class*="post_header"] [class*="fade" i], [class*="post_header"] [class*="mask" i], [class*="post_header"] [class*="gradient" i], ' +
+            '[class*="PostOwner"] [class*="fade" i], [class*="PostOwner"] [class*="mask" i], [class*="PostOwner"] [class*="gradient" i], ' +
+            '[class*="PostHeaderTitle"] [class*="fade" i], [class*="PostHeaderTitle"] [class*="mask" i], [class*="PostHeaderTitle"] [class*="gradient" i], ' +
+            '[class*="Headline__fade"], [class*="Typography__fade"], [class*="Text__fade"], [class*="Subhead__fade"]'
+        );
+        for (let i = 0; i < fades.length; i++) {
+            fades[i].style.setProperty('display', 'none', 'important');
+            fades[i].style.setProperty('opacity', '0', 'important');
+            fades[i].style.setProperty('background', 'transparent', 'important');
+            fades[i].style.setProperty('background-color', 'transparent', 'important');
+            fades[i].style.setProperty('background-image', 'none', 'important');
+        }
+
+        const titles = document.querySelectorAll(
+            '[class*="PostHeaderTitle"], [class*="post_header_title"], [class*="PostHeader__title"], [class*="PostOwner"], [class*="PostHeader"] a, [class*="post_header"] a'
+        );
+        for (let i = 0; i < titles.length; i++) {
+            const t = titles[i];
+            if (t.style.backgroundImage || t.style.background) {
+                t.style.setProperty('background-image', 'none', 'important');
+                t.style.setProperty('background', 'transparent', 'important');
+            }
+        }
+    }
+
     function runAllFixes() {
         if (isRunningFixes) return;
         isRunningFixes = true;
@@ -4352,6 +4757,7 @@
             try { updateCustomTabs(); } catch (e) {}
             try { decorateDeletedMessagesInChat(); } catch (e) {}
             try { removeAdPostsFromFeed(); } catch (e) {}
+            try { fixPostHeaderFades(); } catch (e) {}
             try { bypassAgeRestrictions(); } catch (e) {}
             try { enhanceProfileInfo(); } catch (e) {}
             try { cleanupCustomPageErrors(); } catch (e) {}
