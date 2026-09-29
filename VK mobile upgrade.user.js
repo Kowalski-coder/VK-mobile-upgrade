@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.29.5
+// @version      2.29.6
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -857,12 +857,21 @@
             font-weight: 600 !important;
         }
 
-        /* 2. АККУРАТНЫЙ ОТСТУП СПИСКА ДИАЛОГОВ */
+        /* 2. АККУРАТНЫЙ ОТСТУП СПИСКА ДИАЛОГОВ (ИСПРАВЛЕНИЕ ПЕРЕКРЫТИЯ "ИЗБРАННОЕ" СТРОКОЙ ПОИСКА) */
         body.vmu-page-mail [class*="SubnavigationBar"],
         body.vmu-page-mail .vkuiSubnavigationBar,
         body.vmu-page-mail [class*="HorizontalScroll"],
         body.vmu-page-mail [class*="Tabs"] {
             margin-bottom: 4px !important;
+        }
+
+        body.vmu-page-mail .ConvoList,
+        body.vmu-page-mail [class*="ConvoList"],
+        body.vmu-page-mail [class*="DialogsList"],
+        body.vmu-page-mail [class*="ConversationsList"],
+        body.vmu-page-mail [class*="im-page--dialogs"],
+        body.vmu-page-mail [class*="im-page--history"] {
+            padding-top: 10px !important;
         }
 
         /* Полная прозрачность названий каналов, сообществ и элементов диалогов */
@@ -880,6 +889,26 @@
         [class*="ConversationItem__name"] {
             background-color: transparent !important;
             background: transparent !important;
+        }
+
+        /* Закрепленные сообщения в чатах: единый красивый фон без темных углов */
+        [class*="PinnedMessage"],
+        [class*="PinnedMessage"] *,
+        [class*="im-pinned"],
+        [class*="im-pinned"] *,
+        [class*="pinned_message"],
+        [class*="pinned_message"] *,
+        [class*="PinnedMsg"],
+        [class*="PinnedMsg"] * {
+            background-color: transparent !important;
+            background: transparent !important;
+        }
+
+        [class*="PinnedMessage"],
+        [class*="im-pinned"],
+        [class*="pinned_message"] {
+            background-color: var(--vkui--color_background_secondary, #3b4252) !important;
+            background: var(--vkui--color_background_secondary, #3b4252) !important;
         }
 
         /* 3. СКРЫТИЕ НИЖНЕЙ ШТОРКИ "ТОЛЬКО НЕПРОЧИТАННЫЕ" */
@@ -910,13 +939,37 @@
             padding: 0 !important;
         }
 
-        /* 4. ИДЕАЛЬНОЕ ВЫРАВНИВАНИЕ И РОВНАЯ БАЗОВАЯ ЛИНИЯ КНОПОК В ШАПКЕ МЕССЕНДЖЕРА */
+        /* 4. ИСПРАВЛЕНИЕ ШАПКИ: АВАТАРКА СЛЕВА, КНОПКИ СПРАВА */
         .vkmListHeader,
         [class*="vkmListHeader"],
+        .vkuiPanelHeader,
+        [class*="PanelHeader"] {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            flex-wrap: nowrap !important;
+        }
+
+        .vkmListHeader__before,
+        [class*="vkmListHeader__before"],
+        .vkuiPanelHeader__before,
+        [class*="PanelHeader__before"] {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            flex-shrink: 0 !important;
+            padding-left: 10px !important;
+            margin-left: 0 !important;
+        }
+
         .vkmListHeader__actions,
         [class*="vkmListHeader__actions"],
+        .vkuiPanelHeader__after,
         [class*="PanelHeader__after"],
+        .vkuiPanelHeader__right,
         [class*="PanelHeader__right"],
+        .vkuiPanelHeader__controls,
         [class*="PanelHeader__controls"] {
             display: flex !important;
             flex-direction: row !important;
