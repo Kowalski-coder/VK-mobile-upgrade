@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.29.9
+// @version      2.29.10
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -1808,11 +1808,10 @@
             opacity: 0 !important;
         }
 
-        body.vmu-page-mail [class*="Search"],
-        body.vmu-page-mail .vkuiSearch,
-        body.vmu-page-mail [class*="vkmListHeader"] + [class*="Search"],
-        body.vmu-page-mail [class*="FixedLayout--top"] {
-            margin-bottom: 6px !important;
+        /* Точный отступ для контейнера списка чатов, чтобы первый закрепленный диалог ("Избранное") не перекрывался плавающим поиском */
+        body.vmu-page-mail .ConvoList,
+        body.vmu-page-mail [class*="ConvoList"] {
+            padding-top: 14px !important;
         }
     `;
 
