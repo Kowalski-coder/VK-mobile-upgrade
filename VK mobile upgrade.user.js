@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.29.17
+// @version      2.29.18
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -847,12 +847,7 @@
         [class*="Counter__in"],
         [class*="Counter__children"],
         .vkuiCounter__in,
-        .vkuiCounter__children,
-        [class*="Counter"] *,
-        .vkuiCounter *,
-        .im_peer_counter *,
-        [class*="Badge"] *,
-        .vkuiBadge * {
+        .vkuiCounter__children {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -862,6 +857,21 @@
             line-height: 1 !important;
             height: 100% !important;
             font-weight: 700 !important;
+            color: #ffffff !important;
+            fill: #ffffff !important;
+        }
+
+        /* Текст счетчиков всегда принудительно белый во всех темах */
+        [class*="Counter"],
+        [class*="Counter"] *,
+        .vkuiCounter,
+        .vkuiCounter *,
+        .im_peer_counter,
+        .im_peer_counter *,
+        [class*="Badge"],
+        [class*="Badge"] *,
+        .vkuiBadge,
+        .vkuiBadge * {
             color: #ffffff !important;
             fill: #ffffff !important;
         }
@@ -909,61 +919,38 @@
             background: transparent !important;
         }
 
-        /* Устранение темных пятен и градиентных масок обрезки авторов в ленте новостей и постах */
-        [class*="PostHeader"] [class*="fade" i],
-        [class*="PostHeader"] [class*="Fade" i],
-        [class*="PostHeader"] [class*="mask" i],
-        [class*="PostHeader"] [class*="Mask" i],
-        [class*="PostHeader"] [class*="gradient" i],
-        [class*="post_header"] [class*="fade" i],
-        [class*="post_header"] [class*="Fade" i],
-        [class*="post_header"] [class*="mask" i],
-        [class*="post_header"] [class*="Mask" i],
-        [class*="post_header"] [class*="gradient" i],
-        [class*="PostOwner"] [class*="fade" i],
-        [class*="PostOwner"] [class*="Fade" i],
-        [class*="PostOwner"] [class*="mask" i],
-        [class*="PostOwner"] [class*="Mask" i],
-        [class*="PostOwner"] [class*="gradient" i],
-        [class*="WallPost"] [class*="fade" i],
-        [class*="WallPost"] [class*="Fade" i],
-        [class*="WallPost"] [class*="mask" i],
-        [class*="WallPost"] [class*="Mask" i],
-        [class*="WallPost"] [class*="gradient" i],
-        [class*="FeedBlock"] [class*="fade" i],
-        [class*="FeedBlock"] [class*="Fade" i],
-        [class*="FeedBlock"] [class*="mask" i],
-        [class*="FeedBlock"] [class*="Mask" i],
-        [class*="FeedBlock"] [class*="gradient" i],
-        [class*="PostHeaderTitle"] [class*="fade" i],
-        [class*="PostHeaderTitle"] [class*="Fade" i],
-        [class*="PostHeaderTitle"] [class*="mask" i],
-        [class*="PostHeaderTitle"] [class*="Mask" i],
-        [class*="post_header_title"] [class*="fade" i],
-        [class*="post_header_title"] [class*="Fade" i],
-        [class*="post_header_title"] [class*="mask" i],
-        [class*="post_header_title"] [class*="Mask" i],
-        [class*="PostHeader"] [class*="fade" i]::after,
-        [class*="PostHeader"] [class*="fade" i]::before,
-        [class*="PostOwner"] [class*="fade" i]::after,
-        [class*="PostOwner"] [class*="fade" i]::before,
-        [class*="post_header"] [class*="fade" i]::after,
-        [class*="post_header"] [class*="fade" i]::before,
-        [class*="PostHeader"] [class*="name" i]::after,
-        [class*="PostHeader"] [class*="name" i]::before,
-        [class*="PostHeader"] [class*="title" i]::after,
-        [class*="PostHeader"] [class*="title" i]::before,
-        [class*="PostOwner"] [class*="name" i]::after,
-        [class*="PostOwner"] [class*="name" i]::before,
-        [class*="PostOwner"] [class*="title" i]::after,
-        [class*="PostOwner"] [class*="title" i]::before,
-        [class*="post_header"] [class*="name" i]::after,
-        [class*="post_header"] [class*="name" i]::before,
-        [class*="post_header"] [class*="title" i]::after,
-        [class*="post_header"] [class*="title" i]::before,
-        [class*="post_author"] [class*="fade" i],
-        [class*="wall_author"] [class*="fade" i] {
+        /* 2.5. ПОЛНОЕ УСТРАНЕНИЕ ТЕМНЫХ ПЯТЕН И ГРАДИЕНТНЫХ МАСОК В ЛЕНТЕ И ПОСТАХ */
+        [class*="PostHeader"] *::after,
+        [class*="PostHeader"] *::before,
+        [class*="post_header"] *::after,
+        [class*="post_header"] *::before,
+        [class*="PostOwner"] *::after,
+        [class*="PostOwner"] *::before,
+        [class*="WallPost"] [class*="header" i] *::after,
+        [class*="WallPost"] [class*="header" i] *::before,
+        [class*="FeedBlock"] [class*="header" i] *::after,
+        [class*="FeedBlock"] [class*="header" i] *::before,
+        .vkuiHeadline--ellipsis::after,
+        .vkuiHeadline--ellipsis::before,
+        .vkuiTypography--ellipsis::after,
+        .vkuiTypography--ellipsis::before,
+        .vkuiSubhead--ellipsis::after,
+        .vkuiSubhead--ellipsis::before,
+        .vkuiText--ellipsis::after,
+        .vkuiText--ellipsis::before,
+        .vkuiTitle--ellipsis::after,
+        .vkuiTitle--ellipsis::before,
+        [class*="ellipsis"]::after,
+        [class*="ellipsis"]::before,
+        [class*="Ellipsis"]::after,
+        [class*="Ellipsis"]::before,
+        [class*="fade" i],
+        [class*="Fade" i],
+        [class*="mask" i],
+        [class*="Mask" i],
+        [class*="gradient" i] {
             display: none !important;
+            content: none !important;
             opacity: 0 !important;
             visibility: hidden !important;
             background: transparent !important;
@@ -1165,35 +1152,43 @@
             z-index: 1;
         }
 
-        /* 9. КАСТОМНАЯ ПОДСВЕТКА АКТИВНОЙ ВКЛАДКИ ПРИ ЗАМЕНЕ ПОИСКА */
+        /* 9. КАСТОМНАЯ ПОДСВЕТКА АКТИВНОЙ ВКЛАДКИ */
         .vkuiTabbarItem.vkuiTabbarItem--selected,
         .vkuiTabbarItem.vmu-tab-selected,
+        .vkuiTabbarItem[aria-selected="true"],
         [class*="TabbarItem"].vkuiTabbarItem--selected,
-        [class*="TabbarItem"].vmu-tab-selected {
-            color: var(--vkui--color_icon_accent, var(--vkui--color_text_accent, var(--color_icon_accent, #FF5C5C))) !important;
+        [class*="TabbarItem"].vmu-tab-selected,
+        [class*="TabbarItem"][aria-selected="true"],
+        [class*="TabBarItem"].vkuiTabbarItem--selected,
+        [class*="TabBarItem"].vmu-tab-selected,
+        [class*="TabBarItem"][aria-selected="true"] {
+            color: var(--vkui--color_icon_accent, var(--vkui--color_text_accent, var(--color_icon_accent, #71aaeb))) !important;
         }
 
-        .vkuiTabbarItem.vkuiTabbarItem--selected [class*="TabbarItem__icon"] > svg,
-        .vkuiTabbarItem.vkuiTabbarItem--selected [class*="TabbarItem__text"],
-        .vkuiTabbarItem.vkuiTabbarItem--selected [class*="TabbarItem__children"],
-        .vmu-tab-selected [class*="TabbarItem__icon"] > svg,
-        .vmu-tab-selected [class*="TabbarItem__text"],
-        .vmu-tab-selected [class*="TabbarItem__children"] {
-            color: var(--vkui--color_icon_accent, var(--vkui--color_text_accent, var(--color_icon_accent, #FF5C5C))) !important;
+        .vkuiTabbarItem.vkuiTabbarItem--selected :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]),
+        .vkuiTabbarItem.vmu-tab-selected :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]),
+        .vkuiTabbarItem[aria-selected="true"] :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]),
+        [class*="TabbarItem"].vkuiTabbarItem--selected :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]),
+        [class*="TabbarItem"].vmu-tab-selected :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]),
+        [class*="TabbarItem"][aria-selected="true"] :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]),
+        [class*="TabBarItem"].vkuiTabbarItem--selected :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]),
+        [class*="TabBarItem"].vmu-tab-selected :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]),
+        [class*="TabBarItem"][aria-selected="true"] :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]) {
+            color: var(--vkui--color_icon_accent, var(--vkui--color_text_accent, var(--color_icon_accent, #71aaeb))) !important;
             fill: currentColor !important;
         }
 
-        .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected),
+        .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected):not([aria-selected="true"]),
+        [class*="TabbarItem"]:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected):not([aria-selected="true"]),
+        [class*="TabBarItem"]:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected):not([aria-selected="true"]),
         .vmu-tab-unselected {
             color: var(--vkui--color_icon_secondary, var(--vkui--color_text_secondary, #828282)) !important;
         }
 
-        .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected) [class*="TabbarItem__icon"] > svg,
-        .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected) [class*="TabbarItem__text"],
-        .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected) [class*="TabbarItem__children"],
-        .vmu-tab-unselected [class*="TabbarItem__icon"] > svg,
-        .vmu-tab-unselected [class*="TabbarItem__text"],
-        .vmu-tab-unselected [class*="TabbarItem__children"] {
+        .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected):not([aria-selected="true"]) :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]),
+        [class*="TabbarItem"]:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected):not([aria-selected="true"]) :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]),
+        [class*="TabBarItem"]:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected):not([aria-selected="true"]) :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]),
+        .vmu-tab-unselected :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]) {
             color: var(--vkui--color_icon_secondary, var(--vkui--color_text_secondary, #828282)) !important;
             fill: currentColor !important;
         }
@@ -1431,22 +1426,46 @@
             color: #eceff4 !important;
         }
 
-        html.vmu-theme-nord .vkuiPanelHeader,
-        html.vmu-theme-nord .vkuiPanelHeader__in,
-        html.vmu-theme-nord .vkuiPanelHeader__bg,
-        html.vmu-theme-nord [class*="PanelHeader"],
-        html.vmu-theme-nord [class*="vkmListHeader"],
-        html.vmu-theme-nord [class*="ListHeader"],
-        html.vmu-theme-nord .im-page--header,
-        html[data-theme="nord"] .vkuiPanelHeader,
-        html[data-theme="nord"] .vkuiPanelHeader__in,
-        html[data-theme="nord"] .vkuiPanelHeader__bg,
-        html[data-theme="nord"] [class*="PanelHeader"],
-        html[data-theme="nord"] [class*="vkmListHeader"],
-        html[data-theme="nord"] [class*="ListHeader"],
-        html[data-theme="nord"] .im-page--header {
+        html.vmu-theme-nord body:not(.vmu-page-clips) .vkuiPanelHeader,
+        html.vmu-theme-nord body:not(.vmu-page-clips) .vkuiPanelHeader__in,
+        html.vmu-theme-nord body:not(.vmu-page-clips) .vkuiPanelHeader__bg,
+        html.vmu-theme-nord body:not(.vmu-page-clips) .vkuiPanelHeader__fixed,
+        html.vmu-theme-nord body:not(.vmu-page-clips) .vkuiFixedLayout--top,
+        html.vmu-theme-nord body:not(.vmu-page-clips) [class*="FixedLayout--top"],
+        html.vmu-theme-nord body:not(.vmu-page-clips) [class*="PanelHeader"],
+        html.vmu-theme-nord body:not(.vmu-page-clips) [class*="PanelHeader__in"],
+        html.vmu-theme-nord body:not(.vmu-page-clips) [class*="PanelHeader__bg"],
+        html.vmu-theme-nord body:not(.vmu-page-clips) [class*="PanelHeader__fixed"],
+        html.vmu-theme-nord body:not(.vmu-page-clips) .vkmListHeader,
+        html.vmu-theme-nord body:not(.vmu-page-clips) [class*="vkmListHeader"],
+        html.vmu-theme-nord body:not(.vmu-page-clips) [class*="ListHeader"],
+        html.vmu-theme-nord body:not(.vmu-page-clips) .im-page--header,
+        html.vmu-theme-nord body:not(.vmu-page-clips) header.layout__header,
+        html.vmu-theme-nord body:not(.vmu-page-clips) .layout__header,
+        html.vmu-theme-nord body:not(.vmu-page-clips) header,
+        html[data-theme="nord"] body:not(.vmu-page-clips) .vkuiPanelHeader,
+        html[data-theme="nord"] body:not(.vmu-page-clips) .vkuiPanelHeader__in,
+        html[data-theme="nord"] body:not(.vmu-page-clips) .vkuiPanelHeader__bg,
+        html[data-theme="nord"] body:not(.vmu-page-clips) .vkuiPanelHeader__fixed,
+        html[data-theme="nord"] body:not(.vmu-page-clips) .vkuiFixedLayout--top,
+        html[data-theme="nord"] body:not(.vmu-page-clips) [class*="FixedLayout--top"],
+        html[data-theme="nord"] body:not(.vmu-page-clips) [class*="PanelHeader"],
+        html[data-theme="nord"] body:not(.vmu-page-clips) [class*="PanelHeader__in"],
+        html[data-theme="nord"] body:not(.vmu-page-clips) [class*="PanelHeader__bg"],
+        html[data-theme="nord"] body:not(.vmu-page-clips) [class*="PanelHeader__fixed"],
+        html[data-theme="nord"] body:not(.vmu-page-clips) .vkmListHeader,
+        html[data-theme="nord"] body:not(.vmu-page-clips) [class*="vkmListHeader"],
+        html[data-theme="nord"] body:not(.vmu-page-clips) [class*="ListHeader"],
+        html[data-theme="nord"] body:not(.vmu-page-clips) .im-page--header,
+        html[data-theme="nord"] body:not(.vmu-page-clips) header.layout__header,
+        html[data-theme="nord"] body:not(.vmu-page-clips) .layout__header,
+        html[data-theme="nord"] body:not(.vmu-page-clips) header {
             background-color: #2e3440 !important;
-            border-bottom: 1px solid #434c5e !important;
+            background: #2e3440 !important;
+            border: none !important;
+            border-bottom: none !important;
+            box-shadow: none !important;
+            text-decoration: none !important;
             color: #eceff4 !important;
         }
 
@@ -1458,6 +1477,8 @@
         html[data-theme="nord"] .Tabbar {
             background-color: #2e3440 !important;
             border-top: 1px solid #434c5e !important;
+            border-bottom: none !important;
+            box-shadow: none !important;
         }
 
         html.vmu-theme-nord .vkuiSearch,
@@ -1470,6 +1491,7 @@
         html[data-theme="nord"] [class*="Search__input"] {
             background-color: #3b4252 !important;
             color: #eceff4 !important;
+            border: none !important;
         }
 
         html.vmu-theme-nord .vkuiButton--mode-secondary,
@@ -1478,6 +1500,7 @@
         html[data-theme="nord"] [class*="Button--mode-secondary"] {
             background-color: #434c5e !important;
             color: #eceff4 !important;
+            border: none !important;
         }
 
         html.vmu-theme-nord .vkuiCard,
@@ -1488,6 +1511,7 @@
         html[data-theme="nord"] #vk-mobile-upgrade-settings-card {
             background-color: #3b4252 !important;
             color: #eceff4 !important;
+            border: none !important;
         }
 
         html.vmu-theme-nord .vkuiSimpleCell,
@@ -1495,6 +1519,7 @@
         html[data-theme="nord"] .vkuiSimpleCell,
         html[data-theme="nord"] [class*="SimpleCell"] {
             color: #eceff4 !important;
+            border: none !important;
         }
 
         html.vmu-theme-nord .vkuiFormItem,
@@ -1502,37 +1527,14 @@
         html[data-theme="nord"] .vkuiFormItem,
         html[data-theme="nord"] [class*="FormItem"] {
             color: #eceff4 !important;
-        }
-
-        /* ТАББАР: неактивные вкладки серые, только активная бирюзовая */
-        html.vmu-theme-nord .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not([aria-selected="true"]):not(.vmu-tab-selected),
-        html.vmu-theme-nord [class*="TabbarItem"]:not([class*="selected"]):not([aria-selected="true"]):not(.vmu-tab-selected),
-        html[data-theme="nord"] .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not([aria-selected="true"]):not(.vmu-tab-selected),
-        html[data-theme="nord"] [class*="TabbarItem"]:not([class*="selected"]):not([aria-selected="true"]):not(.vmu-tab-selected) {
-            color: #828282 !important;
-        }
-
-        html.vmu-theme-nord .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not([aria-selected="true"]):not(.vmu-tab-selected) :is([class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"], svg, [class*="TabbarItem__icon"] svg),
-        html[data-theme="nord"] .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not([aria-selected="true"]):not(.vmu-tab-selected) :is([class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"], svg, [class*="TabbarItem__icon"] svg) {
-            color: #828282 !important;
-            fill: #828282 !important;
-        }
-
-        html.vmu-theme-nord :is(.vkuiTabbarItem--selected, [aria-selected="true"], .vmu-tab-selected, [class*="TabbarItem--selected"]),
-        html[data-theme="nord"] :is(.vkuiTabbarItem--selected, [aria-selected="true"], .vmu-tab-selected, [class*="TabbarItem--selected"]) {
-            color: #88c0d0 !important;
-        }
-
-        html.vmu-theme-nord :is(.vkuiTabbarItem--selected, [aria-selected="true"], .vmu-tab-selected, [class*="TabbarItem--selected"]) :is([class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"], svg, [class*="TabbarItem__icon"] svg),
-        html[data-theme="nord"] :is(.vkuiTabbarItem--selected, [aria-selected="true"], .vmu-tab-selected, [class*="TabbarItem--selected"]) :is([class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"], svg, [class*="TabbarItem__icon"] svg) {
-            color: #88c0d0 !important;
-            fill: #88c0d0 !important;
+            border: none !important;
         }
 
         /* ССЫЛКИ В КОНТЕНТЕ */
         html.vmu-theme-nord :is(.vkuiPanel__in, [class*="Panel__in"], main, article, .vkuiCard, [class*="Card"], [class*="Group"], .wall_post_text, [class*="PostText"]) a:not([class*="TabbarItem"]):not([class*="TabBarItem"]):not(.vkuiTabbarItem):not([class*="PanelHeader"]):not([class*="Header"]),
         html[data-theme="nord"] :is(.vkuiPanel__in, [class*="Panel__in"], main, article, .vkuiCard, [class*="Card"], [class*="Group"], .wall_post_text, [class*="PostText"]) a:not([class*="TabbarItem"]):not([class*="TabBarItem"]):not(.vkuiTabbarItem):not([class*="PanelHeader"]):not([class*="Header"]) {
             color: #88c0d0 !important;
+            text-decoration: none !important;
         }
     `;
 
@@ -2443,8 +2445,10 @@
             cursor: pointer !important;
             user-select: none !important;
             margin: 0 1px !important;
-            color: var(--vkui--color_icon_secondary, #828282) !important;
+            color: var(--vkui--color_header_text, var(--vkui--color_icon_primary, #eceff4)) !important;
             background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
             transition: background-color 0.2s ease, color 0.2s ease !important;
             -webkit-tap-highlight-color: transparent !important;
             flex-shrink: 0 !important;
@@ -2472,13 +2476,16 @@
                 if (currentThemeMode === 'nord') {
                     btn.style.setProperty('background-color', 'rgba(136, 192, 208, 0.18)', 'important');
                     btn.style.setProperty('color', '#88c0d0', 'important');
+                } else if (currentThemeMode === 'snow_black') {
+                    btn.style.setProperty('background-color', 'rgba(255, 92, 92, 0.18)', 'important');
+                    btn.style.setProperty('color', '#FF5C5C', 'important');
                 } else {
                     btn.style.setProperty('background-color', 'var(--vkui--color_background_accent_themed_alpha, rgba(113, 170, 235, 0.18))', 'important');
                     btn.style.setProperty('color', 'var(--vkui--color_icon_accent, var(--vkui--color_accent_themed, #71aaeb))', 'important');
                 }
             } else {
                 btn.style.setProperty('background-color', 'transparent', 'important');
-                btn.style.setProperty('color', 'var(--vkui--color_icon_secondary, #828282)', 'important');
+                btn.style.setProperty('color', 'var(--vkui--color_header_text, var(--vkui--color_icon_primary, #eceff4))', 'important');
             }
         }
 
@@ -4689,6 +4696,18 @@
         }
     }
 
+    // Принудительное скрытие градиентных наложений на авторах постов
+    function fixPostHeaderFades() {
+        const fades = document.querySelectorAll('[class*="PostHeader"] [class*="fade" i], [class*="PostHeader"] [class*="mask" i], [class*="post_header"] [class*="fade" i], [class*="PostOwner"] [class*="fade" i], [class*="PostHeaderTitle__fade"], [class*="Headline__fade"], [class*="Typography__fade"]');
+        for (let i = 0; i < fades.length; i++) {
+            fades[i].style.setProperty('display', 'none', 'important');
+            fades[i].style.setProperty('opacity', '0', 'important');
+            fades[i].style.setProperty('background', 'transparent', 'important');
+            fades[i].style.setProperty('background-color', 'transparent', 'important');
+            fades[i].style.setProperty('background-image', 'none', 'important');
+        }
+    }
+
     function runAllFixes() {
         if (isRunningFixes) return;
         isRunningFixes = true;
@@ -4707,6 +4726,7 @@
             try { updateCustomTabs(); } catch (e) {}
             try { decorateDeletedMessagesInChat(); } catch (e) {}
             try { removeAdPostsFromFeed(); } catch (e) {}
+            try { fixPostHeaderFades(); } catch (e) {}
             try { bypassAgeRestrictions(); } catch (e) {}
             try { enhanceProfileInfo(); } catch (e) {}
             try { cleanupCustomPageErrors(); } catch (e) {}
