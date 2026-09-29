@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.29.3
+// @version      2.29.4
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -857,12 +857,40 @@
             font-weight: 600 !important;
         }
 
-        /* 2. АККУРАТНЫЙ ОТСТУП СПИСКА ДИАЛОГОВ ПОД ШТОРКОЙ КАТЕГОРИЙ */
+        /* 2. АККУРАТНЫЙ ОТСТУП СПИСКА ДИАЛОГОВ И ИСПРАВЛЕНИЕ ПЕРЕКРЫТИЯ ПЕРВОГО ЧАТА ("ИЗБРАННОЕ") */
         body.vmu-page-mail [class*="SubnavigationBar"],
         body.vmu-page-mail .vkuiSubnavigationBar,
         body.vmu-page-mail [class*="HorizontalScroll"],
         body.vmu-page-mail [class*="Tabs"] {
             margin-bottom: 6px !important;
+        }
+
+        body.vmu-page-mail [class*="ConvoList"] > *:first-child,
+        body.vmu-page-mail [class*="ConvoList"] [class*="ConvoItem"]:first-child,
+        body.vmu-page-mail [class*="ConvoList"] [class*="SimpleCell"]:first-child,
+        body.vmu-page-mail [class*="ConvoList"] [class*="Cell"]:first-child,
+        body.vmu-page-mail [class*="DialogsList"] > *:first-child,
+        body.vmu-page-mail [class*="ConversationsList"] > *:first-child,
+        body.vmu-page-mail [class*="im-page--dialogs"] > *:first-child,
+        body.vmu-page-mail [class*="im-page--history"] > *:first-child {
+            margin-top: 10px !important;
+        }
+
+        /* Полная прозрачность названий каналов, сообществ и элементов диалогов */
+        [class*="ConvoItem"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not(img):not(svg):not(canvas),
+        [class*="im-dialog"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not(img):not(svg):not(canvas),
+        [class*="DialogsList"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not(img):not(svg):not(canvas),
+        [class*="EntityName"],
+        [class*="EntityName"] *,
+        [class*="Entity__title"],
+        [class*="Entity__title"] *,
+        [class*="ConvoItem__title"],
+        [class*="ConvoItem__name"],
+        [class*="ConvoItem__subtitle"],
+        [class*="ConversationItem__title"],
+        [class*="ConversationItem__name"] {
+            background-color: transparent !important;
+            background: transparent !important;
         }
 
         /* 3. СКРЫТИЕ НИЖНЕЙ ШТОРКИ "ТОЛЬКО НЕПРОЧИТАННЫЕ" */
@@ -1018,8 +1046,8 @@
         body:not(.vmu-page-clips) .layout__header,
         body:not(.vmu-page-clips) header {
             z-index: 800 !important;
-            background: #19191a !important;
-            background-color: #19191a !important;
+            background: var(--vkui--color_header_background, var(--vkui--color_background, #19191a)) !important;
+            background-color: var(--vkui--color_header_background, var(--vkui--color_background, #19191a)) !important;
             -webkit-backdrop-filter: none !important;
             backdrop-filter: none !important;
             opacity: 1 !important;
@@ -1344,6 +1372,55 @@
         html[data-theme="nord"] .Tabbar {
             background-color: #2e3440 !important;
             border-top: 1px solid #434c5e !important;
+        }
+
+        /* Шапка и фиксированные панели в теме Nord */
+        html.vmu-theme-nord .vkuiPanelHeader,
+        html.vmu-theme-nord .vkuiPanelHeader__in,
+        html.vmu-theme-nord .vkuiPanelHeader__bg,
+        html.vmu-theme-nord .vkuiPanelHeader__fixed,
+        html.vmu-theme-nord [class*="PanelHeader"],
+        html.vmu-theme-nord [class*="PanelHeader__in"],
+        html.vmu-theme-nord [class*="PanelHeader__bg"],
+        html.vmu-theme-nord [class*="PanelHeader__fixed"],
+        html.vmu-theme-nord .vkmListHeader,
+        html.vmu-theme-nord [class*="vkmListHeader"],
+        html.vmu-theme-nord header,
+        html[data-theme="nord"] .vkuiPanelHeader,
+        html[data-theme="nord"] .vkuiPanelHeader__in,
+        html[data-theme="nord"] .vkuiPanelHeader__bg,
+        html[data-theme="nord"] .vkuiPanelHeader__fixed,
+        html[data-theme="nord"] [class*="PanelHeader"],
+        html[data-theme="nord"] [class*="PanelHeader__in"],
+        html[data-theme="nord"] [class*="PanelHeader__bg"],
+        html[data-theme="nord"] [class*="PanelHeader__fixed"],
+        html[data-theme="nord"] .vkmListHeader,
+        html[data-theme="nord"] [class*="vkmListHeader"],
+        html[data-theme="nord"] header {
+            background: #2e3440 !important;
+            background-color: #2e3440 !important;
+        }
+
+        /* Прозрачные ячейки и списки в теме Nord */
+        html.vmu-theme-nord .vkuiSimpleCell,
+        html.vmu-theme-nord [class*="SimpleCell"],
+        html.vmu-theme-nord .vkuiGroup,
+        html.vmu-theme-nord [class*="Group"],
+        html.vmu-theme-nord .vkuiPanel,
+        html.vmu-theme-nord [class*="Panel"],
+        html.vmu-theme-nord [class*="ConvoItem"],
+        html.vmu-theme-nord [class*="convo-item"],
+        html.vmu-theme-nord [class*="im-dialog"],
+        html[data-theme="nord"] .vkuiSimpleCell,
+        html[data-theme="nord"] [class*="SimpleCell"],
+        html[data-theme="nord"] .vkuiGroup,
+        html[data-theme="nord"] [class*="Group"],
+        html[data-theme="nord"] .vkuiPanel,
+        html[data-theme="nord"] [class*="Panel"],
+        html[data-theme="nord"] [class*="ConvoItem"],
+        html[data-theme="nord"] [class*="convo-item"],
+        html[data-theme="nord"] [class*="im-dialog"] {
+            background-color: transparent !important;
         }
     `;
 

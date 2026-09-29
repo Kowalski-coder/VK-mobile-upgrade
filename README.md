@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🚀 VK Mobile Upgrade (v2.29.3)
+# 🚀 VK Mobile Upgrade (v2.29.4)
 
 **Ультимативное улучшение и кастомизация интерфейса m.vk.ru**
 
