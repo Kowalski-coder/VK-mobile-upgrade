@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.29.19
+// @version      2.29.20
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -1190,42 +1190,20 @@
         }
 
         /* 9. КАСТОМНАЯ ПОДСВЕТКА АКТИВНОЙ ВКЛАДКИ */
-        .vkuiTabbarItem.vkuiTabbarItem--selected,
-        .vkuiTabbarItem.vmu-tab-selected,
-        .vkuiTabbarItem[aria-selected="true"],
-        [class*="TabbarItem"].vkuiTabbarItem--selected,
-        [class*="TabbarItem"].vmu-tab-selected,
-        [class*="TabbarItem"][aria-selected="true"],
-        [class*="TabBarItem"].vkuiTabbarItem--selected,
-        [class*="TabBarItem"].vmu-tab-selected,
-        [class*="TabBarItem"][aria-selected="true"] {
+        :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav, [class*="FixedLayout--bottom"]) :is(.vkuiTabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item, [role="tab"]):is(.vkuiTabbarItem--selected, [class*="selected"], [class*="active"], [aria-selected="true"], .vmu-tab-selected, .bottom_nav__item--active) {
             color: var(--vkui--color_icon_accent, var(--vkui--color_text_accent, var(--color_icon_accent, #71aaeb))) !important;
         }
 
-        .vkuiTabbarItem.vkuiTabbarItem--selected :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]),
-        .vkuiTabbarItem.vmu-tab-selected :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]),
-        .vkuiTabbarItem[aria-selected="true"] :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]),
-        [class*="TabbarItem"].vkuiTabbarItem--selected :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]),
-        [class*="TabbarItem"].vmu-tab-selected :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]),
-        [class*="TabbarItem"][aria-selected="true"] :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]),
-        [class*="TabBarItem"].vkuiTabbarItem--selected :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]),
-        [class*="TabBarItem"].vmu-tab-selected :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]),
-        [class*="TabBarItem"][aria-selected="true"] :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]) {
+        :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav, [class*="FixedLayout--bottom"]) :is(.vkuiTabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item, [role="tab"]):is(.vkuiTabbarItem--selected, [class*="selected"], [class*="active"], [aria-selected="true"], .vmu-tab-selected, .bottom_nav__item--active) :is(svg, [class*="icon"] svg, [class*="Icon"] svg, [class*="text"], [class*="Text"], [class*="children"], [class*="label"], [class*="Label"], span) {
             color: var(--vkui--color_icon_accent, var(--vkui--color_text_accent, var(--color_icon_accent, #71aaeb))) !important;
             fill: currentColor !important;
         }
 
-        .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected):not([aria-selected="true"]),
-        [class*="TabbarItem"]:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected):not([aria-selected="true"]),
-        [class*="TabBarItem"]:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected):not([aria-selected="true"]),
-        .vmu-tab-unselected {
+        :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav, [class*="FixedLayout--bottom"]) :is(.vkuiTabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item, [role="tab"]):not(.vkuiTabbarItem--selected):not([class*="selected"]):not([class*="active"]):not([aria-selected="true"]):not(.vmu-tab-selected):not(.bottom_nav__item--active) {
             color: var(--vkui--color_icon_secondary, var(--vkui--color_text_secondary, #828282)) !important;
         }
 
-        .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected):not([aria-selected="true"]) :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]),
-        [class*="TabbarItem"]:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected):not([aria-selected="true"]) :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]),
-        [class*="TabBarItem"]:not(.vkuiTabbarItem--selected):not(.vmu-tab-selected):not([aria-selected="true"]) :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]),
-        .vmu-tab-unselected :is([class*="TabbarItem__icon"] > svg, [class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"]) {
+        :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav, [class*="FixedLayout--bottom"]) :is(.vkuiTabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item, [role="tab"]):not(.vkuiTabbarItem--selected):not([class*="selected"]):not([class*="active"]):not([aria-selected="true"]):not(.vmu-tab-selected):not(.bottom_nav__item--active) :is(svg, [class*="icon"] svg, [class*="Icon"] svg, [class*="text"], [class*="Text"], [class*="children"], [class*="label"], [class*="Label"], span) {
             color: var(--vkui--color_icon_secondary, var(--vkui--color_text_secondary, #828282)) !important;
             fill: currentColor !important;
         }
@@ -1379,6 +1357,9 @@
             --color_background_modal: #2e3440 !important;
             --vkui--color_header_background: #2e3440 !important;
             --color_header_background: #2e3440 !important;
+            --vkui--color_background_header: #2e3440 !important;
+            --vkui--color_background_header_alternate: #2e3440 !important;
+            --header_background: #2e3440 !important;
             --vkui--color_field_background: #3b4252 !important;
             --vkui--color_write_bar_input_background: #3b4252 !important;
             --background_page: #2e3440 !important;
@@ -1565,6 +1546,27 @@
         html[data-theme="nord"] [class*="FormItem"] {
             color: #eceff4 !important;
             border: none !important;
+        }
+
+        /* ТАББАР NORD */
+        html.vmu-theme-nord :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav, [class*="FixedLayout--bottom"]) :is(.vkuiTabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item, [role="tab"]):is(.vkuiTabbarItem--selected, [class*="selected"], [class*="active"], [aria-selected="true"], .vmu-tab-selected, .bottom_nav__item--active),
+        html[data-theme="nord"] :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav, [class*="FixedLayout--bottom"]) :is(.vkuiTabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item, [role="tab"]):is(.vkuiTabbarItem--selected, [class*="selected"], [class*="active"], [aria-selected="true"], .vmu-tab-selected, .bottom_nav__item--active) {
+            color: #88c0d0 !important;
+        }
+
+        html.vmu-theme-nord :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav, [class*="FixedLayout--bottom"]) :is(.vkuiTabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item, [role="tab"]):is(.vkuiTabbarItem--selected, [class*="selected"], [class*="active"], [aria-selected="true"], .vmu-tab-selected, .bottom_nav__item--active) :is(svg, [class*="icon"] svg, [class*="Icon"] svg, [class*="text"], [class*="Text"], [class*="children"], [class*="label"], [class*="Label"], span) {
+            color: #88c0d0 !important;
+            fill: #88c0d0 !important;
+        }
+
+        /* УБИРАЕМ ЛИШНИЕ ПОЛОСЫ И ПОДЧЕРКИВАНИЯ В ШАПКАХ */
+        html.vmu-theme-nord :is(.vkuiPanelHeader__separator, [class*="PanelHeader__separator"], .vkuiPanelHeader::after, [class*="PanelHeader"]::after, .vkuiPanelHeader__line, [class*="PanelHeader__line"], .vkmListHeader::after, [class*="vkmListHeader"]::after, .im-page--header::after),
+        html[data-theme="nord"] :is(.vkuiPanelHeader__separator, [class*="PanelHeader__separator"], .vkuiPanelHeader::after, [class*="PanelHeader"]::after, .vkuiPanelHeader__line, [class*="PanelHeader__line"], .vkmListHeader::after, [class*="vkmListHeader"]::after, .im-page--header::after) {
+            display: none !important;
+            opacity: 0 !important;
+            height: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
         }
 
         /* ССЫЛКИ В КОНТЕНТЕ */
@@ -4567,45 +4569,31 @@
         applySearchTabCustomization(searchItem);
         applyBottomTabIconParams(items);
 
-        // Управление активным состоянием всех вкладок на основе текущего пути
-        const currentPath = window.location.pathname.toLowerCase();
-        const currentSearch = window.location.search.toLowerCase();
-        const fullUrl = currentPath + currentSearch;
-
-        let activeIdx = -1;
+        // Управление активным состоянием табов при кастомизации кнопки «Поиск»
         if (currentTabSearch !== 'search') {
             const def = TAB_DEFINITIONS[currentTabSearch];
-            if (def && def.matchPaths.some(p => fullUrl.startsWith(p) || fullUrl.includes(p))) {
-                activeIdx = 1;
-            }
-        }
+            if (def) {
+                const currentPath = window.location.pathname.toLowerCase();
+                const currentSearch = window.location.search.toLowerCase();
+                const fullUrl = currentPath + currentSearch;
+                const isCustomTabActive = def.matchPaths.some(p => fullUrl.startsWith(p) || fullUrl.includes(p));
 
-        if (activeIdx === -1) {
-            if (currentPath === '/' || currentPath.startsWith('/feed')) {
-                activeIdx = 0;
-            } else if (currentPath.startsWith('/search') || currentPath.startsWith('/discover')) {
-                activeIdx = 1;
-            } else if (currentPath.startsWith('/mail') || currentPath.startsWith('/im') || currentPath.startsWith('/messages')) {
-                activeIdx = 2;
-            } else if (currentPath.startsWith('/clips')) {
-                activeIdx = 3;
-            } else if (currentPath.startsWith('/menu') || currentPath.startsWith('/settings') || currentPath.startsWith('/more') || currentPath.startsWith('/profile') || currentPath.startsWith('/edit') || currentPath.length > 1) {
-                activeIdx = items.length - 1;
-            }
-        }
-
-        if (activeIdx >= 0 && activeIdx < items.length) {
-            for (let i = 0; i < items.length; i++) {
-                if (i === activeIdx) {
-                    items[i].classList.add('vkuiTabbarItem--selected', 'vmu-tab-selected', 'bottom_nav__item--active');
-                    items[i].classList.remove('vmu-tab-unselected');
-                    items[i].setAttribute('aria-selected', 'true');
+                if (isCustomTabActive) {
+                    searchItem.classList.add('vkuiTabbarItem--selected', 'vmu-tab-selected');
+                    searchItem.setAttribute('aria-selected', 'true');
+                    for (let i = 0; i < items.length; i++) {
+                        if (i !== 1) {
+                            items[i].classList.remove('vkuiTabbarItem--selected');
+                            items[i].setAttribute('aria-selected', 'false');
+                        }
+                    }
                 } else {
-                    items[i].classList.remove('vkuiTabbarItem--selected', 'vmu-tab-selected', 'bottom_nav__item--active');
-                    items[i].classList.add('vmu-tab-unselected');
-                    items[i].setAttribute('aria-selected', 'false');
+                    searchItem.classList.remove('vmu-tab-selected', 'vkuiTabbarItem--selected');
+                    searchItem.setAttribute('aria-selected', 'false');
                 }
             }
+        } else {
+            searchItem.classList.remove('vmu-tab-selected');
         }
     }
 
@@ -4622,7 +4610,6 @@
             if (def && def.href) {
                 e.preventDefault();
                 e.stopPropagation();
-                e.stopImmediatePropagation();
                 if (e.type === 'click' || e.type === 'touchend') {
                     if (window.location.pathname !== def.href) {
                         try {
@@ -4635,7 +4622,7 @@
                         } catch (err) {
                             window.location.href = def.href;
                         }
-                        runAllFixes();
+                        scheduleFixes();
                     }
                 }
             }
@@ -4644,18 +4631,11 @@
 
     document.addEventListener('click', interceptTabbarClick, true);
     document.addEventListener('touchend', interceptTabbarClick, true);
-    document.addEventListener('pointerdown', interceptTabbarClick, true);
-    document.addEventListener('touchstart', interceptTabbarClick, true);
-    document.addEventListener('mousedown', interceptTabbarClick, true);
 
     document.addEventListener('click', interceptChatMoreActions, true);
     document.addEventListener('click', interceptActionButtons, true);
-    document.addEventListener('pointerdown', interceptActionButtons, true);
-    document.addEventListener('touchstart', interceptActionButtons, true);
-    document.addEventListener('mousedown', interceptActionButtons, true);
     document.addEventListener('pointerdown', blockMorePointer, true);
     document.addEventListener('touchstart', blockMorePointer, true);
-    document.addEventListener('mousedown', blockMorePointer, true);
 
     // ==========================================
     //       ИНИЦИАЛИЗАЦИЯ И MUTATION OBSERVER
@@ -4730,15 +4710,32 @@
         }
     }
 
-    // Принудительное скрытие градиентных наложений на авторах постов
+    // Принудительное скрытие градиентных наложений на авторах постов в ленте
     function fixPostHeaderFades() {
-        const fades = document.querySelectorAll('[class*="PostHeader"] [class*="fade" i], [class*="PostHeader"] [class*="mask" i], [class*="post_header"] [class*="fade" i], [class*="PostOwner"] [class*="fade" i], [class*="PostHeaderTitle__fade"], [class*="Headline__fade"], [class*="Typography__fade"]');
+        const fades = document.querySelectorAll(
+            '[class*="PostHeader"] [class*="fade" i], [class*="PostHeader"] [class*="mask" i], [class*="PostHeader"] [class*="gradient" i], ' +
+            '[class*="post_header"] [class*="fade" i], [class*="post_header"] [class*="mask" i], [class*="post_header"] [class*="gradient" i], ' +
+            '[class*="PostOwner"] [class*="fade" i], [class*="PostOwner"] [class*="mask" i], [class*="PostOwner"] [class*="gradient" i], ' +
+            '[class*="PostHeaderTitle"] [class*="fade" i], [class*="PostHeaderTitle"] [class*="mask" i], [class*="PostHeaderTitle"] [class*="gradient" i], ' +
+            '[class*="Headline__fade"], [class*="Typography__fade"], [class*="Text__fade"], [class*="Subhead__fade"]'
+        );
         for (let i = 0; i < fades.length; i++) {
             fades[i].style.setProperty('display', 'none', 'important');
             fades[i].style.setProperty('opacity', '0', 'important');
             fades[i].style.setProperty('background', 'transparent', 'important');
             fades[i].style.setProperty('background-color', 'transparent', 'important');
             fades[i].style.setProperty('background-image', 'none', 'important');
+        }
+
+        const titles = document.querySelectorAll(
+            '[class*="PostHeaderTitle"], [class*="post_header_title"], [class*="PostHeader__title"], [class*="PostOwner"], [class*="PostHeader"] a, [class*="post_header"] a'
+        );
+        for (let i = 0; i < titles.length; i++) {
+            const t = titles[i];
+            if (t.style.backgroundImage || t.style.background) {
+                t.style.setProperty('background-image', 'none', 'important');
+                t.style.setProperty('background', 'transparent', 'important');
+            }
         }
     }
 
