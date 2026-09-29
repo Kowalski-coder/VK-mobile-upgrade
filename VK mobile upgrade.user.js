@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.29.1
+// @version      2.29.2
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -1326,11 +1326,35 @@
         html.vmu-theme-nord .vkuiPanelHeader__in,
         html.vmu-theme-nord .vkuiPanelHeader__bg,
         html.vmu-theme-nord [class*="PanelHeader"],
+        html.vmu-theme-nord [class*="vkmListHeader"],
+        html.vmu-theme-nord [class*="ListHeader"],
+        html.vmu-theme-nord .im-page--header,
+        html.vmu-theme-nord [class*="FixedLayout"],
+        html.vmu-theme-nord [class*="FixedLayout__in"],
+        html.vmu-theme-nord [class*="Search"],
+        html.vmu-theme-nord .vkuiSearch,
+        html.vmu-theme-nord [class*="Search__in"],
         html[data-theme="nord"] .vkuiPanelHeader,
         html[data-theme="nord"] .vkuiPanelHeader__in,
         html[data-theme="nord"] .vkuiPanelHeader__bg,
-        html[data-theme="nord"] [class*="PanelHeader"] {
+        html[data-theme="nord"] [class*="PanelHeader"],
+        html[data-theme="nord"] [class*="vkmListHeader"],
+        html[data-theme="nord"] [class*="ListHeader"],
+        html[data-theme="nord"] .im-page--header,
+        html[data-theme="nord"] [class*="FixedLayout"],
+        html[data-theme="nord"] [class*="FixedLayout__in"],
+        html[data-theme="nord"] [class*="Search"],
+        html[data-theme="nord"] .vkuiSearch,
+        html[data-theme="nord"] [class*="Search__in"] {
             background-color: #2e3440 !important;
+            color: #eceff4 !important;
+        }
+
+        html.vmu-theme-nord [class*="Search__field"],
+        html.vmu-theme-nord [class*="Search__input"],
+        html[data-theme="nord"] [class*="Search__field"],
+        html[data-theme="nord"] [class*="Search__input"] {
+            background-color: #3b4252 !important;
             color: #eceff4 !important;
         }
 
@@ -1786,8 +1810,33 @@
 
         body.vmu-page-mail [class*="Search"],
         body.vmu-page-mail .vkuiSearch,
-        body.vmu-page-mail [class*="vkmListHeader"] + [class*="Search"] {
-            margin-bottom: 2px !important;
+        body.vmu-page-mail [class*="vkmListHeader"] + [class*="Search"],
+        body.vmu-page-mail [class*="FixedLayout"] {
+            margin-bottom: 8px !important;
+        }
+
+        body.vmu-page-mail [class*="ConvoList"],
+        body.vmu-page-mail [class*="ConversationList"],
+        body.vmu-page-mail .im-dialogs,
+        body.vmu-page-mail [class*="Panel__in"] > [class*="Group"]:first-of-type,
+        body.vmu-page-mail [class*="FixedLayout"] + div {
+            padding-top: 8px !important;
+        }
+
+        /* Устранение черных рамок вокруг имен/названий сообществ и чатов */
+        [class*="ConvoItem__title"],
+        [class*="ConvoItem__name"],
+        [class*="ConvoItem__subtitle"],
+        [class*="ConversationItem__title"],
+        [class*="ConversationItem__name"],
+        [class*="EntityName"],
+        [class*="im-dialog--title"],
+        [class*="im-dialog--name"],
+        [class*="SimpleCell__content"],
+        [class*="SimpleCell__middle"],
+        [class*="Cell__content"],
+        [class*="Cell__middle"] {
+            background-color: transparent !important;
         }
     `;
 
@@ -3149,7 +3198,7 @@
         itemMenu.setAttribute('href', '/settings?act=vmu_menu');
 
         const iconContainerMenu = itemMenu.querySelector('.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]');
-        const gearSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: var(--vkui--color_icon_accent, #FF5C5C) !important; margin: 0 auto !important;"><circle cx="14" cy="14" r="3.75" stroke="currentColor" stroke-width="2"/><path d="M14 2.5a1.5 1.5 0 0 1 1.45 1.1l.3 1.2a2 2 0 0 0 2.1 1.5l1.2-.3a1.5 1.5 0 0 1 1.7 1.7l-.3 1.2a2 2 0 0 0 1.5 2.1l1.2.3a1.5 1.5 0 0 1 1.1 1.45v1.5a1.5 1.5 0 0 1-1.1 1.45l-1.2.3a2 2 0 0 0-1.5 2.1l.3 1.2a1.5 1.5 0 0 1-1.7 1.7l-1.2-.3a2 2 0 0 0-2.1 1.5l-.3 1.2a1.5 1.5 0 0 1-1.45 1.1h-1.5a1.5 1.5 0 0 1-1.45-1.1l-.3-1.2a2 2 0 0 0-2.1-1.5l-1.2.3a1.5 1.5 0 0 1-1.7-1.7l.3-1.2a2 2 0 0 0-1.5-2.1l-1.2-.3a1.5 1.5 0 0 1-1.1-1.45v-1.5a1.5 1.5 0 0 1 1.1-1.45l1.2-.3a2 2 0 0 0 1.5-2.1l-.3-1.2a1.5 1.5 0 0 1 1.7-1.7l1.2.3a2 2 0 0 0 2.1-1.5l.3-1.2a1.5 1.5 0 0 1 1.45-1.1h1.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
+        const gearSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: var(--vkui--color_icon_secondary, #ECEFF4) !important; margin: 0 auto !important;"><circle cx="14" cy="14" r="3.75" stroke="currentColor" stroke-width="2"/><path d="M14 2.5a1.5 1.5 0 0 1 1.45 1.1l.3 1.2a2 2 0 0 0 2.1 1.5l1.2-.3a1.5 1.5 0 0 1 1.7 1.7l-.3 1.2a2 2 0 0 0 1.5 2.1l1.2.3a1.5 1.5 0 0 1 1.1 1.45v1.5a1.5 1.5 0 0 1-1.1 1.45l-1.2.3a2 2 0 0 0-1.5 2.1l.3 1.2a1.5 1.5 0 0 1-1.7 1.7l-1.2-.3a2 2 0 0 0-2.1 1.5l-.3 1.2a1.5 1.5 0 0 1-1.45 1.1h-1.5a1.5 1.5 0 0 1-1.45-1.1l-.3-1.2a2 2 0 0 0-2.1-1.5l-1.2.3a1.5 1.5 0 0 1-1.7-1.7l.3-1.2a2 2 0 0 0-1.5-2.1l-1.2-.3a1.5 1.5 0 0 1-1.1-1.45v-1.5a1.5 1.5 0 0 1 1.1-1.45l1.2-.3a2 2 0 0 0 1.5-2.1l-.3-1.2a1.5 1.5 0 0 1 1.7-1.7l1.2.3a2 2 0 0 0 2.1-1.5l.3-1.2a1.5 1.5 0 0 1 1.45-1.1h1.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
         if (iconContainerMenu) {
             iconContainerMenu.innerHTML = gearSvg;
         }
@@ -3182,7 +3231,7 @@
         itemDebug.setAttribute('href', '/settings?act=vmu_debug');
 
         const iconContainerDebug = itemDebug.querySelector('.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]');
-        const bugSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: var(--vkui--color_icon_accent, #FF5C5C) !important; margin: 0 auto !important;"><path d="M11 8L8.5 4.5M17 8l2.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="8.5" y="8" width="11" height="13" rx="5.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 11.5h5M3.5 15h5M3.5 18.5h5M19.5 11.5h5M19.5 15h5M19.5 18.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 11.5v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+        const bugSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: var(--vkui--color_icon_secondary, #ECEFF4) !important; margin: 0 auto !important;"><path d="M11 8L8.5 4.5M17 8l2.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="8.5" y="8" width="11" height="13" rx="5.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 11.5h5M3.5 15h5M3.5 18.5h5M19.5 11.5h5M19.5 15h5M19.5 18.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 11.5v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
         if (iconContainerDebug) {
             iconContainerDebug.innerHTML = bugSvg;
         }
@@ -3562,7 +3611,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.29.1</div>
+            <div>• <b>Script Version:</b> v2.29.2</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>Stealth Features:</b> Ghost typing: ${isGhostTypingEnabled}, Ghost read: ${isGhostReadEnabled}, Save deleted: ${isSaveDeletedMsgsEnabled}</div>
