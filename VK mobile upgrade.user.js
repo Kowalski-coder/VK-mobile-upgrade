@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.29.15
+// @version      2.29.16
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -898,6 +898,49 @@
         [class*="im-mess--author"] * {
             background-color: transparent !important;
             background: transparent !important;
+        }
+
+        /* Устранение черных пятен/градиентов обрезки авторов в ленте новостей и постах */
+        [class*="PostHeader"] [class*="fade" i],
+        [class*="PostHeader"] [class*="mask" i],
+        [class*="PostHeader"] [class*="gradient" i],
+        [class*="post_header"] [class*="fade" i],
+        [class*="post_header"] [class*="mask" i],
+        [class*="post_header"] [class*="gradient" i],
+        [class*="PostOwner"] [class*="fade" i],
+        [class*="PostOwner"] [class*="mask" i],
+        [class*="PostOwner"] [class*="gradient" i],
+        [class*="WallPost"] [class*="fade" i],
+        [class*="WallPost"] [class*="mask" i],
+        [class*="WallPost"] [class*="gradient" i],
+        [class*="FeedBlock"] [class*="fade" i],
+        [class*="FeedBlock"] [class*="mask" i],
+        [class*="FeedBlock"] [class*="gradient" i],
+        [class*="PostHeaderTitle"] [class*="fade" i],
+        [class*="PostHeaderTitle"] [class*="mask" i],
+        [class*="post_header_title"] [class*="fade" i],
+        [class*="post_header_title"] [class*="mask" i],
+        [class*="PostHeader"],
+        [class*="PostHeader"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Button"]):not(button):not(img):not(svg):not(canvas),
+        [class*="post_header"],
+        [class*="post_header"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Button"]):not(button):not(img):not(svg):not(canvas),
+        [class*="PostOwner"],
+        [class*="PostOwner"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Button"]):not(button):not(img):not(svg):not(canvas),
+        [class*="WallPost__header"],
+        [class*="WallPost__header"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Button"]):not(button):not(img):not(svg):not(canvas),
+        [class*="wall_post__header"],
+        [class*="wall_post__header"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Button"]):not(button):not(img):not(svg):not(canvas) {
+            background-color: transparent !important;
+            background: transparent !important;
+        }
+
+        /* Иконки кастомных пунктов скрипта в настройках имеют цвет соседних иконок */
+        .vmu-custom-settings-item,
+        .vmu-custom-settings-item [class*="SimpleCell__before"],
+        .vmu-custom-settings-item [class*="Cell__before"],
+        .vmu-custom-settings-item .vkuiIcon,
+        .vmu-custom-settings-item svg {
+            color: var(--vkui--color_icon_secondary, #828282) !important;
         }
 
         /* 3. СКРЫТИЕ НИЖНЕЙ ШТОРКИ "ТОЛЬКО НЕПРОЧИТАННЫЕ" */
@@ -2342,8 +2385,13 @@
 
         function updateBtnVisual() {
             if (isUnread) {
-                btn.style.setProperty('background-color', 'rgba(255, 92, 92, 0.16)', 'important');
-                btn.style.setProperty('color', '#FF5C5C', 'important');
+                if (currentThemeMode === 'nord') {
+                    btn.style.setProperty('background-color', 'rgba(136, 192, 208, 0.18)', 'important');
+                    btn.style.setProperty('color', '#88c0d0', 'important');
+                } else {
+                    btn.style.setProperty('background-color', 'var(--vkui--color_background_accent_themed_alpha, rgba(113, 170, 235, 0.18))', 'important');
+                    btn.style.setProperty('color', 'var(--vkui--color_icon_accent, var(--vkui--color_accent_themed, #71aaeb))', 'important');
+                }
             } else {
                 btn.style.setProperty('background-color', 'transparent', 'important');
                 btn.style.setProperty('color', 'var(--vkui--color_icon_secondary, #828282)', 'important');
@@ -3185,7 +3233,7 @@
         itemMenu.setAttribute('href', '/settings?act=vmu_menu');
 
         const iconContainerMenu = itemMenu.querySelector('.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]');
-        const gearSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: var(--vkui--color_icon_accent, #FF5C5C) !important; margin: 0 auto !important;"><circle cx="14" cy="14" r="3.75" stroke="currentColor" stroke-width="2"/><path d="M14 2.5a1.5 1.5 0 0 1 1.45 1.1l.3 1.2a2 2 0 0 0 2.1 1.5l1.2-.3a1.5 1.5 0 0 1 1.7 1.7l-.3 1.2a2 2 0 0 0 1.5 2.1l1.2.3a1.5 1.5 0 0 1 1.1 1.45v1.5a1.5 1.5 0 0 1-1.1 1.45l-1.2.3a2 2 0 0 0-1.5 2.1l.3 1.2a1.5 1.5 0 0 1-1.7 1.7l-1.2-.3a2 2 0 0 0-2.1 1.5l-.3 1.2a1.5 1.5 0 0 1-1.45 1.1h-1.5a1.5 1.5 0 0 1-1.45-1.1l-.3-1.2a2 2 0 0 0-2.1-1.5l-1.2.3a1.5 1.5 0 0 1-1.7-1.7l.3-1.2a2 2 0 0 0-1.5-2.1l-1.2-.3a1.5 1.5 0 0 1-1.1-1.45v-1.5a1.5 1.5 0 0 1 1.1-1.45l1.2-.3a2 2 0 0 0 1.5-2.1l-.3-1.2a1.5 1.5 0 0 1 1.7-1.7l1.2.3a2 2 0 0 0 2.1-1.5l.3-1.2a1.5 1.5 0 0 1 1.45-1.1h1.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
+        const gearSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: var(--vkui--color_icon_secondary, #828282) !important; margin: 0 auto !important;"><circle cx="14" cy="14" r="3.75" stroke="currentColor" stroke-width="2"/><path d="M14 2.5a1.5 1.5 0 0 1 1.45 1.1l.3 1.2a2 2 0 0 0 2.1 1.5l1.2-.3a1.5 1.5 0 0 1 1.7 1.7l-.3 1.2a2 2 0 0 0 1.5 2.1l1.2.3a1.5 1.5 0 0 1 1.1 1.45v1.5a1.5 1.5 0 0 1-1.1 1.45l-1.2.3a2 2 0 0 0-1.5 2.1l.3 1.2a1.5 1.5 0 0 1-1.7 1.7l-1.2-.3a2 2 0 0 0-2.1 1.5l-.3 1.2a1.5 1.5 0 0 1-1.45 1.1h-1.5a1.5 1.5 0 0 1-1.45-1.1l-.3-1.2a2 2 0 0 0-2.1-1.5l-1.2.3a1.5 1.5 0 0 1-1.7-1.7l.3-1.2a2 2 0 0 0-1.5-2.1l-1.2-.3a1.5 1.5 0 0 1-1.1-1.45v-1.5a1.5 1.5 0 0 1 1.1-1.45l1.2-.3a2 2 0 0 0 1.5-2.1l-.3-1.2a1.5 1.5 0 0 1 1.7-1.7l1.2.3a2 2 0 0 0 2.1-1.5l.3-1.2a1.5 1.5 0 0 1 1.45-1.1h1.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
         if (iconContainerMenu) {
             iconContainerMenu.innerHTML = gearSvg;
         }
@@ -3218,7 +3266,7 @@
         itemDebug.setAttribute('href', '/settings?act=vmu_debug');
 
         const iconContainerDebug = itemDebug.querySelector('.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]');
-        const bugSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: var(--vkui--color_icon_accent, #FF5C5C) !important; margin: 0 auto !important;"><path d="M11 8L8.5 4.5M17 8l2.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="8.5" y="8" width="11" height="13" rx="5.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 11.5h5M3.5 15h5M3.5 18.5h5M19.5 11.5h5M19.5 15h5M19.5 18.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 11.5v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+        const bugSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: var(--vkui--color_icon_secondary, #828282) !important; margin: 0 auto !important;"><path d="M11 8L8.5 4.5M17 8l2.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="8.5" y="8" width="11" height="13" rx="5.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 11.5h5M3.5 15h5M3.5 18.5h5M19.5 11.5h5M19.5 15h5M19.5 18.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 11.5v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
         if (iconContainerDebug) {
             iconContainerDebug.innerHTML = bugSvg;
         }
