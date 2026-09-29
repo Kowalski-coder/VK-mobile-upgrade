@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.29.22
+// @version      2.29.23
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -1190,22 +1190,36 @@
         }
 
         /* 9. КАСТОМНАЯ ПОДСВЕТКА АКТИВНОЙ ВКЛАДКИ */
-        :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav, [class*="FixedLayout--bottom"]) :is(.vkuiTabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item, [role="tab"]):is(.vkuiTabbarItem--selected, [class*="selected"], [class*="active"], [aria-selected="true"], .vmu-tab-selected, .bottom_nav__item--active) {
+        .vmu-tab-selected,
+        .vkuiTabbarItem.vmu-tab-selected,
+        [class*="TabbarItem"].vmu-tab-selected,
+        [class*="TabBarItem"].vmu-tab-selected,
+        .vkuiTabbarItem.vkuiTabbarItem--selected,
+        .vkuiTabbarItem[aria-selected="true"],
+        [class*="TabbarItem"].vkuiTabbarItem--selected,
+        [class*="TabbarItem"][aria-selected="true"],
+        .bottom_nav__item--active {
             color: var(--vkui--color_icon_accent, var(--vkui--color_text_accent, var(--color_icon_accent, #71aaeb))) !important;
         }
 
-        :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav, [class*="FixedLayout--bottom"]) :is(.vkuiTabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item, [role="tab"]):is(.vkuiTabbarItem--selected, [class*="selected"], [class*="active"], [aria-selected="true"], .vmu-tab-selected, .bottom_nav__item--active) :is(svg, [class*="icon"] svg, [class*="Icon"] svg, [class*="text"], [class*="Text"], [class*="children"], [class*="label"], [class*="Label"], span) {
+        .vmu-tab-selected :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], span),
+        .vkuiTabbarItem.vmu-tab-selected :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], span),
+        .vkuiTabbarItem.vkuiTabbarItem--selected :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], span),
+        .vkuiTabbarItem[aria-selected="true"] :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], span),
+        .bottom_nav__item--active :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], span) {
             color: var(--vkui--color_icon_accent, var(--vkui--color_text_accent, var(--color_icon_accent, #71aaeb))) !important;
-            fill: currentColor !important;
         }
 
-        :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav, [class*="FixedLayout--bottom"]) :is(.vkuiTabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item, [role="tab"]):not(.vkuiTabbarItem--selected):not([class*="selected"]):not([class*="active"]):not([aria-selected="true"]):not(.vmu-tab-selected):not(.bottom_nav__item--active) {
+        .vmu-tab-unselected,
+        .vkuiTabbarItem.vmu-tab-unselected,
+        [class*="TabbarItem"].vmu-tab-unselected,
+        [class*="TabBarItem"].vmu-tab-unselected {
             color: var(--vkui--color_icon_secondary, var(--vkui--color_text_secondary, #828282)) !important;
         }
 
-        :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav, [class*="FixedLayout--bottom"]) :is(.vkuiTabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item, [role="tab"]):not(.vkuiTabbarItem--selected):not([class*="selected"]):not([class*="active"]):not([aria-selected="true"]):not(.vmu-tab-selected):not(.bottom_nav__item--active) :is(svg, [class*="icon"] svg, [class*="Icon"] svg, [class*="text"], [class*="Text"], [class*="children"], [class*="label"], [class*="Label"], span) {
+        .vmu-tab-unselected :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], span),
+        .vkuiTabbarItem.vmu-tab-unselected :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], span) {
             color: var(--vkui--color_icon_secondary, var(--vkui--color_text_secondary, #828282)) !important;
-            fill: currentColor !important;
         }
 
         /* 10. ЕДИНЫЙ ШРИФТ И СТИЛЬ ДЛЯ НИЖНЕЙ ПАНЕЛИ */
@@ -1549,14 +1563,29 @@
         }
 
         /* ТАББАР NORD */
-        html.vmu-theme-nord :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav, [class*="FixedLayout--bottom"]) :is(.vkuiTabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item, [role="tab"]):is(.vkuiTabbarItem--selected, [class*="selected"], [class*="active"], [aria-selected="true"], .vmu-tab-selected, .bottom_nav__item--active),
-        html[data-theme="nord"] :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav, [class*="FixedLayout--bottom"]) :is(.vkuiTabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item, [role="tab"]):is(.vkuiTabbarItem--selected, [class*="selected"], [class*="active"], [aria-selected="true"], .vmu-tab-selected, .bottom_nav__item--active) {
+        html.vmu-theme-nord .vmu-tab-selected,
+        html.vmu-theme-nord .vkuiTabbarItem.vmu-tab-selected,
+        html.vmu-theme-nord [class*="TabbarItem"].vmu-tab-selected,
+        html.vmu-theme-nord [class*="TabBarItem"].vmu-tab-selected,
+        html.vmu-theme-nord .vkuiTabbarItem.vkuiTabbarItem--selected,
+        html.vmu-theme-nord .vkuiTabbarItem[aria-selected="true"],
+        html.vmu-theme-nord .bottom_nav__item--active,
+        html[data-theme="nord"] .vmu-tab-selected,
+        html[data-theme="nord"] .vkuiTabbarItem.vmu-tab-selected,
+        html[data-theme="nord"] [class*="TabbarItem"].vmu-tab-selected,
+        html[data-theme="nord"] [class*="TabBarItem"].vmu-tab-selected,
+        html[data-theme="nord"] .vkuiTabbarItem.vkuiTabbarItem--selected,
+        html[data-theme="nord"] .vkuiTabbarItem[aria-selected="true"],
+        html[data-theme="nord"] .bottom_nav__item--active {
             color: #88c0d0 !important;
         }
 
-        html.vmu-theme-nord :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav, [class*="FixedLayout--bottom"]) :is(.vkuiTabbarItem, [class*="TabbarItem"], [class*="TabBarItem"], .bottom_nav__item, [role="tab"]):is(.vkuiTabbarItem--selected, [class*="selected"], [class*="active"], [aria-selected="true"], .vmu-tab-selected, .bottom_nav__item--active) :is(svg, [class*="icon"] svg, [class*="Icon"] svg, [class*="text"], [class*="Text"], [class*="children"], [class*="label"], [class*="Label"], span) {
+        html.vmu-theme-nord :is(.vmu-tab-selected, .vkuiTabbarItem.vmu-tab-selected, [class*="TabbarItem"].vmu-tab-selected, .vkuiTabbarItem.vkuiTabbarItem--selected, .vkuiTabbarItem[aria-selected="true"], .bottom_nav__item--active) :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], span) {
             color: #88c0d0 !important;
-            fill: #88c0d0 !important;
+        }
+
+        html[data-theme="nord"] :is(.vmu-tab-selected, .vkuiTabbarItem.vmu-tab-selected, [class*="TabbarItem"].vmu-tab-selected, .vkuiTabbarItem.vkuiTabbarItem--selected, .vkuiTabbarItem[aria-selected="true"], .bottom_nav__item--active) :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], span) {
+            color: #88c0d0 !important;
         }
 
         /* УБИРАЕМ ЛИШНИЕ ПОЛОСЫ И ПОДЧЕРКИВАНИЯ В ШАПКАХ */
@@ -4547,6 +4576,56 @@
         }
     }
 
+    function updateTabActiveVisual(items) {
+        if (!items || items.length === 0) return;
+        const currentPath = window.location.pathname.toLowerCase();
+        const currentSearch = window.location.search.toLowerCase();
+        const fullUrl = currentPath + currentSearch;
+
+        let activeIdx = -1;
+        if (currentTabSearch !== 'search') {
+            const def = TAB_DEFINITIONS[currentTabSearch];
+            if (def && def.matchPaths.some(p => fullUrl.startsWith(p) || fullUrl.includes(p))) {
+                activeIdx = 1;
+            }
+        }
+
+        if (activeIdx === -1) {
+            if (currentPath === '/' || currentPath.startsWith('/feed') || currentPath.startsWith('/news')) {
+                activeIdx = 0;
+            } else if (currentPath.startsWith('/discover') || currentPath.startsWith('/search')) {
+                activeIdx = 1;
+            } else if (currentPath.startsWith('/mail') || currentPath.startsWith('/im') || currentPath.startsWith('/messages')) {
+                activeIdx = 2;
+            } else if (currentPath.startsWith('/clips')) {
+                activeIdx = 3;
+            } else if (currentPath.startsWith('/menu') || currentPath.startsWith('/settings') || currentPath.startsWith('/more') || currentPath.startsWith('/profile') || currentPath.startsWith('/edit') || currentPath.startsWith('/id') || currentPath.length > 1) {
+                activeIdx = items.length - 1;
+            }
+        }
+
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            const isSelectedByNative = item.classList.contains('vkuiTabbarItem--selected') ||
+                                       item.getAttribute('aria-selected') === 'true' ||
+                                       (item.className && typeof item.className === 'string' && (item.className.includes('selected') || item.className.includes('active')));
+
+            const shouldBeSelected = (activeIdx !== -1) ? (i === activeIdx) : isSelectedByNative;
+
+            if (shouldBeSelected) {
+                if (!item.classList.contains('vmu-tab-selected')) {
+                    item.classList.add('vmu-tab-selected');
+                }
+                item.classList.remove('vmu-tab-unselected');
+            } else {
+                item.classList.remove('vmu-tab-selected');
+                if (!item.classList.contains('vmu-tab-unselected')) {
+                    item.classList.add('vmu-tab-unselected');
+                }
+            }
+        }
+    }
+
     function updateCustomTabs() {
         // Очистка ошибочных SVG на верхней панели и в контенте
         const nonBottomSvgs = document.querySelectorAll('header [data-vmu-svg], .vkuiPanelHeader [data-vmu-svg], [class*="PanelHeader"] [data-vmu-svg], .vkuiTabs [data-vmu-svg], [class*="Tabs"] [data-vmu-svg]');
@@ -4568,33 +4647,7 @@
         searchItem.dataset.vmuSlot = 'search';
         applySearchTabCustomization(searchItem);
         applyBottomTabIconParams(items);
-
-        // Управление активным состоянием табов при кастомизации кнопки «Поиск»
-        if (currentTabSearch !== 'search') {
-            const def = TAB_DEFINITIONS[currentTabSearch];
-            if (def) {
-                const currentPath = window.location.pathname.toLowerCase();
-                const currentSearch = window.location.search.toLowerCase();
-                const fullUrl = currentPath + currentSearch;
-                const isCustomTabActive = def.matchPaths.some(p => fullUrl.startsWith(p) || fullUrl.includes(p));
-
-                if (isCustomTabActive) {
-                    searchItem.classList.add('vkuiTabbarItem--selected', 'vmu-tab-selected');
-                    searchItem.setAttribute('aria-selected', 'true');
-                    for (let i = 0; i < items.length; i++) {
-                        if (i !== 1) {
-                            items[i].classList.remove('vkuiTabbarItem--selected');
-                            items[i].setAttribute('aria-selected', 'false');
-                        }
-                    }
-                } else {
-                    searchItem.classList.remove('vmu-tab-selected', 'vkuiTabbarItem--selected');
-                    searchItem.setAttribute('aria-selected', 'false');
-                }
-            }
-        } else {
-            searchItem.classList.remove('vmu-tab-selected');
-        }
+        updateTabActiveVisual(items);
     }
 
     function interceptTabbarClick(e) {
