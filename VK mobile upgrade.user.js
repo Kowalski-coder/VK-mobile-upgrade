@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.29.8
+// @version      2.29.9
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -857,22 +857,12 @@
             font-weight: 600 !important;
         }
 
-        /* 2. АККУРАТНЫЙ ОТСТУП СПИСКА ДИАЛОГОВ (УСТРАНЕНИЕ ПЕРЕКРЫТИЯ "ИЗБРАННОЕ") */
+        /* 2. АККУРАТНЫЙ ОТСТУП СПИСКА ДИАЛОГОВ ПОД ШТОРКОЙ КАТЕГОРИЙ */
         body.vmu-page-mail [class*="SubnavigationBar"],
         body.vmu-page-mail .vkuiSubnavigationBar,
         body.vmu-page-mail [class*="HorizontalScroll"],
         body.vmu-page-mail [class*="Tabs"] {
             margin-bottom: 6px !important;
-        }
-
-        body.vmu-page-mail [class*="Search"],
-        body.vmu-page-mail .vkuiSearch {
-            margin-bottom: 4px !important;
-        }
-
-        body.vmu-page-mail .ConvoList,
-        body.vmu-page-mail [class*="ConvoList"] {
-            margin-top: 12px !important;
         }
 
         /* Закрепленные сообщения в чатах: аккуратный фон темы без черных углов */
@@ -1404,27 +1394,7 @@
             background-color: #2e3440 !important;
         }
 
-        /* Прозрачные ячейки и списки в теме Nord */
-        html.vmu-theme-nord .vkuiSimpleCell,
-        html.vmu-theme-nord [class*="SimpleCell"],
-        html.vmu-theme-nord .vkuiGroup,
-        html.vmu-theme-nord [class*="Group"],
-        html.vmu-theme-nord .vkuiPanel,
-        html.vmu-theme-nord [class*="Panel"],
-        html.vmu-theme-nord [class*="ConvoItem"],
-        html.vmu-theme-nord [class*="convo-item"],
-        html.vmu-theme-nord [class*="im-dialog"],
-        html[data-theme="nord"] .vkuiSimpleCell,
-        html[data-theme="nord"] [class*="SimpleCell"],
-        html[data-theme="nord"] .vkuiGroup,
-        html[data-theme="nord"] [class*="Group"],
-        html[data-theme="nord"] .vkuiPanel,
-        html[data-theme="nord"] [class*="Panel"],
-        html[data-theme="nord"] [class*="ConvoItem"],
-        html[data-theme="nord"] [class*="convo-item"],
-        html[data-theme="nord"] [class*="im-dialog"] {
-            background-color: transparent !important;
-        }
+
     `;
 
 
@@ -1838,10 +1808,11 @@
             opacity: 0 !important;
         }
 
-        /* Аккуратный отступ для списка диалогов при скрытых папках */
-        body.vmu-page-mail .ConvoList,
-        body.vmu-page-mail [class*="ConvoList"] {
-            margin-top: 12px !important;
+        body.vmu-page-mail [class*="Search"],
+        body.vmu-page-mail .vkuiSearch,
+        body.vmu-page-mail [class*="vkmListHeader"] + [class*="Search"],
+        body.vmu-page-mail [class*="FixedLayout--top"] {
+            margin-bottom: 6px !important;
         }
     `;
 
