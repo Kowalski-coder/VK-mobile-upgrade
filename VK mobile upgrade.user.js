@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.29.7
+// @version      2.29.8
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -857,12 +857,22 @@
             font-weight: 600 !important;
         }
 
-        /* 2. АККУРАТНЫЙ ОТСТУП СПИСКА ДИАЛОГОВ ПОД ШТОРКОЙ КАТЕГОРИЙ */
+        /* 2. АККУРАТНЫЙ ОТСТУП СПИСКА ДИАЛОГОВ (УСТРАНЕНИЕ ПЕРЕКРЫТИЯ "ИЗБРАННОЕ") */
         body.vmu-page-mail [class*="SubnavigationBar"],
         body.vmu-page-mail .vkuiSubnavigationBar,
         body.vmu-page-mail [class*="HorizontalScroll"],
         body.vmu-page-mail [class*="Tabs"] {
             margin-bottom: 6px !important;
+        }
+
+        body.vmu-page-mail [class*="Search"],
+        body.vmu-page-mail .vkuiSearch {
+            margin-bottom: 4px !important;
+        }
+
+        body.vmu-page-mail .ConvoList,
+        body.vmu-page-mail [class*="ConvoList"] {
+            margin-top: 12px !important;
         }
 
         /* Закрепленные сообщения в чатах: аккуратный фон темы без черных углов */
@@ -1829,8 +1839,9 @@
         }
 
         /* Аккуратный отступ для списка диалогов при скрытых папках */
-        body.vmu-page-mail .ConvoList {
-            margin-top: 6px !important;
+        body.vmu-page-mail .ConvoList,
+        body.vmu-page-mail [class*="ConvoList"] {
+            margin-top: 12px !important;
         }
     `;
 
