@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.29.0
+// @version      2.29.1
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -1210,73 +1210,122 @@
     const COLOR_NEGATIVE_SWAPPED = '#71AAEB'; // Изначально #FF5C5C -> теперь голубой
 
     
-    // ==========================================
-    //       NORD THEME (NORDIC CACHYOS PALETTE)
+        // ==========================================
+    //       NORD THEME (POLAR NIGHT & FROST)
     // ==========================================
     const NORD_THEME_CSS = `
-        /* NORD THEME: POLAR NIGHT & FROST */
-        html[data-theme="nord"],
+        /* ==========================================
+           NORD THEME (POLAR NIGHT, SNOW STORM, FROST)
+           ========================================== */
+        *, *::before, *::after,
+        :root, html, body,
         html.vmu-theme-nord,
+        html[data-theme="nord"],
         [data-theme="nord"] body,
-        html[data-theme="nord"] body {
-            background-color: #2e3440 !important;
+        html.vmu-theme-nord body,
+        .vk__page, .vkui__root, .vkuiRoot, .vkuiAppRoot,
+        [scheme], [data-theme="nord"], div#root, div#vk_wrap, #vk_area_wrap, .layout {
+            /* ФОНОВЫЕ ЦВЕТА (POLAR NIGHT) */
             --vkui--color_background: #2e3440 !important;
             --color_background: #2e3440 !important;
             --vkui--color_background_content: #3b4252 !important;
             --color_background_content: #3b4252 !important;
             --vkui--color_background_secondary: #3b4252 !important;
             --color_background_secondary: #3b4252 !important;
+            --vkui--color_background_secondary_alpha: rgba(59, 66, 82, 0.92) !important;
             --vkui--color_background_tertiary: #434c5e !important;
             --color_background_tertiary: #434c5e !important;
             --vkui--color_background_modal: #2e3440 !important;
             --color_background_modal: #2e3440 !important;
             --vkui--color_header_background: #2e3440 !important;
             --color_header_background: #2e3440 !important;
+            --vkui--color_field_background: #3b4252 !important;
+            --vkui--color_write_bar_input_background: #3b4252 !important;
+            --background_page: #2e3440 !important;
+            --background_content: #3b4252 !important;
 
-            /* ТЕКСТ: SNOW STORM */
+            /* ТЕКСТ (SNOW STORM) */
             --vkui--color_text_primary: #eceff4 !important;
             --color_text_primary: #eceff4 !important;
             --vkui--color_text_secondary: #d8dee9 !important;
             --color_text_secondary: #d8dee9 !important;
             --vkui--color_text_subhead: #e5e9f0 !important;
             --color_text_subhead: #e5e9f0 !important;
-            --vkui--color_text_muted: #4c566a !important;
-            --color_text_muted: #4c566a !important;
+            --vkui--color_text_muted: #7b88a1 !important;
+            --color_text_muted: #7b88a1 !important;
+            --vkui--color_text_contrast: #2e3440 !important;
 
-            /* АКЦЕНТЫ: FROST (#88C0D0 / #81A1C1) */
-            --vkui--color_icon_accent: #88c0d0 !important;
-            --color_icon_accent: #88c0d0 !important;
-            --vkui--color_icon_accent_themed: #88c0d0 !important;
-            --color_icon_accent_themed: #88c0d0 !important;
+            /* АКЦЕНТЫ (FROST: #88C0D0 / #81A1C1) */
+            --vkui--color_im_text_name: #88c0d0 !important;
+            --color_im_text_name: #88c0d0 !important;
             --vkui--color_text_accent: #88c0d0 !important;
             --color_text_accent: #88c0d0 !important;
             --vkui--color_text_accent_themed: #88c0d0 !important;
             --color_text_accent_themed: #88c0d0 !important;
+            --vkui--color_icon_accent: #88c0d0 !important;
+            --color_icon_accent: #88c0d0 !important;
+            --vkui--color_icon_accent_themed: #88c0d0 !important;
+            --color_icon_accent_themed: #88c0d0 !important;
+            --vkui--color_background_accent: #88c0d0 !important;
+            --color_background_accent: #88c0d0 !important;
+            --vkui--color_background_accent_themed: #88c0d0 !important;
+            --color_background_accent_themed: #88c0d0 !important;
+            --vkui--color_background_accent_tint: rgba(136, 192, 208, 0.16) !important;
+            --color_background_accent_tint: rgba(136, 192, 208, 0.16) !important;
+            --vkui--color_stroke_accent: #88c0d0 !important;
+            --color_stroke_accent: #88c0d0 !important;
+            --vkui--color_stroke_accent_themed: #88c0d0 !important;
+            --color_stroke_accent_themed: #88c0d0 !important;
             --vkui--color_text_link: #88c0d0 !important;
             --color_text_link: #88c0d0 !important;
             --vkui--color_text_link_themed: #88c0d0 !important;
             --color_text_link_themed: #88c0d0 !important;
-            --vkui--color_background_accent: #88c0d0 !important;
-            --color_background_accent: #88c0d0 !important;
-            --vkui--color_background_accent_tint: rgba(136, 192, 208, 0.15) !important;
-            --vkui--color_stroke_accent: #88c0d0 !important;
-            --color_stroke_accent: #88c0d0 !important;
-            --vkui--color_im_text_name: #88c0d0 !important;
-            --color_im_text_name: #88c0d0 !important;
+            --vkui--color_text_link_tint: rgba(136, 192, 208, 0.16) !important;
+            --color_text_link_tint: rgba(136, 192, 208, 0.16) !important;
+            --vkui--color_track_background: #88c0d0 !important;
+            --vkui--color_write_bar_icon: #88c0d0 !important;
+            --vkui--color_im_forward_line: #88c0d0 !important;
+            --vkui--color_im_quote_line: #88c0d0 !important;
             --accent: #88c0d0 !important;
+            --accent_blue: #88c0d0 !important;
             --link_color: #88c0d0 !important;
             --button_primary_background: #88c0d0 !important;
+            --button_primary_foreground: #2e3440 !important;
             --counter_primary_background: #88c0d0 !important;
+            --counter_primary_text: #2e3440 !important;
 
-            /* ЧАТЫ И СООБЩЕНИЯ В NORD */
+            /* РАЗДЕЛИТЕЛИ И РАМКИ */
+            --vkui--color_separator_primary: #434c5e !important;
+            --vkui--color_separator_primary_alpha: rgba(76, 86, 106, 0.5) !important;
+            --vkui--color_separator_secondary: #4c566a !important;
+            --vkui--color_field_border_alpha: rgba(76, 86, 106, 0.4) !important;
+            --vkui--color_image_border_alpha: rgba(76, 86, 106, 0.3) !important;
+
+            /* ЧАТЫ И СООБЩЕНИЯ */
             --vkui--vkontakte_color_im_bubble_incoming: #3b4252 !important;
             --vkui--vkontakte_color_im_bubble_incoming_alternate: #3b4252 !important;
             --vkui--vkontakte_color_im_bubble_outgoing: #434c5e !important;
-            --vkui--color_write_bar_input_background: #3b4252 !important;
-            --vkui--color_separator_primary: #434c5e !important;
-            --vkui--color_separator_primary_alpha: rgba(76, 86, 106, 0.4) !important;
+
+            /* AURORA (ПОЗИТИВ / НЕГАТИВ) */
+            --vkui--color_text_negative: #bf616a !important;
+            --color_text_negative: #bf616a !important;
+            --vkui--color_icon_negative: #bf616a !important;
+            --color_icon_negative: #bf616a !important;
+            --vkui--color_text_positive: #a3be8c !important;
+            --color_text_positive: #a3be8c !important;
         }
 
+        /* NORD СТИЛИЗАЦИЯ ШАПКИ, ТАББАРА И ЭЛЕМЕНТОВ */
+        html.vmu-theme-nord body,
+        html[data-theme="nord"] body {
+            background-color: #2e3440 !important;
+            color: #eceff4 !important;
+        }
+
+        html.vmu-theme-nord .vkuiPanelHeader,
+        html.vmu-theme-nord .vkuiPanelHeader__in,
+        html.vmu-theme-nord .vkuiPanelHeader__bg,
+        html.vmu-theme-nord [class*="PanelHeader"],
         html[data-theme="nord"] .vkuiPanelHeader,
         html[data-theme="nord"] .vkuiPanelHeader__in,
         html[data-theme="nord"] .vkuiPanelHeader__bg,
@@ -1285,11 +1334,42 @@
             color: #eceff4 !important;
         }
 
+        html.vmu-theme-nord .vkuiTabBar,
+        html.vmu-theme-nord [class*="TabBar"],
+        html.vmu-theme-nord .Tabbar,
         html[data-theme="nord"] .vkuiTabBar,
         html[data-theme="nord"] [class*="TabBar"],
         html[data-theme="nord"] .Tabbar {
             background-color: #2e3440 !important;
             border-top: 1px solid #434c5e !important;
+        }
+
+        html.vmu-theme-nord .vkuiSimpleCell,
+        html.vmu-theme-nord [class*="SimpleCell"],
+        html.vmu-theme-nord .vkuiCard,
+        html.vmu-theme-nord [class*="Card"],
+        html.vmu-theme-nord .vkuiGroup,
+        html.vmu-theme-nord [class*="Group"],
+        html[data-theme="nord"] .vkuiSimpleCell,
+        html[data-theme="nord"] [class*="SimpleCell"],
+        html[data-theme="nord"] .vkuiCard,
+        html[data-theme="nord"] [class*="Card"],
+        html[data-theme="nord"] .vkuiGroup,
+        html[data-theme="nord"] [class*="Group"] {
+            background-color: #3b4252 !important;
+            color: #eceff4 !important;
+        }
+
+        html.vmu-theme-nord .vkuiFormItem,
+        html.vmu-theme-nord [class*="FormItem"],
+        html[data-theme="nord"] .vkuiFormItem,
+        html[data-theme="nord"] [class*="FormItem"] {
+            color: #eceff4 !important;
+        }
+
+        html.vmu-theme-nord a,
+        html[data-theme="nord"] a {
+            color: #88c0d0 !important;
         }
     `;
 
@@ -2949,9 +3029,12 @@
         setSetting(STORAGE_KEYS.THEME_MODE, mode);
         isColorSwapEnabled = (mode === 'snow_black');
 
-        const isLight = mode === 'light';
+        const isLight = (mode === 'light');
+        const isNord = (mode === 'nord');
+        const isSnow = (mode === 'snow_black');
+
         const vkuiTheme = isLight ? 'bright_light' : 'space_gray';
-        const vkTheme = isLight ? 'light' : 'dark';
+        const vkTheme = isLight ? 'light' : (isSnow ? 'snow_black' : (isNord ? 'nord' : 'dark'));
 
         try {
             localStorage.setItem('vkui_theme', vkuiTheme);
@@ -2967,15 +3050,20 @@
             html.setAttribute('scheme', vkuiTheme);
             html.setAttribute('data-theme', vkTheme);
             html.setAttribute('data-vkui-theme', vkuiTheme);
+            html.classList.toggle('vmu-color-swap', isSnow);
+            html.classList.toggle('vmu-theme-nord', isNord);
         }
         if (body) {
             body.setAttribute('scheme', vkuiTheme);
             body.setAttribute('data-theme', vkTheme);
             body.setAttribute('data-vkui-theme', vkuiTheme);
+            body.classList.toggle('vmu-color-swap', isSnow);
+            body.classList.toggle('vmu-theme-nord', isNord);
         }
 
         applyStyles();
         updatePwaManifestAndIcons();
+        scheduleFixes();
 
         // Синхронизируем с нативными переключателями VK, если есть
         const lightRadio = document.querySelector(
@@ -2995,27 +3083,26 @@
     }
 
     function syncCurrentTheme() {
-        const isLight = currentThemeMode === 'light';
+        const isLight = (currentThemeMode === 'light');
+        const isNord = (currentThemeMode === 'nord');
+        const isSnow = (currentThemeMode === 'snow_black');
+
         const vkuiTheme = isLight ? 'bright_light' : 'space_gray';
-        const vkTheme = isLight ? 'light' : 'dark';
+        const vkTheme = isLight ? 'light' : (isSnow ? 'snow_black' : (isNord ? 'nord' : 'dark'));
 
         try {
-            if (localStorage.getItem('vkui_theme') !== vkuiTheme) {
-                localStorage.setItem('vkui_theme', vkuiTheme);
-            }
-            if (localStorage.getItem('vk_theme') !== vkTheme) {
-                localStorage.setItem('vk_theme', vkTheme);
-            }
-            if (localStorage.getItem('scheme') !== vkuiTheme) {
-                localStorage.setItem('scheme', vkuiTheme);
-            }
+            if (localStorage.getItem('vkui_theme') !== vkuiTheme) localStorage.setItem('vkui_theme', vkuiTheme);
+            if (localStorage.getItem('vk_theme') !== vkTheme) localStorage.setItem('vk_theme', vkTheme);
+            if (localStorage.getItem('scheme') !== vkuiTheme) localStorage.setItem('scheme', vkuiTheme);
         } catch (e) {}
 
         const html = document.documentElement;
-        if (html && html.getAttribute('scheme') !== vkuiTheme) {
-            html.setAttribute('scheme', vkuiTheme);
-            html.setAttribute('data-theme', vkTheme);
-            html.setAttribute('data-vkui-theme', vkuiTheme);
+        if (html) {
+            if (html.getAttribute('scheme') !== vkuiTheme) html.setAttribute('scheme', vkuiTheme);
+            if (html.getAttribute('data-theme') !== vkTheme) html.setAttribute('data-theme', vkTheme);
+            if (html.getAttribute('data-vkui-theme') !== vkuiTheme) html.setAttribute('data-vkui-theme', vkuiTheme);
+            html.classList.toggle('vmu-color-swap', isSnow);
+            html.classList.toggle('vmu-theme-nord', isNord);
         }
     }
 
@@ -3475,7 +3562,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.29.0</div>
+            <div>• <b>Script Version:</b> v2.29.1</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>Stealth Features:</b> Ghost typing: ${isGhostTypingEnabled}, Ghost read: ${isGhostReadEnabled}, Save deleted: ${isSaveDeletedMsgsEnabled}</div>
