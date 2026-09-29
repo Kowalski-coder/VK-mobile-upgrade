@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.29.13
+// @version      2.29.14
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -865,6 +865,35 @@
             margin-bottom: 6px !important;
         }
 
+        /* Полная прозрачность названий каналов, сообществ и элементов диалогов */
+        [class*="ConvoItem"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not(img):not(svg):not(canvas),
+        [class*="im-dialog"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not(img):not(svg):not(canvas),
+        [class*="DialogsList"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not(img):not(svg):not(canvas),
+        [class*="EntityName"],
+        [class*="EntityName"] *,
+        [class*="Entity__title"],
+        [class*="Entity__title"] *,
+        [class*="Entity__name"],
+        [class*="Entity__name"] *,
+        [class*="Entity"],
+        [class*="ChannelTitle"],
+        [class*="ChannelTitle"] *,
+        [class*="author_name"],
+        [class*="author_name"] *,
+        [class*="AuthorName"],
+        [class*="AuthorName"] *,
+        [class*="im-mess--author"],
+        [class*="im-mess--author"] *,
+        [class*="im-dialog--name"],
+        [class*="im-dialog--title"],
+        [class*="ConvoItem__name"],
+        [class*="ConvoItem__title"],
+        [class*="ConversationItem__title"],
+        [class*="ConversationItem__name"] {
+            background-color: transparent !important;
+            background: transparent !important;
+        }
+
         /* 3. СКРЫТИЕ НИЖНЕЙ ШТОРКИ "ТОЛЬКО НЕПРОЧИТАННЫЕ" */
         .ConvoList__footerSwitch,
         [class*="ConvoList__footerSwitch"],
@@ -1344,19 +1373,20 @@
             border-top: 1px solid #434c5e !important;
         }
 
-        html.vmu-theme-nord .vkuiSimpleCell,
-        html.vmu-theme-nord [class*="SimpleCell"],
         html.vmu-theme-nord .vkuiCard,
         html.vmu-theme-nord [class*="Card"],
-        html.vmu-theme-nord .vkuiGroup,
-        html.vmu-theme-nord [class*="Group"],
-        html[data-theme="nord"] .vkuiSimpleCell,
-        html[data-theme="nord"] [class*="SimpleCell"],
+        html.vmu-theme-nord #vk-mobile-upgrade-settings-card,
         html[data-theme="nord"] .vkuiCard,
         html[data-theme="nord"] [class*="Card"],
-        html[data-theme="nord"] .vkuiGroup,
-        html[data-theme="nord"] [class*="Group"] {
+        html[data-theme="nord"] #vk-mobile-upgrade-settings-card {
             background-color: #3b4252 !important;
+            color: #eceff4 !important;
+        }
+
+        html.vmu-theme-nord .vkuiSimpleCell,
+        html.vmu-theme-nord [class*="SimpleCell"],
+        html[data-theme="nord"] .vkuiSimpleCell,
+        html[data-theme="nord"] [class*="SimpleCell"] {
             color: #eceff4 !important;
         }
 
