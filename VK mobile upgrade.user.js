@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.29.18
+// @version      2.29.19
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -824,12 +824,15 @@
             color: var(--vkui--color_icon_accent, #71aaeb) !important;
         }
 
-        /* 1. ИСПРАВЛЕНИЕ ОВАЛЬНЫХ СЧЕТЧИКОВ СООБЩЕНИЙ/УВЕДОМЛЕНИЙ -> ИДЕАЛЬНЫЙ КРУГ И БЕЛЫЙ ТЕКСТ */
+        /* 1. ИСПРАВЛЕНИЕ ОВАЛЬНЫХ СЧЕТЧИКОВ СООБЩЕНИЙ/УВЕДОМЛЕНИЙ -> ИДЕАЛЬНЫЙ КРУГ, КРАСНЫЙ ФОН И БЕЛЫЙ ТЕКСТ */
         [class*="Counter"],
         .vkuiCounter,
         .im_peer_counter,
         [class*="Badge"],
-        .vkuiBadge {
+        .vkuiBadge,
+        .vkuiTabbarItem__indicator,
+        .vkuiTabbarItem__badge,
+        .vmu-restored-badge {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -841,6 +844,19 @@
             box-sizing: border-box !important;
             border-radius: 10px !important;
             flex-shrink: 0 !important;
+            background-color: var(--vkui--color_background_negative, #FF5C5C) !important;
+            color: #ffffff !important;
+        }
+
+        .vkuiCounter--mode-prominent,
+        [class*="Counter--mode-prominent"],
+        .vkuiCounter--mode-primary,
+        [class*="Counter--mode-primary"],
+        .im_peer_counter,
+        .vkuiBadge,
+        [class*="Badge"],
+        .vmu-restored-badge {
+            background-color: var(--vkui--color_background_negative, #FF5C5C) !important;
             color: #ffffff !important;
         }
 
@@ -871,7 +887,9 @@
         [class*="Badge"],
         [class*="Badge"] *,
         .vkuiBadge,
-        .vkuiBadge * {
+        .vkuiBadge *,
+        .vmu-restored-badge,
+        .vmu-restored-badge * {
             color: #ffffff !important;
             fill: #ffffff !important;
         }
@@ -920,16 +938,34 @@
         }
 
         /* 2.5. ПОЛНОЕ УСТРАНЕНИЕ ТЕМНЫХ ПЯТЕН И ГРАДИЕНТНЫХ МАСОК В ЛЕНТЕ И ПОСТАХ */
+        [class*="PostHeader"] [class*="fade" i],
+        [class*="PostHeader"] [class*="Fade" i],
+        [class*="PostHeader"] [class*="mask" i],
+        [class*="PostHeader"] [class*="Mask" i],
+        [class*="PostHeader"] [class*="gradient" i],
+        [class*="PostHeader"] [class*="Gradient" i],
+        [class*="PostHeader"] [class*="subscribe" i][class*="fade" i],
+        [class*="PostHeader"] [class*="action" i][class*="fade" i],
+        [class*="PostHeaderTitle"] [class*="fade" i],
+        [class*="PostHeaderTitle"] [class*="Fade" i],
+        [class*="PostHeaderTitle"] [class*="mask" i],
+        [class*="PostHeaderTitle"] [class*="Mask" i],
+        [class*="post_header"] [class*="fade" i],
+        [class*="post_header"] [class*="Fade" i],
+        [class*="PostOwner"] [class*="fade" i],
+        [class*="PostOwner"] [class*="Fade" i],
+        [class*="WallPost"] [class*="fade" i],
+        [class*="FeedBlock"] [class*="fade" i],
         [class*="PostHeader"] *::after,
         [class*="PostHeader"] *::before,
         [class*="post_header"] *::after,
         [class*="post_header"] *::before,
         [class*="PostOwner"] *::after,
         [class*="PostOwner"] *::before,
+        [class*="PostHeaderTitle"] *::after,
+        [class*="PostHeaderTitle"] *::before,
         [class*="WallPost"] [class*="header" i] *::after,
         [class*="WallPost"] [class*="header" i] *::before,
-        [class*="FeedBlock"] [class*="header" i] *::after,
-        [class*="FeedBlock"] [class*="header" i] *::before,
         .vkuiHeadline--ellipsis::after,
         .vkuiHeadline--ellipsis::before,
         .vkuiTypography--ellipsis::after,
@@ -943,21 +979,22 @@
         [class*="ellipsis"]::after,
         [class*="ellipsis"]::before,
         [class*="Ellipsis"]::after,
-        [class*="Ellipsis"]::before,
-        [class*="fade" i],
-        [class*="Fade" i],
-        [class*="mask" i],
-        [class*="Mask" i],
-        [class*="gradient" i] {
+        [class*="Ellipsis"]::before {
             display: none !important;
             content: none !important;
             opacity: 0 !important;
             visibility: hidden !important;
+            width: 0 !important;
+            height: 0 !important;
             background: transparent !important;
             background-color: transparent !important;
             background-image: none !important;
+            mask: none !important;
             mask-image: none !important;
+            -webkit-mask: none !important;
             -webkit-mask-image: none !important;
+            box-shadow: none !important;
+            border: none !important;
         }
 
         /* 3. СКРЫТИЕ НИЖНЕЙ ШТОРКИ "ТОЛЬКО НЕПРОЧИТАННЫЕ" */
@@ -3324,7 +3361,7 @@
         itemMenu.setAttribute('href', '/settings?act=vmu_menu');
 
         const iconContainerMenu = itemMenu.querySelector('.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]');
-        const gearSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: inherit !important; margin: 0 auto !important;"><circle cx="14" cy="14" r="3.75" stroke="currentColor" stroke-width="2"/><path d="M14 2.5a1.5 1.5 0 0 1 1.45 1.1l.3 1.2a2 2 0 0 0 2.1 1.5l1.2-.3a1.5 1.5 0 0 1 1.7 1.7l-.3 1.2a2 2 0 0 0 1.5 2.1l1.2.3a1.5 1.5 0 0 1 1.1 1.45v1.5a1.5 1.5 0 0 1-1.1 1.45l-1.2.3a2 2 0 0 0-1.5 2.1l.3 1.2a1.5 1.5 0 0 1-1.7 1.7l-1.2-.3a2 2 0 0 0-2.1 1.5l-.3 1.2a1.5 1.5 0 0 1-1.45 1.1h-1.5a1.5 1.5 0 0 1-1.45-1.1l-.3-1.2a2 2 0 0 0-2.1-1.5l-1.2.3a1.5 1.5 0 0 1-1.7-1.7l.3-1.2a2 2 0 0 0-1.5-2.1l-1.2-.3a1.5 1.5 0 0 1-1.1-1.45v-1.5a1.5 1.5 0 0 1 1.1-1.45l1.2-.3a2 2 0 0 0 1.5-2.1l-.3-1.2a1.5 1.5 0 0 1 1.7-1.7l1.2.3a2 2 0 0 0 2.1-1.5l.3-1.2a1.5 1.5 0 0 1 1.45-1.1h1.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
+        const gearSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: #ffffff !important; margin: 0 auto !important;"><circle cx="14" cy="14" r="3.75" stroke="currentColor" stroke-width="2"/><path d="M14 2.5a1.5 1.5 0 0 1 1.45 1.1l.3 1.2a2 2 0 0 0 2.1 1.5l1.2-.3a1.5 1.5 0 0 1 1.7 1.7l-.3 1.2a2 2 0 0 0 1.5 2.1l1.2.3a1.5 1.5 0 0 1 1.1 1.45v1.5a1.5 1.5 0 0 1-1.1 1.45l-1.2.3a2 2 0 0 0-1.5 2.1l.3 1.2a1.5 1.5 0 0 1-1.7 1.7l-1.2-.3a2 2 0 0 0-2.1 1.5l-.3 1.2a1.5 1.5 0 0 1-1.45 1.1h-1.5a1.5 1.5 0 0 1-1.45-1.1l-.3-1.2a2 2 0 0 0-2.1-1.5l-1.2.3a1.5 1.5 0 0 1-1.7-1.7l.3-1.2a2 2 0 0 0-1.5-2.1l-1.2-.3a1.5 1.5 0 0 1-1.1-1.45v-1.5a1.5 1.5 0 0 1 1.1-1.45l1.2-.3a2 2 0 0 0 1.5-2.1l-.3-1.2a1.5 1.5 0 0 1 1.7-1.7l1.2.3a2 2 0 0 0 2.1-1.5l.3-1.2a1.5 1.5 0 0 1 1.45-1.1h1.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
         if (iconContainerMenu) {
             iconContainerMenu.innerHTML = gearSvg;
         }
@@ -3357,7 +3394,7 @@
         itemDebug.setAttribute('href', '/settings?act=vmu_debug');
 
         const iconContainerDebug = itemDebug.querySelector('.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]');
-        const bugSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: inherit !important; margin: 0 auto !important;"><path d="M11 8L8.5 4.5M17 8l2.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="8.5" y="8" width="11" height="13" rx="5.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 11.5h5M3.5 15h5M3.5 18.5h5M19.5 11.5h5M19.5 15h5M19.5 18.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 11.5v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+        const bugSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: #ffffff !important; margin: 0 auto !important;"><path d="M11 8L8.5 4.5M17 8l2.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="8.5" y="8" width="11" height="13" rx="5.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 11.5h5M3.5 15h5M3.5 18.5h5M19.5 11.5h5M19.5 15h5M19.5 18.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 11.5v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
         if (iconContainerDebug) {
             iconContainerDebug.innerHTML = bugSvg;
         }
@@ -4530,46 +4567,43 @@
         applySearchTabCustomization(searchItem);
         applyBottomTabIconParams(items);
 
-        // Управление активным состоянием табов при кастомизации
+        // Управление активным состоянием всех вкладок на основе текущего пути
+        const currentPath = window.location.pathname.toLowerCase();
+        const currentSearch = window.location.search.toLowerCase();
+        const fullUrl = currentPath + currentSearch;
+
+        let activeIdx = -1;
         if (currentTabSearch !== 'search') {
             const def = TAB_DEFINITIONS[currentTabSearch];
-            if (def) {
-                const currentPath = window.location.pathname.toLowerCase();
-                const currentSearch = window.location.search.toLowerCase();
-                const fullUrl = currentPath + currentSearch;
-                const isCustomTabActive = def.matchPaths.some(p => fullUrl.startsWith(p) || fullUrl.includes(p));
-
-                const menuItem = items[items.length - 1];
-
-                if (isCustomTabActive) {
-                    // 1. Подсвечиваем замененную кнопку (items[1]) как активную
-                    searchItem.classList.add('vkuiTabbarItem--selected', 'vmu-tab-selected');
-                    searchItem.classList.remove('vmu-tab-unselected');
-                    searchItem.setAttribute('aria-selected', 'true');
-
-                    // 2. Снимаем подсветку со ВСЕХ остальных вкладок на панели (Главная, Мессенджер, Клипы, Ещё)
-                    for (let i = 0; i < items.length; i++) {
-                        if (i !== 1) {
-                            items[i].classList.remove('vkuiTabbarItem--selected', 'vmu-tab-selected', 'bottom_nav__item--active');
-                            items[i].classList.add('vmu-tab-unselected');
-                            items[i].setAttribute('aria-selected', 'false');
-                        }
-                    }
-                } else {
-                    searchItem.classList.remove('vmu-tab-selected', 'vkuiTabbarItem--selected');
-                    searchItem.setAttribute('aria-selected', 'false');
-                    for (let i = 0; i < items.length; i++) {
-                        if (i !== 1) {
-                            items[i].classList.remove('vmu-tab-unselected');
-                        }
-                    }
-                }
+            if (def && def.matchPaths.some(p => fullUrl.startsWith(p) || fullUrl.includes(p))) {
+                activeIdx = 1;
             }
-        } else {
-            searchItem.classList.remove('vmu-tab-selected');
+        }
+
+        if (activeIdx === -1) {
+            if (currentPath === '/' || currentPath.startsWith('/feed')) {
+                activeIdx = 0;
+            } else if (currentPath.startsWith('/search') || currentPath.startsWith('/discover')) {
+                activeIdx = 1;
+            } else if (currentPath.startsWith('/mail') || currentPath.startsWith('/im') || currentPath.startsWith('/messages')) {
+                activeIdx = 2;
+            } else if (currentPath.startsWith('/clips')) {
+                activeIdx = 3;
+            } else if (currentPath.startsWith('/menu') || currentPath.startsWith('/settings') || currentPath.startsWith('/more') || currentPath.startsWith('/profile') || currentPath.startsWith('/edit') || currentPath.length > 1) {
+                activeIdx = items.length - 1;
+            }
+        }
+
+        if (activeIdx >= 0 && activeIdx < items.length) {
             for (let i = 0; i < items.length; i++) {
-                if (i !== 1) {
+                if (i === activeIdx) {
+                    items[i].classList.add('vkuiTabbarItem--selected', 'vmu-tab-selected', 'bottom_nav__item--active');
                     items[i].classList.remove('vmu-tab-unselected');
+                    items[i].setAttribute('aria-selected', 'true');
+                } else {
+                    items[i].classList.remove('vkuiTabbarItem--selected', 'vmu-tab-selected', 'bottom_nav__item--active');
+                    items[i].classList.add('vmu-tab-unselected');
+                    items[i].setAttribute('aria-selected', 'false');
                 }
             }
         }
