@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.29.4
+// @version      2.29.5
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -857,23 +857,12 @@
             font-weight: 600 !important;
         }
 
-        /* 2. АККУРАТНЫЙ ОТСТУП СПИСКА ДИАЛОГОВ И ИСПРАВЛЕНИЕ ПЕРЕКРЫТИЯ ПЕРВОГО ЧАТА ("ИЗБРАННОЕ") */
+        /* 2. АККУРАТНЫЙ ОТСТУП СПИСКА ДИАЛОГОВ */
         body.vmu-page-mail [class*="SubnavigationBar"],
         body.vmu-page-mail .vkuiSubnavigationBar,
         body.vmu-page-mail [class*="HorizontalScroll"],
         body.vmu-page-mail [class*="Tabs"] {
-            margin-bottom: 6px !important;
-        }
-
-        body.vmu-page-mail [class*="ConvoList"] > *:first-child,
-        body.vmu-page-mail [class*="ConvoList"] [class*="ConvoItem"]:first-child,
-        body.vmu-page-mail [class*="ConvoList"] [class*="SimpleCell"]:first-child,
-        body.vmu-page-mail [class*="ConvoList"] [class*="Cell"]:first-child,
-        body.vmu-page-mail [class*="DialogsList"] > *:first-child,
-        body.vmu-page-mail [class*="ConversationsList"] > *:first-child,
-        body.vmu-page-mail [class*="im-page--dialogs"] > *:first-child,
-        body.vmu-page-mail [class*="im-page--history"] > *:first-child {
-            margin-top: 10px !important;
+            margin-bottom: 4px !important;
         }
 
         /* Полная прозрачность названий каналов, сообществ и элементов диалогов */
@@ -921,7 +910,7 @@
             padding: 0 !important;
         }
 
-        /* 4. ЗАПРЕТ ПЕРЕНОСА КНОПОК В ШАПКЕ МЕССЕНДЖЕРА НА НОВУЮ СТРОКУ */
+        /* 4. ИДЕАЛЬНОЕ ВЫРАВНИВАНИЕ И РОВНАЯ БАЗОВАЯ ЛИНИЯ КНОПОК В ШАПКЕ МЕССЕНДЖЕРА */
         .vkmListHeader,
         [class*="vkmListHeader"],
         .vkmListHeader__actions,
@@ -929,7 +918,33 @@
         [class*="PanelHeader__after"],
         [class*="PanelHeader__right"],
         [class*="PanelHeader__controls"] {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
             flex-wrap: nowrap !important;
+            height: 100% !important;
+        }
+
+        .vkmListHeader__actions > *,
+        [class*="vkmListHeader__actions"] > *,
+        [class*="PanelHeader__after"] > *,
+        [class*="PanelHeader__right"] > *,
+        [class*="PanelHeader__controls"] > *,
+        .vkmListHeader .vkuiPanelHeaderButton,
+        [class*="vkmListHeader"] [class*="PanelHeaderButton"],
+        .vkuiPanelHeader .vkuiPanelHeaderButton,
+        [class*="PanelHeader"] [class*="PanelHeaderButton"],
+        #vmu-top-unread-btn {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            vertical-align: middle !important;
+            align-self: center !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            height: 48px !important;
+            max-height: 48px !important;
         }
 
         /* 5. СКРЫТИЕ КНОПКИ ДЕЙСТВИЙ (3 ТОЧКИ) СТРОГО В СПИСКЕ ДИАЛОГОВ (ConvoList / ConvoItem) */
@@ -2338,12 +2353,13 @@
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            width: 36px !important;
-            height: 36px !important;
-            border-radius: 50% !important;
+            align-self: center !important;
+            width: 44px !important;
+            height: 48px !important;
             cursor: pointer !important;
             user-select: none !important;
-            margin: 0 1px !important;
+            margin: 0 !important;
+            padding: 0 !important;
             color: var(--vkui--color_icon_secondary, #828282) !important;
             background: transparent !important;
             transition: background-color 0.2s ease, color 0.2s ease !important;
