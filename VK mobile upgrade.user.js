@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.29.14
+// @version      2.29.15
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -865,10 +865,22 @@
             margin-bottom: 6px !important;
         }
 
-        /* Полная прозрачность названий каналов, сообществ и элементов диалогов */
-        [class*="ConvoItem"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not(img):not(svg):not(canvas),
-        [class*="im-dialog"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not(img):not(svg):not(canvas),
-        [class*="DialogsList"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not(img):not(svg):not(canvas),
+        /* Полная прозрачность элементов списка диалогов и сообщений (устранение темных рамок вокруг названий каналов и бейджей) */
+        body.vmu-page-mail [class*="ConvoList"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not(img):not(svg):not(canvas),
+        body.vmu-page-mail .vkuiSimpleCell *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not(img):not(svg):not(canvas),
+        body.vmu-page-mail [class*="SimpleCell"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not(img):not(svg):not(canvas),
+        body.vmu-page-mail .vkuiTypography,
+        body.vmu-page-mail [class*="Typography"],
+        body.vmu-page-mail .vkuiHeadline,
+        body.vmu-page-mail [class*="Headline"],
+        body.vmu-page-mail .vkuiFootnote,
+        body.vmu-page-mail [class*="Footnote"],
+        body.vmu-page-mail .vkuiSubhead,
+        body.vmu-page-mail [class*="Subhead"],
+        body.vmu-page-mail [class*="SimpleCell__children"],
+        body.vmu-page-mail [class*="SimpleCell__text"],
+        body.vmu-page-mail [class*="SimpleCell__middle"],
+        body.vmu-page-mail [class*="SimpleCell__content"],
         [class*="EntityName"],
         [class*="EntityName"] *,
         [class*="Entity__title"],
@@ -883,13 +895,7 @@
         [class*="AuthorName"],
         [class*="AuthorName"] *,
         [class*="im-mess--author"],
-        [class*="im-mess--author"] *,
-        [class*="im-dialog--name"],
-        [class*="im-dialog--title"],
-        [class*="ConvoItem__name"],
-        [class*="ConvoItem__title"],
-        [class*="ConversationItem__title"],
-        [class*="ConversationItem__name"] {
+        [class*="im-mess--author"] * {
             background-color: transparent !important;
             background: transparent !important;
         }
