@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.29.16
+// @version      2.29.17
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -824,11 +824,12 @@
             color: var(--vkui--color_icon_accent, #71aaeb) !important;
         }
 
-        /* 1. ИСПРАВЛЕНИЕ ОВАЛЬНЫХ СЧЕТЧИКОВ СООБЩЕНИЙ/УВЕДОМЛЕНИЙ -> ИДЕАЛЬНЫЙ КРУГ */
+        /* 1. ИСПРАВЛЕНИЕ ОВАЛЬНЫХ СЧЕТЧИКОВ СООБЩЕНИЙ/УВЕДОМЛЕНИЙ -> ИДЕАЛЬНЫЙ КРУГ И БЕЛЫЙ ТЕКСТ */
         [class*="Counter"],
         .vkuiCounter,
         .im_peer_counter,
-        [class*="Badge"] {
+        [class*="Badge"],
+        .vkuiBadge {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -840,12 +841,18 @@
             box-sizing: border-box !important;
             border-radius: 10px !important;
             flex-shrink: 0 !important;
+            color: #ffffff !important;
         }
 
         [class*="Counter__in"],
         [class*="Counter__children"],
         .vkuiCounter__in,
-        .vkuiCounter__children {
+        .vkuiCounter__children,
+        [class*="Counter"] *,
+        .vkuiCounter *,
+        .im_peer_counter *,
+        [class*="Badge"] *,
+        .vkuiBadge * {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -854,7 +861,9 @@
             margin: 0 !important;
             line-height: 1 !important;
             height: 100% !important;
-            font-weight: 600 !important;
+            font-weight: 700 !important;
+            color: #ffffff !important;
+            fill: #ffffff !important;
         }
 
         /* 2. АККУРАТНЫЙ ОТСТУП СПИСКА ДИАЛОГОВ ПОД ШТОРКОЙ КАТЕГОРИЙ */
@@ -900,47 +909,68 @@
             background: transparent !important;
         }
 
-        /* Устранение черных пятен/градиентов обрезки авторов в ленте новостей и постах */
+        /* Устранение темных пятен и градиентных масок обрезки авторов в ленте новостей и постах */
         [class*="PostHeader"] [class*="fade" i],
+        [class*="PostHeader"] [class*="Fade" i],
         [class*="PostHeader"] [class*="mask" i],
+        [class*="PostHeader"] [class*="Mask" i],
         [class*="PostHeader"] [class*="gradient" i],
         [class*="post_header"] [class*="fade" i],
+        [class*="post_header"] [class*="Fade" i],
         [class*="post_header"] [class*="mask" i],
+        [class*="post_header"] [class*="Mask" i],
         [class*="post_header"] [class*="gradient" i],
         [class*="PostOwner"] [class*="fade" i],
+        [class*="PostOwner"] [class*="Fade" i],
         [class*="PostOwner"] [class*="mask" i],
+        [class*="PostOwner"] [class*="Mask" i],
         [class*="PostOwner"] [class*="gradient" i],
         [class*="WallPost"] [class*="fade" i],
+        [class*="WallPost"] [class*="Fade" i],
         [class*="WallPost"] [class*="mask" i],
+        [class*="WallPost"] [class*="Mask" i],
         [class*="WallPost"] [class*="gradient" i],
         [class*="FeedBlock"] [class*="fade" i],
+        [class*="FeedBlock"] [class*="Fade" i],
         [class*="FeedBlock"] [class*="mask" i],
+        [class*="FeedBlock"] [class*="Mask" i],
         [class*="FeedBlock"] [class*="gradient" i],
         [class*="PostHeaderTitle"] [class*="fade" i],
+        [class*="PostHeaderTitle"] [class*="Fade" i],
         [class*="PostHeaderTitle"] [class*="mask" i],
+        [class*="PostHeaderTitle"] [class*="Mask" i],
         [class*="post_header_title"] [class*="fade" i],
+        [class*="post_header_title"] [class*="Fade" i],
         [class*="post_header_title"] [class*="mask" i],
-        [class*="PostHeader"],
-        [class*="PostHeader"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Button"]):not(button):not(img):not(svg):not(canvas),
-        [class*="post_header"],
-        [class*="post_header"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Button"]):not(button):not(img):not(svg):not(canvas),
-        [class*="PostOwner"],
-        [class*="PostOwner"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Button"]):not(button):not(img):not(svg):not(canvas),
-        [class*="WallPost__header"],
-        [class*="WallPost__header"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Button"]):not(button):not(img):not(svg):not(canvas),
-        [class*="wall_post__header"],
-        [class*="wall_post__header"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Button"]):not(button):not(img):not(svg):not(canvas) {
-            background-color: transparent !important;
+        [class*="post_header_title"] [class*="Mask" i],
+        [class*="PostHeader"] [class*="fade" i]::after,
+        [class*="PostHeader"] [class*="fade" i]::before,
+        [class*="PostOwner"] [class*="fade" i]::after,
+        [class*="PostOwner"] [class*="fade" i]::before,
+        [class*="post_header"] [class*="fade" i]::after,
+        [class*="post_header"] [class*="fade" i]::before,
+        [class*="PostHeader"] [class*="name" i]::after,
+        [class*="PostHeader"] [class*="name" i]::before,
+        [class*="PostHeader"] [class*="title" i]::after,
+        [class*="PostHeader"] [class*="title" i]::before,
+        [class*="PostOwner"] [class*="name" i]::after,
+        [class*="PostOwner"] [class*="name" i]::before,
+        [class*="PostOwner"] [class*="title" i]::after,
+        [class*="PostOwner"] [class*="title" i]::before,
+        [class*="post_header"] [class*="name" i]::after,
+        [class*="post_header"] [class*="name" i]::before,
+        [class*="post_header"] [class*="title" i]::after,
+        [class*="post_header"] [class*="title" i]::before,
+        [class*="post_author"] [class*="fade" i],
+        [class*="wall_author"] [class*="fade" i] {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
             background: transparent !important;
-        }
-
-        /* Иконки кастомных пунктов скрипта в настройках имеют цвет соседних иконок */
-        .vmu-custom-settings-item,
-        .vmu-custom-settings-item [class*="SimpleCell__before"],
-        .vmu-custom-settings-item [class*="Cell__before"],
-        .vmu-custom-settings-item .vkuiIcon,
-        .vmu-custom-settings-item svg {
-            color: var(--vkui--color_icon_secondary, #828282) !important;
+            background-color: transparent !important;
+            background-image: none !important;
+            mask-image: none !important;
+            -webkit-mask-image: none !important;
         }
 
         /* 3. СКРЫТИЕ НИЖНЕЙ ШТОРКИ "ТОЛЬКО НЕПРОЧИТАННЫЕ" */
@@ -1369,8 +1399,9 @@
             --link_color: #88c0d0 !important;
             --button_primary_background: #88c0d0 !important;
             --button_primary_foreground: #2e3440 !important;
-            --counter_primary_background: #88c0d0 !important;
-            --counter_primary_text: #2e3440 !important;
+            --counter_primary_background: #bf616a !important;
+            --counter_primary_text: #ffffff !important;
+            --counter_secondary_text: #ffffff !important;
 
             /* РАЗДЕЛИТЕЛИ И РАМКИ */
             --vkui--color_separator_primary: #434c5e !important;
@@ -1404,11 +1435,18 @@
         html.vmu-theme-nord .vkuiPanelHeader__in,
         html.vmu-theme-nord .vkuiPanelHeader__bg,
         html.vmu-theme-nord [class*="PanelHeader"],
+        html.vmu-theme-nord [class*="vkmListHeader"],
+        html.vmu-theme-nord [class*="ListHeader"],
+        html.vmu-theme-nord .im-page--header,
         html[data-theme="nord"] .vkuiPanelHeader,
         html[data-theme="nord"] .vkuiPanelHeader__in,
         html[data-theme="nord"] .vkuiPanelHeader__bg,
-        html[data-theme="nord"] [class*="PanelHeader"] {
+        html[data-theme="nord"] [class*="PanelHeader"],
+        html[data-theme="nord"] [class*="vkmListHeader"],
+        html[data-theme="nord"] [class*="ListHeader"],
+        html[data-theme="nord"] .im-page--header {
             background-color: #2e3440 !important;
+            border-bottom: 1px solid #434c5e !important;
             color: #eceff4 !important;
         }
 
@@ -1420,6 +1458,26 @@
         html[data-theme="nord"] .Tabbar {
             background-color: #2e3440 !important;
             border-top: 1px solid #434c5e !important;
+        }
+
+        html.vmu-theme-nord .vkuiSearch,
+        html.vmu-theme-nord [class*="Search"],
+        html.vmu-theme-nord [class*="Search__field"],
+        html.vmu-theme-nord [class*="Search__input"],
+        html[data-theme="nord"] .vkuiSearch,
+        html[data-theme="nord"] [class*="Search"],
+        html[data-theme="nord"] [class*="Search__field"],
+        html[data-theme="nord"] [class*="Search__input"] {
+            background-color: #3b4252 !important;
+            color: #eceff4 !important;
+        }
+
+        html.vmu-theme-nord .vkuiButton--mode-secondary,
+        html.vmu-theme-nord [class*="Button--mode-secondary"],
+        html[data-theme="nord"] .vkuiButton--mode-secondary,
+        html[data-theme="nord"] [class*="Button--mode-secondary"] {
+            background-color: #434c5e !important;
+            color: #eceff4 !important;
         }
 
         html.vmu-theme-nord .vkuiCard,
@@ -1446,8 +1504,34 @@
             color: #eceff4 !important;
         }
 
-        html.vmu-theme-nord a,
-        html[data-theme="nord"] a {
+        /* ТАББАР: неактивные вкладки серые, только активная бирюзовая */
+        html.vmu-theme-nord .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not([aria-selected="true"]):not(.vmu-tab-selected),
+        html.vmu-theme-nord [class*="TabbarItem"]:not([class*="selected"]):not([aria-selected="true"]):not(.vmu-tab-selected),
+        html[data-theme="nord"] .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not([aria-selected="true"]):not(.vmu-tab-selected),
+        html[data-theme="nord"] [class*="TabbarItem"]:not([class*="selected"]):not([aria-selected="true"]):not(.vmu-tab-selected) {
+            color: #828282 !important;
+        }
+
+        html.vmu-theme-nord .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not([aria-selected="true"]):not(.vmu-tab-selected) :is([class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"], svg, [class*="TabbarItem__icon"] svg),
+        html[data-theme="nord"] .vkuiTabbarItem:not(.vkuiTabbarItem--selected):not([aria-selected="true"]):not(.vmu-tab-selected) :is([class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"], svg, [class*="TabbarItem__icon"] svg) {
+            color: #828282 !important;
+            fill: #828282 !important;
+        }
+
+        html.vmu-theme-nord :is(.vkuiTabbarItem--selected, [aria-selected="true"], .vmu-tab-selected, [class*="TabbarItem--selected"]),
+        html[data-theme="nord"] :is(.vkuiTabbarItem--selected, [aria-selected="true"], .vmu-tab-selected, [class*="TabbarItem--selected"]) {
+            color: #88c0d0 !important;
+        }
+
+        html.vmu-theme-nord :is(.vkuiTabbarItem--selected, [aria-selected="true"], .vmu-tab-selected, [class*="TabbarItem--selected"]) :is([class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"], svg, [class*="TabbarItem__icon"] svg),
+        html[data-theme="nord"] :is(.vkuiTabbarItem--selected, [aria-selected="true"], .vmu-tab-selected, [class*="TabbarItem--selected"]) :is([class*="TabbarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__text"], [class*="TabBarItem__children"], svg, [class*="TabbarItem__icon"] svg) {
+            color: #88c0d0 !important;
+            fill: #88c0d0 !important;
+        }
+
+        /* ССЫЛКИ В КОНТЕНТЕ */
+        html.vmu-theme-nord :is(.vkuiPanel__in, [class*="Panel__in"], main, article, .vkuiCard, [class*="Card"], [class*="Group"], .wall_post_text, [class*="PostText"]) a:not([class*="TabbarItem"]):not([class*="TabBarItem"]):not(.vkuiTabbarItem):not([class*="PanelHeader"]):not([class*="Header"]),
+        html[data-theme="nord"] :is(.vkuiPanel__in, [class*="Panel__in"], main, article, .vkuiCard, [class*="Card"], [class*="Group"], .wall_post_text, [class*="PostText"]) a:not([class*="TabbarItem"]):not([class*="TabBarItem"]):not(.vkuiTabbarItem):not([class*="PanelHeader"]):not([class*="Header"]) {
             color: #88c0d0 !important;
         }
     `;
@@ -3233,7 +3317,7 @@
         itemMenu.setAttribute('href', '/settings?act=vmu_menu');
 
         const iconContainerMenu = itemMenu.querySelector('.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]');
-        const gearSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: var(--vkui--color_icon_secondary, #828282) !important; margin: 0 auto !important;"><circle cx="14" cy="14" r="3.75" stroke="currentColor" stroke-width="2"/><path d="M14 2.5a1.5 1.5 0 0 1 1.45 1.1l.3 1.2a2 2 0 0 0 2.1 1.5l1.2-.3a1.5 1.5 0 0 1 1.7 1.7l-.3 1.2a2 2 0 0 0 1.5 2.1l1.2.3a1.5 1.5 0 0 1 1.1 1.45v1.5a1.5 1.5 0 0 1-1.1 1.45l-1.2.3a2 2 0 0 0-1.5 2.1l.3 1.2a1.5 1.5 0 0 1-1.7 1.7l-1.2-.3a2 2 0 0 0-2.1 1.5l-.3 1.2a1.5 1.5 0 0 1-1.45 1.1h-1.5a1.5 1.5 0 0 1-1.45-1.1l-.3-1.2a2 2 0 0 0-2.1-1.5l-1.2.3a1.5 1.5 0 0 1-1.7-1.7l.3-1.2a2 2 0 0 0-1.5-2.1l-1.2-.3a1.5 1.5 0 0 1-1.1-1.45v-1.5a1.5 1.5 0 0 1 1.1-1.45l1.2-.3a2 2 0 0 0 1.5-2.1l-.3-1.2a1.5 1.5 0 0 1 1.7-1.7l1.2.3a2 2 0 0 0 2.1-1.5l.3-1.2a1.5 1.5 0 0 1 1.45-1.1h1.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
+        const gearSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: inherit !important; margin: 0 auto !important;"><circle cx="14" cy="14" r="3.75" stroke="currentColor" stroke-width="2"/><path d="M14 2.5a1.5 1.5 0 0 1 1.45 1.1l.3 1.2a2 2 0 0 0 2.1 1.5l1.2-.3a1.5 1.5 0 0 1 1.7 1.7l-.3 1.2a2 2 0 0 0 1.5 2.1l1.2.3a1.5 1.5 0 0 1 1.1 1.45v1.5a1.5 1.5 0 0 1-1.1 1.45l-1.2.3a2 2 0 0 0-1.5 2.1l.3 1.2a1.5 1.5 0 0 1-1.7 1.7l-1.2-.3a2 2 0 0 0-2.1 1.5l-.3 1.2a1.5 1.5 0 0 1-1.45 1.1h-1.5a1.5 1.5 0 0 1-1.45-1.1l-.3-1.2a2 2 0 0 0-2.1-1.5l-1.2.3a1.5 1.5 0 0 1-1.7-1.7l.3-1.2a2 2 0 0 0-1.5-2.1l-1.2-.3a1.5 1.5 0 0 1-1.1-1.45v-1.5a1.5 1.5 0 0 1 1.1-1.45l1.2-.3a2 2 0 0 0 1.5-2.1l-.3-1.2a1.5 1.5 0 0 1 1.7-1.7l1.2.3a2 2 0 0 0 2.1-1.5l.3-1.2a1.5 1.5 0 0 1 1.45-1.1h1.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
         if (iconContainerMenu) {
             iconContainerMenu.innerHTML = gearSvg;
         }
@@ -3266,7 +3350,7 @@
         itemDebug.setAttribute('href', '/settings?act=vmu_debug');
 
         const iconContainerDebug = itemDebug.querySelector('.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]');
-        const bugSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: var(--vkui--color_icon_secondary, #828282) !important; margin: 0 auto !important;"><path d="M11 8L8.5 4.5M17 8l2.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="8.5" y="8" width="11" height="13" rx="5.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 11.5h5M3.5 15h5M3.5 18.5h5M19.5 11.5h5M19.5 15h5M19.5 18.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 11.5v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+        const bugSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: inherit !important; margin: 0 auto !important;"><path d="M11 8L8.5 4.5M17 8l2.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="8.5" y="8" width="11" height="13" rx="5.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 11.5h5M3.5 15h5M3.5 18.5h5M19.5 11.5h5M19.5 15h5M19.5 18.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 11.5v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
         if (iconContainerDebug) {
             iconContainerDebug.innerHTML = bugSvg;
         }
