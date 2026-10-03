@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.31.0
+// @version      2.31.1
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Nordic, Red&Gray), принудительное кэширование интерфейса (Stale-While-Revalidate для JS, CSS, шрифтов и иконок) с очисткой кэша, раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -1279,10 +1279,10 @@
             color: inherit !important;
         }
         .vmu-custom-settings-item :is(.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]) :is(.vkuiIcon, svg) {
-            color: var(--vkui--color_icon_secondary, #828282) !important;
+            color: var(--vkui--color_icon_accent, var(--color_icon_accent, currentColor)) !important;
         }
         .vmu-custom-settings-item :is(.vkuiSimpleCell__after, [class*="SimpleCell__after"], [class*="Cell__after"]) :is(.vkuiIcon, svg) {
-            color: var(--vkui--color_icon_secondary, #828282) !important;
+            color: var(--vkui--color_icon_secondary, var(--color_icon_secondary, #828282)) !important;
         }
 
         html.vmu-theme-nord .vmu-custom-settings-item :is(.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]) :is(.vkuiIcon, svg),
@@ -1294,9 +1294,9 @@
 
         /* 1.7. СКРЫТИЕ СТАТУСА "ПОДКЛЮЧЕНИЕ..." В ШАПКЕ МЕССЕНДЖЕРА */
         body.vmu-page-mail :is(
-            [class*="PanelHeader__subhead" i],
-            [class*="im-page--header-status" i],
-            [class*="HeaderStatus" i],
+            [class*="PanelHeader__subhead" i]:not(:has([class*="Typing" i])):not(:has([class*="typing" i])),
+            [class*="im-page--header-status" i]:not(:has([class*="Typing" i])):not(:has([class*="typing" i])),
+            [class*="HeaderStatus" i]:not(:has([class*="Typing" i])):not(:has([class*="typing" i])),
             [class*="ConnectionStatus" i],
             [class*="ConnectionBanner" i],
             [class*="connection_status" i],
@@ -1356,10 +1356,54 @@
             margin-bottom: 6px !important;
         }
 
+        /* 2.4. ВОССТАНОВЛЕНИЕ ОРИГИНАЛЬНОГО ИНДИКАТОРА «ПЕЧАТАЕТ» В ЧАТАХ */
+        .TypingIndicator,
+        [class*="TypingIndicator"],
+        .ConvoHistoryTyping,
+        [class*="ConvoHistoryTyping"] {
+            display: inline-flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            vertical-align: middle !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        :is(.TypingIndicator--text, [class*="TypingIndicator--text"]) :is(.TypingIndicator__particle, [class*="particle"]),
+        :is(.TypingIndicator--text, [class*="TypingIndicator--text"])::before,
+        :is(.TypingIndicator--text, [class*="TypingIndicator--text"])::after {
+            display: block !important;
+            width: 4px !important;
+            height: 4px !important;
+            margin: 0 1.5px !important;
+            background: currentColor !important;
+            background-color: currentColor !important;
+            border-radius: 50% !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            content: '' !important;
+            backface-visibility: hidden !important;
+        }
+
+        :is(.TypingIndicator--voice, [class*="TypingIndicator--voice"]) :is(.TypingIndicator__particle, [class*="particle"]),
+        :is(.TypingIndicator--voice, [class*="TypingIndicator--voice"])::before,
+        :is(.TypingIndicator--voice, [class*="TypingIndicator--voice"])::after {
+            display: block !important;
+            width: 3px !important;
+            height: 12px !important;
+            margin-right: 3px !important;
+            background: currentColor !important;
+            background-color: currentColor !important;
+            border-radius: 2px !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            content: '' !important;
+        }
+
         /* Полная прозрачность элементов списка диалогов и сообщений (устранение темных рамок вокруг названий каналов и бейджей) */
-        body.vmu-page-mail [class*="ConvoList"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not(img):not(svg):not(canvas),
-        body.vmu-page-mail .vkuiSimpleCell *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not(img):not(svg):not(canvas),
-        body.vmu-page-mail [class*="SimpleCell"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not(img):not(svg):not(canvas),
+        body.vmu-page-mail [class*="ConvoList"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not([class*="Typing"]):not([class*="particle"]):not(img):not(svg):not(canvas),
+        body.vmu-page-mail .vkuiSimpleCell *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not([class*="Typing"]):not([class*="particle"]):not(img):not(svg):not(canvas),
+        body.vmu-page-mail [class*="SimpleCell"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not([class*="Typing"]):not([class*="particle"]):not(img):not(svg):not(canvas),
         body.vmu-page-mail .vkuiTypography,
         body.vmu-page-mail [class*="Typography"],
         body.vmu-page-mail .vkuiHeadline,
@@ -1420,20 +1464,22 @@
         [class*="PostHeaderTitle"] *::before,
         [class*="WallPost"] [class*="header" i] *::after,
         [class*="WallPost"] [class*="header" i] *::before,
-        .vkuiHeadline--ellipsis::after,
-        .vkuiHeadline--ellipsis::before,
-        .vkuiTypography--ellipsis::after,
-        .vkuiTypography--ellipsis::before,
-        .vkuiSubhead--ellipsis::after,
-        .vkuiSubhead--ellipsis::before,
-        .vkuiText--ellipsis::after,
-        .vkuiText--ellipsis::before,
-        .vkuiTitle--ellipsis::after,
-        .vkuiTitle--ellipsis::before,
-        [class*="ellipsis"]::after,
-        [class*="ellipsis"]::before,
-        [class*="Ellipsis"]::after,
-        [class*="Ellipsis"]::before {
+        :is([class*="PostHeader"], [class*="post_header"], [class*="PostOwner"], [class*="FeedBlock"]) :is(
+            .vkuiHeadline--ellipsis::after,
+            .vkuiHeadline--ellipsis::before,
+            .vkuiTypography--ellipsis::after,
+            .vkuiTypography--ellipsis::before,
+            .vkuiSubhead--ellipsis::after,
+            .vkuiSubhead--ellipsis::before,
+            .vkuiText--ellipsis::after,
+            .vkuiText--ellipsis::before,
+            .vkuiTitle--ellipsis::after,
+            .vkuiTitle--ellipsis::before,
+            [class*="ellipsis"]::after,
+            [class*="ellipsis"]::before,
+            [class*="Ellipsis"]::after,
+            [class*="Ellipsis"]::before
+        ) {
             display: none !important;
             content: none !important;
             opacity: 0 !important;
@@ -1447,8 +1493,8 @@
             mask-image: none !important;
             -webkit-mask: none !important;
             -webkit-mask-image: none !important;
-            box-shadow: none !important;
             border: none !important;
+            box-shadow: none !important;
         }
 
         /* 3. СКРЫТИЕ НИЖНЕЙ ШТОРКИ "ТОЛЬКО НЕПРОЧИТАННЫЕ" */
@@ -4365,7 +4411,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.31.0</div>
+            <div>• <b>Script Version:</b> v2.31.1</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>UI Cache:</b> ${isUiCacheEnabled}</div>
@@ -5508,6 +5554,9 @@
         );
         for (let i = 0; i < statusEls.length; i++) {
             const el = statusEls[i];
+            if (el.querySelector('[class*="Typing" i], [class*="typing" i]') || (el.textContent && el.textContent.toLowerCase().includes('печат'))) {
+                continue;
+            }
             el.style.setProperty('display', 'none', 'important');
             el.style.setProperty('height', '0', 'important');
             el.style.setProperty('margin', '0', 'important');
