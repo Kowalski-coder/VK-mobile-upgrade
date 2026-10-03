@@ -1,0 +1,24 @@
+# APK files
+*.apk
+*.apkm
+*.xapk
+*.idsig
+
+# Decompiled APK data and workspaces
+apk_extracted/
+apk_src/
+apk_workspace/
+decompiled/
+build/
+dist/
+
+# Android signing keys
+*.keystore
+*.jks
+
+# Tools downloaded locally
+tools/
+.cache/
+__pycache__/
+original_vk_extracted/
+original vk/

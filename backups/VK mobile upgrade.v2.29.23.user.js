@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.30.0
-// @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Nordic, Red&Gray), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
+// @version      2.29.23
+// @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Snow Black), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -225,8 +225,8 @@
         return false;
     }
 
-    const TYPING_PATTERNS = ['setactivity', 'messages.setactivity', 'act=a_typing', 'act=set_activity', 'act=typing', 'type=typing', 'type=audiomessage', '"type":"typing"'];
-    const READ_PATTERNS = ['markasread', 'messages.markasread', 'act=a_read_message', 'act=a_mark_read', 'act=mark_as_read', 'markaslistened', 'messages.markaslistened', 'act=mark_read'];
+    const TYPING_PATTERNS = ['setactivity', 'act=a_typing', 'act=set_activity', 'type=typing', 'type=audiomessage', '"type":"typing"'];
+    const READ_PATTERNS = ['markasread', 'act=a_read_message', 'act=a_mark_read', 'act=mark_as_read', 'markaslistened', 'act=read'];
 
     const AD_NETWORK_PATTERNS = [
         'act=get_audio_ad',
@@ -243,6 +243,7 @@
         'audio.getpromo'
     ];
 
+
     function extractStringBody(body) {
         if (!body) return '';
         if (typeof body === 'string') return body;
@@ -255,9 +256,6 @@
                 }
                 return entries.join('&');
             } catch (e) {}
-        }
-        if (typeof body === 'object') {
-            try { return JSON.stringify(body); } catch (e) {}
         }
         return '';
     }
@@ -317,7 +315,7 @@
         } catch (e) {}
     }
 
-    // Инициализация хуков window.fetch, XMLHttpRequest и WebSocket
+    // Инициализация хуков window.fetch и XMLHttpRequest
     function initNetworkInterceptors() {
         const targetWin = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
         if (targetWin.__vmu_interceptors_installed) return;
@@ -339,6 +337,7 @@
                     });
                 }
 
+
                 // Всегда активная блокировка рекламы в музыке и аналитики рекламы
                 if (matchesPattern(combined, AD_NETWORK_PATTERNS)) {
                     return new Response(JSON.stringify({ response: 0, payload: [0, []], ads: false }), {
@@ -347,7 +346,18 @@
                     });
                 }
 
-                // Нечиталка
+    
+            // Всегда активная блокировка рекламы в музыке и аналитики рекламы
+            if (matchesPattern(combined, AD_NETWORK_PATTERNS)) {
+                Object.defineProperty(this, 'readyState', { value: 4, writable: true });
+                Object.defineProperty(this, 'status', { value: 200, writable: true });
+                Object.defineProperty(this, 'responseText', { value: '{"response":0,"payload":[0,[]],"ads":false}', writable: true });
+                if (typeof this.onreadystatechange === 'function') this.onreadystatechange();
+                if (typeof this.onload === 'function') this.onload();
+                return;
+            }
+
+            // Нечиталка
                 if (isGhostReadEnabled && matchesPattern(combined, READ_PATTERNS)) {
                     return new Response(JSON.stringify({ response: 1, payload: [0, []] }), {
                         status: 200,
@@ -394,6 +404,7 @@
                 return;
             }
 
+
             // Всегда активная блокировка рекламы в музыке и аналитики рекламы
             if (matchesPattern(combined, AD_NETWORK_PATTERNS)) {
                 Object.defineProperty(this, 'readyState', { value: 4, writable: true });
@@ -425,28 +436,6 @@
 
             return origSend.apply(this, arguments);
         };
-
-        // 3. Hook WebSocket (для блокировки отправки печати и прочтения по сокетам)
-        if (targetWin.WebSocket && typeof targetWin.WebSocket.prototype.send === 'function') {
-            const origWsSend = targetWin.WebSocket.prototype.send;
-            targetWin.WebSocket.prototype.send = function(data) {
-                try {
-                    let str = '';
-                    if (typeof data === 'string') str = data;
-                    else if (data instanceof ArrayBuffer) str = new TextDecoder().decode(data);
-                    if (str) {
-                        const lower = str.toLowerCase();
-                        if (isGhostTypingEnabled && matchesPattern(lower, TYPING_PATTERNS)) {
-                            return; // отменяем отправку статуса набора текста
-                        }
-                        if (isGhostReadEnabled && matchesPattern(lower, READ_PATTERNS)) {
-                            return; // отменяем отправку статуса прочтения
-                        }
-                    }
-                } catch (e) {}
-                return origWsSend.apply(this, arguments);
-            };
-        }
     }
 
     // Запуск сетевых перехватчиков немедленно
@@ -599,8 +588,8 @@
     const THEME_OPTIONS = [
         { value: 'dark', label: 'Тёмная' },
         { value: 'light', label: 'Светлая' },
-        { value: 'nord', label: 'Nordic' },
-        { value: 'snow_black', label: 'Red&Gray' }
+        { value: 'nord', label: 'Nord' },
+        { value: 'snow_black', label: 'Snow Black' }
     ];
     const START_PAGE_OPTIONS = [
         { value: 'mail', label: 'Мессенджер (/mail)' },
@@ -799,12 +788,6 @@
             margin-bottom: 2px !important;
             position: relative !important;
         }
-        .vmu-deleted-msg-restored {
-            margin: 6px 12px !important;
-            padding: 8px 12px !important;
-            max-width: 85% !important;
-            box-sizing: border-box !important;
-        }
         .vmu-deleted-badge {
             display: inline-flex !important;
             align-items: center !important;
@@ -841,12 +824,12 @@
             color: var(--vkui--color_icon_accent, #71aaeb) !important;
         }
 
-        /* 1. ИСПРАВЛЕНИЕ СЧЕТЧИКОВ СООБЩЕНИЙ/УВЕДОМЛЕНИЙ -> ИДЕАЛЬНЫЙ КРУГ */
+        /* 1. ИСПРАВЛЕНИЕ ОВАЛЬНЫХ СЧЕТЧИКОВ СООБЩЕНИЙ/УВЕДОМЛЕНИЙ -> ИДЕАЛЬНЫЙ КРУГ, КРАСНЫЙ ФОН И БЕЛЫЙ ТЕКСТ */
         [class*="Counter"],
         .vkuiCounter,
         .im_peer_counter,
-        [class*="Badge"]:not([class*="Avatar"]):not([class*="ImageBase"]),
-        .vkuiBadge:not([class*="Avatar"]):not([class*="ImageBase"]),
+        [class*="Badge"],
+        .vkuiBadge,
         .vkuiTabbarItem__indicator,
         .vkuiTabbarItem__badge,
         .vmu-restored-badge {
@@ -854,13 +837,27 @@
             align-items: center !important;
             justify-content: center !important;
             text-align: center !important;
-            min-width: 18px !important;
-            height: 18px !important;
-            line-height: 18px !important;
-            padding: 0 4px !important;
+            min-width: 20px !important;
+            height: 20px !important;
+            line-height: 20px !important;
+            padding: 0 5px !important;
             box-sizing: border-box !important;
-            border-radius: 9px !important;
+            border-radius: 10px !important;
             flex-shrink: 0 !important;
+            background-color: var(--vkui--color_background_negative, #FF5C5C) !important;
+            color: #ffffff !important;
+        }
+
+        .vkuiCounter--mode-prominent,
+        [class*="Counter--mode-prominent"],
+        .vkuiCounter--mode-primary,
+        [class*="Counter--mode-primary"],
+        .im_peer_counter,
+        .vkuiBadge,
+        [class*="Badge"],
+        .vmu-restored-badge {
+            background-color: var(--vkui--color_background_negative, #FF5C5C) !important;
+            color: #ffffff !important;
         }
 
         [class*="Counter__in"],
@@ -876,154 +873,25 @@
             line-height: 1 !important;
             height: 100% !important;
             font-weight: 700 !important;
-        }
-
-        /* 1.1. СЧЁТЧИК НА НИЖНЕЙ ПАНЕЛИ: ВСЕГДА КРАСНЫЙ КРУЖОК С БЕЛЫМ ЧИСЛОМ (В ЛЮБОЙ ТЕМЕ И ПРИ ЛЮБОЙ АКТИВНОЙ ВКЛАДКЕ) */
-        :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav) :is([class*="TabbarItem__indicator"], [class*="TabbarItem__badge"], [class*="Counter"], .vkuiCounter, [class*="Badge"], .vkuiBadge, .vmu-restored-badge) {
-            background-color: #ff3347 !important;
-            background: #ff3347 !important;
-            color: #ffffff !important;
-            min-width: 18px !important;
-            height: 18px !important;
-            line-height: 18px !important;
-            padding: 0 4px !important;
-            box-sizing: border-box !important;
-            border-radius: 9px !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-
-        :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav) :is([class*="TabbarItem__indicator"], [class*="TabbarItem__badge"], [class*="Counter"], .vkuiCounter, [class*="Badge"], .vkuiBadge, .vmu-restored-badge) * {
-            color: #ffffff !important;
-            fill: #ffffff !important;
-            background: transparent !important;
-            opacity: 1 !important;
-        }
-
-        /* 1.2. СЧЁТЧИКИ В СПИСКЕ ДИАЛОГОВ (ВКЛАДКА МЕССЕНДЖЕР) */
-        /* Базово: красный кружок */
-        body.vmu-page-mail :is(.vkuiSimpleCell, [class*="ConvoList"], [class*="ConversationItem"], [class*="im-dialog"]) :is([class*="Counter"], .vkuiCounter, .im_peer_counter) {
-            background-color: #ff3347 !important;
-            background: #ff3347 !important;
-            border-radius: 10px !important;
-            min-width: 20px !important;
-            height: 20px !important;
-            line-height: 20px !important;
-            padding: 0 5px !important;
-            box-sizing: border-box !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            color: var(--vkui--color_background, #19191a) !important;
-        }
-
-        body.vmu-page-mail :is(.vkuiSimpleCell, [class*="ConvoList"], [class*="ConversationItem"], [class*="im-dialog"]) :is([class*="Counter"], .vkuiCounter, .im_peer_counter) * {
-            color: var(--vkui--color_background, #19191a) !important;
-            fill: var(--vkui--color_background, #19191a) !important;
-        }
-
-        /* Чаты с отключенными уведомлениями: серый кружок */
-        body.vmu-page-mail :is(.vkuiSimpleCell, [class*="ConvoList"], [class*="ConversationItem"], [class*="im-dialog"]) :is(
-            [class*="Counter--mode-secondary"],
-            .vkuiCounter--mode-secondary,
-            [class*="Counter--mode-inherit"],
-            .vkuiCounter--mode-inherit,
-            [class*="muted"] [class*="Counter"],
-            [class*="mute"] [class*="Counter"],
-            [data-muted] [class*="Counter"],
-            :has([class*="volume_outline"]) [class*="Counter"],
-            :has([class*="muted"]) [class*="Counter"],
-            :has([class*="mute"]) [class*="Counter"],
-            :has(use[*|href*="volume" i]) [class*="Counter"],
-            :has(use[*|href*="mute" i]) [class*="Counter"]
-        ) {
-            background-color: #76787a !important;
-            background: #76787a !important;
-        }
-
-        /* Число внутри счётчика чата принимает цвет фона соответствующей темы */
-        html[data-theme="light"] body.vmu-page-mail :is(.vkuiSimpleCell, [class*="ConvoList"], [class*="ConversationItem"], [class*="im-dialog"]) :is([class*="Counter"], .vkuiCounter, .im_peer_counter) *,
-        html[scheme="bright_light"] body.vmu-page-mail :is(.vkuiSimpleCell, [class*="ConvoList"], [class*="ConversationItem"], [class*="im-dialog"]) :is([class*="Counter"], .vkuiCounter, .im_peer_counter) * {
             color: #ffffff !important;
             fill: #ffffff !important;
         }
 
-        html[data-theme="dark"] body.vmu-page-mail :is(.vkuiSimpleCell, [class*="ConvoList"], [class*="ConversationItem"], [class*="im-dialog"]) :is([class*="Counter"], .vkuiCounter, .im_peer_counter) *,
-        html[scheme="space_gray"] body.vmu-page-mail :is(.vkuiSimpleCell, [class*="ConvoList"], [class*="ConversationItem"], [class*="im-dialog"]) :is([class*="Counter"], .vkuiCounter, .im_peer_counter) * {
-            color: #19191a !important;
-            fill: #19191a !important;
-        }
-
-        html.vmu-theme-nord body.vmu-page-mail :is(.vkuiSimpleCell, [class*="ConvoList"], [class*="ConversationItem"], [class*="im-dialog"]) :is([class*="Counter"], .vkuiCounter, .im_peer_counter) *,
-        html[data-theme="nord"] body.vmu-page-mail :is(.vkuiSimpleCell, [class*="ConvoList"], [class*="ConversationItem"], [class*="im-dialog"]) :is([class*="Counter"], .vkuiCounter, .im_peer_counter) * {
-            color: #2e3440 !important;
-            fill: #2e3440 !important;
-        }
-
-        html.vmu-theme-snow-black body.vmu-page-mail :is(.vkuiSimpleCell, [class*="ConvoList"], [class*="ConversationItem"], [class*="im-dialog"]) :is([class*="Counter"], .vkuiCounter, .im_peer_counter) *,
-        html[data-theme="snow_black"] body.vmu-page-mail :is(.vkuiSimpleCell, [class*="ConvoList"], [class*="ConversationItem"], [class*="im-dialog"]) :is([class*="Counter"], .vkuiCounter, .im_peer_counter) * {
-            color: #000000 !important;
-            fill: #000000 !important;
-        }
-
-        /* 1.3. ЗНАЧОК ДОБАВЛЕНИЯ ИСТОРИИ НА АВАТАРКЕ (ИДЕАЛЬНЫЙ КРУГ, ТЕМАТИЧЕСКИЙ ФОН И БЕЛЫЙ ПЛЮС) */
-        :is([class*="Avatar__badge"], [class*="ImageBase__badge"], [class*="AvatarBadge"], [class*="ImageBaseBadge"], .vkuiAvatar__badge, .vkuiImageBase__badge) {
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            width: 24px !important;
-            height: 24px !important;
-            min-width: 24px !important;
-            min-height: 24px !important;
-            border-radius: 50% !important;
-            box-sizing: border-box !important;
-            background-color: var(--vkui--color_background_accent, var(--color_background_accent, #2688eb)) !important;
-            background: var(--vkui--color_background_accent, var(--color_background_accent, #2688eb)) !important;
-            border: 2px solid var(--vkui--color_background, #19191a) !important;
-            box-shadow: none !important;
-        }
-
-        :is([class*="Avatar__badge"], [class*="ImageBase__badge"], [class*="AvatarBadge"], [class*="ImageBaseBadge"], .vkuiAvatar__badge, .vkuiImageBase__badge) :is(svg, path, *):not([class*="Counter"]):not([class*="Badge"]) {
+        /* Текст счетчиков всегда принудительно белый во всех темах */
+        [class*="Counter"],
+        [class*="Counter"] *,
+        .vkuiCounter,
+        .vkuiCounter *,
+        .im_peer_counter,
+        .im_peer_counter *,
+        [class*="Badge"],
+        [class*="Badge"] *,
+        .vkuiBadge,
+        .vkuiBadge *,
+        .vmu-restored-badge,
+        .vmu-restored-badge * {
             color: #ffffff !important;
             fill: #ffffff !important;
-            stroke: #ffffff !important;
-        }
-
-        html.vmu-theme-nord :is([class*="Avatar__badge"], [class*="ImageBase__badge"], [class*="AvatarBadge"], [class*="ImageBaseBadge"]) {
-            background-color: #88c0d0 !important;
-            background: #88c0d0 !important;
-            border-color: #2e3440 !important;
-        }
-
-        html.vmu-theme-snow-black :is([class*="Avatar__badge"], [class*="ImageBase__badge"], [class*="AvatarBadge"], [class*="ImageBaseBadge"]),
-        html[data-theme="snow_black"] :is([class*="Avatar__badge"], [class*="ImageBase__badge"], [class*="AvatarBadge"], [class*="ImageBaseBadge"]) {
-            background-color: #ff5c5c !important;
-            background: #ff5c5c !important;
-            border-color: #000000 !important;
-        }
-
-        /* 1.4. АККУРАТНЫЙ КОМПАКТНЫЙ МАСШТАБ ИСТОРИЙ НА ГЛАВНОЙ ВКЛАДКЕ */
-        body.vmu-page-feed :is([class*="StoriesFeed"], [class*="stories_feed"], [class*="StoriesBlock"], [class*="StoriesSection"], [data-feed-block*="stories"]) {
-            zoom: 0.84 !important;
-            margin-top: -2px !important;
-            margin-bottom: 2px !important;
-        }
-
-        /* 1.5. КНОПКА НЕПРОЧИТАННОГО В ШАПКЕ МЕССЕНДЖЕРА И ИКОНКИ НАСТРОЕК */
-        #vmu-top-unread-btn {
-            color: inherit !important;
-        }
-        #vmu-top-unread-btn svg {
-            color: inherit !important;
-        }
-        .vmu-custom-settings-item .vkuiIcon,
-        .vmu-custom-settings-item svg {
-            color: var(--vkui--color_icon_accent, var(--color_icon_accent, currentColor)) !important;
         }
 
         /* 2. АККУРАТНЫЙ ОТСТУП СПИСКА ДИАЛОГОВ ПОД ШТОРКОЙ КАТЕГОРИЙ */
@@ -1334,11 +1202,11 @@
             color: var(--vkui--color_icon_accent, var(--vkui--color_text_accent, var(--color_icon_accent, #71aaeb))) !important;
         }
 
-        .vmu-tab-selected :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__label"]):not([class*="Counter"]):not([class*="Badge"]):not([class*="indicator"]),
-        .vkuiTabbarItem.vmu-tab-selected :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__label"]):not([class*="Counter"]):not([class*="Badge"]):not([class*="indicator"]),
-        .vkuiTabbarItem.vkuiTabbarItem--selected :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__label"]):not([class*="Counter"]):not([class*="Badge"]):not([class*="indicator"]),
-        .vkuiTabbarItem[aria-selected="true"] :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__label"]):not([class*="Counter"]):not([class*="Badge"]):not([class*="indicator"]),
-        .bottom_nav__item--active :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__label"]):not([class*="Counter"]):not([class*="Badge"]):not([class*="indicator"]) {
+        .vmu-tab-selected :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], span),
+        .vkuiTabbarItem.vmu-tab-selected :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], span),
+        .vkuiTabbarItem.vkuiTabbarItem--selected :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], span),
+        .vkuiTabbarItem[aria-selected="true"] :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], span),
+        .bottom_nav__item--active :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], span) {
             color: var(--vkui--color_icon_accent, var(--vkui--color_text_accent, var(--color_icon_accent, #71aaeb))) !important;
         }
 
@@ -1349,8 +1217,8 @@
             color: var(--vkui--color_icon_secondary, var(--vkui--color_text_secondary, #828282)) !important;
         }
 
-        .vmu-tab-unselected :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__label"]):not([class*="Counter"]):not([class*="Badge"]):not([class*="indicator"]),
-        .vkuiTabbarItem.vmu-tab-unselected :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__label"]):not([class*="Counter"]):not([class*="Badge"]):not([class*="indicator"]) {
+        .vmu-tab-unselected :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], span),
+        .vkuiTabbarItem.vmu-tab-unselected :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], span) {
             color: var(--vkui--color_icon_secondary, var(--vkui--color_text_secondary, #828282)) !important;
         }
 
@@ -1481,18 +1349,14 @@
         /* ==========================================
            NORD THEME (POLAR NIGHT, SNOW STORM, FROST)
            ========================================== */
+        *, *::before, *::after,
+        :root, html, body,
         html.vmu-theme-nord,
         html[data-theme="nord"],
-        html.vmu-theme-nord :root,
-        html[data-theme="nord"] :root,
+        [data-theme="nord"] body,
         html.vmu-theme-nord body,
-        html[data-theme="nord"] body,
-        html.vmu-theme-nord [scheme],
-        html[data-theme="nord"] [scheme],
-        html.vmu-theme-nord div#root,
-        html.vmu-theme-nord div#vk_wrap,
-        html.vmu-theme-nord #vk_area_wrap,
-        html.vmu-theme-nord .layout {
+        .vk__page, .vkui__root, .vkuiRoot, .vkuiAppRoot,
+        [scheme], [data-theme="nord"], div#root, div#vk_wrap, #vk_area_wrap, .layout {
             /* ФОНОВЫЕ ЦВЕТА (POLAR NIGHT) */
             --vkui--color_background: #2e3440 !important;
             --color_background: #2e3440 !important;
@@ -1716,11 +1580,11 @@
             color: #88c0d0 !important;
         }
 
-        html.vmu-theme-nord :is(.vmu-tab-selected, .vkuiTabbarItem.vmu-tab-selected, [class*="TabbarItem"].vmu-tab-selected, .vkuiTabbarItem.vkuiTabbarItem--selected, .vkuiTabbarItem[aria-selected="true"], .bottom_nav__item--active) :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__label"]):not([class*="Counter"]):not([class*="Badge"]):not([class*="indicator"]) {
+        html.vmu-theme-nord :is(.vmu-tab-selected, .vkuiTabbarItem.vmu-tab-selected, [class*="TabbarItem"].vmu-tab-selected, .vkuiTabbarItem.vkuiTabbarItem--selected, .vkuiTabbarItem[aria-selected="true"], .bottom_nav__item--active) :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], span) {
             color: #88c0d0 !important;
         }
 
-        html[data-theme="nord"] :is(.vmu-tab-selected, .vkuiTabbarItem.vmu-tab-selected, [class*="TabbarItem"].vmu-tab-selected, .vkuiTabbarItem.vkuiTabbarItem--selected, .vkuiTabbarItem[aria-selected="true"], .bottom_nav__item--active) :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__label"]):not([class*="Counter"]):not([class*="Badge"]):not([class*="indicator"]) {
+        html[data-theme="nord"] :is(.vmu-tab-selected, .vkuiTabbarItem.vmu-tab-selected, [class*="TabbarItem"].vmu-tab-selected, .vkuiTabbarItem.vkuiTabbarItem--selected, .vkuiTabbarItem[aria-selected="true"], .bottom_nav__item--active) :is(svg, [class*="TabbarItem__icon"] svg, [class*="TabBarItem__icon"] svg, [class*="TabbarItem__text"], [class*="TabBarItem__text"], [class*="TabbarItem__children"], [class*="TabBarItem__children"], span) {
             color: #88c0d0 !important;
         }
 
@@ -1870,22 +1734,10 @@
 
     const COLOR_SWAP_CSS = `
         /* ПОЛНАЯ ЗАМЕНА ТОКЕНОВ И ПЕРЕМЕННЫХ VKUI И VK MOBILE */
-        html.vmu-theme-snow-black,
-        html[data-theme="snow_black"],
-        html.vmu-color-swap,
-        html.vmu-theme-snow-black :root,
-        html[data-theme="snow_black"] :root,
-        html.vmu-color-swap :root,
-        html.vmu-theme-snow-black body,
-        html[data-theme="snow_black"] body,
-        html.vmu-color-swap body,
-        html.vmu-theme-snow-black [scheme],
-        html[data-theme="snow_black"] [scheme],
-        html.vmu-color-swap [scheme],
-        html.vmu-theme-snow-black div#root,
-        html.vmu-theme-snow-black div#vk_wrap,
-        html.vmu-theme-snow-black #vk_area_wrap,
-        html.vmu-theme-snow-black .layout {
+        *, *::before, *::after,
+        :root, html, body,
+        .vk__page, .vkui__root, .vkuiRoot, .vkuiAppRoot,
+        [scheme], [data-theme], div#root, div#vk_wrap, #vk_area_wrap, .layout {
             /* АКЦЕНТНЫЕ ЦВЕТА И ИМЕНА В ЧАТАХ -> #FF5C5C */
             --vkui--color_im_text_name: ${COLOR_ACCENT_SWAPPED} !important;
             --color_im_text_name: ${COLOR_ACCENT_SWAPPED} !important;
@@ -2661,7 +2513,7 @@
             cursor: pointer !important;
             user-select: none !important;
             margin: 0 1px !important;
-            color: inherit !important;
+            color: var(--vkui--color_header_text, var(--vkui--color_icon_primary, #eceff4)) !important;
             background: transparent !important;
             border: none !important;
             box-shadow: none !important;
@@ -2701,13 +2553,7 @@
                 }
             } else {
                 btn.style.setProperty('background-color', 'transparent', 'important');
-                const neighbor = headerActions.querySelector('.vkuiPanelHeaderButton:not(#' + UNREAD_TOP_BTN_ID + '), button, a');
-                if (neighbor) {
-                    const compColor = window.getComputedStyle(neighbor).color;
-                    btn.style.setProperty('color', compColor || 'inherit', 'important');
-                } else {
-                    btn.style.setProperty('color', 'inherit', 'important');
-                }
+                btn.style.setProperty('color', 'var(--vkui--color_header_text, var(--vkui--color_icon_primary, #eceff4))', 'important');
             }
         }
 
@@ -3546,7 +3392,7 @@
         itemMenu.setAttribute('href', '/settings?act=vmu_menu');
 
         const iconContainerMenu = itemMenu.querySelector('.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]');
-        const gearSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; margin: 0 auto !important;"><circle cx="14" cy="14" r="3.75" stroke="currentColor" stroke-width="2"/><path d="M14 2.5a1.5 1.5 0 0 1 1.45 1.1l.3 1.2a2 2 0 0 0 2.1 1.5l1.2-.3a1.5 1.5 0 0 1 1.7 1.7l-.3 1.2a2 2 0 0 0 1.5 2.1l1.2.3a1.5 1.5 0 0 1 1.1 1.45v1.5a1.5 1.5 0 0 1-1.1 1.45l-1.2.3a2 2 0 0 0-1.5 2.1l.3 1.2a1.5 1.5 0 0 1-1.7 1.7l-1.2-.3a2 2 0 0 0-2.1 1.5l-.3 1.2a1.5 1.5 0 0 1-1.45 1.1h-1.5a1.5 1.5 0 0 1-1.45-1.1l-.3-1.2a2 2 0 0 0-2.1-1.5l-1.2.3a1.5 1.5 0 0 1-1.7-1.7l.3-1.2a2 2 0 0 0-1.5-2.1l-1.2-.3a1.5 1.5 0 0 1-1.1-1.45v-1.5a1.5 1.5 0 0 1 1.1-1.45l1.2-.3a2 2 0 0 0 1.5-2.1l-.3-1.2a1.5 1.5 0 0 1 1.7-1.7l1.2.3a2 2 0 0 0 2.1-1.5l.3-1.2a1.5 1.5 0 0 1 1.45-1.1h1.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
+        const gearSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: #ffffff !important; margin: 0 auto !important;"><circle cx="14" cy="14" r="3.75" stroke="currentColor" stroke-width="2"/><path d="M14 2.5a1.5 1.5 0 0 1 1.45 1.1l.3 1.2a2 2 0 0 0 2.1 1.5l1.2-.3a1.5 1.5 0 0 1 1.7 1.7l-.3 1.2a2 2 0 0 0 1.5 2.1l1.2.3a1.5 1.5 0 0 1 1.1 1.45v1.5a1.5 1.5 0 0 1-1.1 1.45l-1.2.3a2 2 0 0 0-1.5 2.1l.3 1.2a1.5 1.5 0 0 1-1.7 1.7l-1.2-.3a2 2 0 0 0-2.1 1.5l-.3 1.2a1.5 1.5 0 0 1-1.45 1.1h-1.5a1.5 1.5 0 0 1-1.45-1.1l-.3-1.2a2 2 0 0 0-2.1-1.5l-1.2.3a1.5 1.5 0 0 1-1.7-1.7l.3-1.2a2 2 0 0 0-1.5-2.1l-1.2-.3a1.5 1.5 0 0 1-1.1-1.45v-1.5a1.5 1.5 0 0 1 1.1-1.45l1.2-.3a2 2 0 0 0 1.5-2.1l-.3-1.2a1.5 1.5 0 0 1 1.7-1.7l1.2.3a2 2 0 0 0 2.1-1.5l.3-1.2a1.5 1.5 0 0 1 1.45-1.1h1.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>`;
         if (iconContainerMenu) {
             iconContainerMenu.innerHTML = gearSvg;
         }
@@ -3579,7 +3425,7 @@
         itemDebug.setAttribute('href', '/settings?act=vmu_debug');
 
         const iconContainerDebug = itemDebug.querySelector('.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]');
-        const bugSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; margin: 0 auto !important;"><path d="M11 8L8.5 4.5M17 8l2.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="8.5" y="8" width="11" height="13" rx="5.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 11.5h5M3.5 15h5M3.5 18.5h5M19.5 11.5h5M19.5 15h5M19.5 18.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 11.5v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+        const bugSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28" fill="none" class="vkuiIcon vkuiIcon--28 vkuiIcon--w-28 vkuiIcon--h-28" style="display: block !important; width: 28px !important; height: 28px !important; color: #ffffff !important; margin: 0 auto !important;"><path d="M11 8L8.5 4.5M17 8l2.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><rect x="8.5" y="8" width="11" height="13" rx="5.5" stroke="currentColor" stroke-width="2"/><path d="M3.5 11.5h5M3.5 15h5M3.5 18.5h5M19.5 11.5h5M19.5 15h5M19.5 18.5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M14 11.5v7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
         if (iconContainerDebug) {
             iconContainerDebug.innerHTML = bugSvg;
         }
@@ -4253,7 +4099,7 @@
             z-index: 1 !important;
         `;
 
-        // 1. Выбор темы (Светлая / Тёмная / Nordic / Red&Gray)
+        // 1. Выбор темы (Светлая / Тёмная / Snow Black)
         const rowTheme = createSelectRow(
             'Тема',
             'Оформление интерфейса',
@@ -4851,11 +4697,6 @@
     let fixesScheduled = false;
 
     
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    }
-
     // Оформление удалённых сообщений в активном чате
     async function decorateDeletedMessagesInChat() {
         if (!isSaveDeletedMsgsEnabled) return;
@@ -4879,30 +4720,14 @@
             if (!item || !item.id) continue;
             // Ищем элемент сообщения в DOM по msgid / data-id
             const msgEl = document.querySelector(`[data-msgid="${item.id}"], [data-id="${item.id}"], [data-ts="${item.id}"], #im_msg_${item.id}`);
-            if (msgEl) {
-                if (!msgEl.classList.contains('vmu-deleted-msg')) {
-                    msgEl.classList.add('vmu-deleted-msg');
-                    if (!msgEl.querySelector('.vmu-deleted-badge')) {
-                        const badge = document.createElement('div');
-                        badge.className = 'vmu-deleted-badge';
-                        const timeStr = item.deleted_at ? new Date(item.deleted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-                        badge.innerHTML = `🗑️ [Удалено${timeStr ? ' ' + timeStr : ''}]`;
-                        msgEl.insertBefore(badge, msgEl.firstChild);
-                    }
-                }
-            } else if (item.text) {
-                // Если сообщения уже нет в DOM (удалено) — восстанавливаем его отображение из базы
-                const chatContainer = document.querySelector('.im-page--chat-body, [class*="MessagesList"], [class*="ChatHistory"], .vkmChat, [class*="vkmChat"], [class*="im-history"], [class*="im-chat"]');
-                if (chatContainer && !chatContainer.querySelector(`[data-vmu-restored-id="${item.id}"]`)) {
-                    const restoredEl = document.createElement('div');
-                    restoredEl.className = 'vmu-deleted-msg vmu-deleted-msg-restored';
-                    restoredEl.setAttribute('data-vmu-restored-id', String(item.id));
-                    const timeStr = item.date ? new Date(item.date * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
-                    restoredEl.innerHTML = `
-                        <div class="vmu-deleted-badge">🗑️ [Удалено${timeStr ? ' в ' + timeStr : ''}]</div>
-                        <div style="font-size: 14px; margin-top: 4px; word-break: break-word;">${escapeHtml(item.text)}</div>
-                    `;
-                    chatContainer.appendChild(restoredEl);
+            if (msgEl && !msgEl.classList.contains('vmu-deleted-msg')) {
+                msgEl.classList.add('vmu-deleted-msg');
+                if (!msgEl.querySelector('.vmu-deleted-badge')) {
+                    const badge = document.createElement('div');
+                    badge.className = 'vmu-deleted-badge';
+                    const timeStr = item.deleted_at ? new Date(item.deleted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+                    badge.innerHTML = `🗑️ [Удалено${timeStr ? ' ' + timeStr : ''}]`;
+                    msgEl.insertBefore(badge, msgEl.firstChild);
                 }
             }
         }
