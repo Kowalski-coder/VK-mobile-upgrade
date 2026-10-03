@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.30.2
+// @version      2.30.3
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Nordic, Red&Gray), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -1107,16 +1107,24 @@
 
         /* 1.4. АККУРАТНЫЙ КОМПАКТНЫЙ МАСШТАБ ИСТОРИЙ НА ГЛАВНОЙ ВКЛАДКЕ */
         :is([class*="StoriesFeed" i], [class*="stories_feed" i], [class*="StoriesBlock" i], [class*="StoriesSection" i], [class*="StoriesList" i], [class*="storiesList" i], [data-feed-block*="stories" i], .stories_feed_wrap, [class*="stories_feed_wrap" i], .vmu-stories-container, [data-vmu-stories="1"]) {
-            zoom: 0.78 !important;
-            margin-top: -2px !important;
-            margin-bottom: -4px !important;
+            zoom: 0.85 !important;
+            padding-top: 6px !important;
+            padding-bottom: 2px !important;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            overflow: visible !important;
+        }
+
+        :is([class*="StoriesFeed" i], [class*="stories_feed" i], [class*="StoriesBlock" i], [class*="StoriesSection" i], [class*="StoriesList" i], [class*="storiesList" i], [data-feed-block*="stories" i], .stories_feed_wrap, [class*="stories_feed_wrap" i], .vmu-stories-container, [data-vmu-stories="1"]) :is([class*="HorizontalScroll__in" i], [class*="HorizontalScroll" i]) {
+            padding-top: 6px !important;
+            padding-bottom: 2px !important;
+            overflow-y: visible !important;
         }
 
         :is([class*="StoriesFeed" i], [class*="stories_feed" i], [class*="StoriesBlock" i], [class*="StoriesSection" i], [class*="StoriesList" i], [class*="storiesList" i], [data-feed-block*="stories" i], .stories_feed_wrap, [class*="stories_feed_wrap" i], .vmu-stories-container, [data-vmu-stories="1"]) :is([class*="StoriesItem" i], [class*="StoryItem" i], [class*="stories_item" i], [class*="Item" i], [role="listitem"]) {
-            transform: scale(0.78) !important;
-            transform-origin: top center !important;
-            margin-left: -5px !important;
-            margin-right: -5px !important;
+            transform: none !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
         }
 
         /* 1.5. ВСЕГДА АКТИВНАЯ ФИЛЬТРАЦИЯ ЛЕНТЫ: РЕКЛАМА, ПРОМО, РЕКОМЕНДАЦИИ И КЛИПЫ */
@@ -1151,10 +1159,17 @@
             color: inherit !important;
         }
         .vmu-custom-settings-item :is(.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]) :is(.vkuiIcon, svg) {
-            color: var(--vkui--color_icon_accent, var(--color_icon_accent, currentColor)) !important;
+            color: var(--vkui--color_icon_secondary, #828282) !important;
         }
         .vmu-custom-settings-item :is(.vkuiSimpleCell__after, [class*="SimpleCell__after"], [class*="Cell__after"]) :is(.vkuiIcon, svg) {
-            color: var(--vkui--color_icon_secondary, var(--color_icon_secondary, #828282)) !important;
+            color: var(--vkui--color_icon_secondary, #828282) !important;
+        }
+
+        html.vmu-theme-nord .vmu-custom-settings-item :is(.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]) :is(.vkuiIcon, svg),
+        html.vmu-theme-nord .vmu-custom-settings-item :is(.vkuiSimpleCell__after, [class*="SimpleCell__after"], [class*="Cell__after"]) :is(.vkuiIcon, svg),
+        html[data-theme="nord"] .vmu-custom-settings-item :is(.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]) :is(.vkuiIcon, svg),
+        html[data-theme="nord"] .vmu-custom-settings-item :is(.vkuiSimpleCell__after, [class*="SimpleCell__after"], [class*="Cell__after"]) :is(.vkuiIcon, svg) {
+            color: #eceff4 !important;
         }
 
         /* 1.7. СКРЫТИЕ СТАТУСА "ПОДКЛЮЧЕНИЕ..." В ШАПКЕ МЕССЕНДЖЕРА */
@@ -1708,6 +1723,10 @@
             --vkui--color_text_muted: #7b88a1 !important;
             --color_text_muted: #7b88a1 !important;
             --vkui--color_text_contrast: #2e3440 !important;
+            --vkui--color_icon_secondary: #eceff4 !important;
+            --color_icon_secondary: #eceff4 !important;
+            --vkui--color_icon_medium: #eceff4 !important;
+            --color_icon_medium: #eceff4 !important;
 
             /* АКЦЕНТЫ (FROST: #88C0D0 / #81A1C1) */
             --vkui--color_im_text_name: #88c0d0 !important;
@@ -3749,7 +3768,7 @@
         const afterMenu = itemMenu.querySelector('.vkuiSimpleCell__after, [class*="SimpleCell__after"], [class*="Cell__after"]');
         if (afterMenu) {
             const svgM = afterMenu.querySelector('svg');
-            if (svgM) svgM.style.setProperty('color', 'var(--vkui--color_icon_secondary, #828282)', 'important');
+            if (svgM) svgM.style.removeProperty('color');
         }
 
         itemMenu.onclick = (e) => {
@@ -3788,7 +3807,7 @@
         const afterDebug = itemDebug.querySelector('.vkuiSimpleCell__after, [class*="SimpleCell__after"], [class*="Cell__after"]');
         if (afterDebug) {
             const svgD = afterDebug.querySelector('svg');
-            if (svgD) svgD.style.setProperty('color', 'var(--vkui--color_icon_secondary, #828282)', 'important');
+            if (svgD) svgD.style.removeProperty('color');
         }
 
         itemDebug.onclick = (e) => {
@@ -4163,7 +4182,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.30.2</div>
+            <div>• <b>Script Version:</b> v2.30.3</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>Stealth Features:</b> Ghost typing: ${isGhostTypingEnabled}, Ghost read: ${isGhostReadEnabled}, Ghost stories: ${isGhostStoryReadEnabled}, Save deleted: ${isSaveDeletedMsgsEnabled}</div>
@@ -5239,18 +5258,20 @@
                 storiesContainer.classList.add('vmu-stories-container');
                 storiesContainer.setAttribute('data-vmu-stories', '1');
             }
-            storiesContainer.style.setProperty('zoom', '0.78', 'important');
+            storiesContainer.style.setProperty('zoom', '0.85', 'important');
+            storiesContainer.style.setProperty('padding-top', '6px', 'important');
+            storiesContainer.style.setProperty('padding-bottom', '2px', 'important');
+            storiesContainer.style.setProperty('overflow-y', 'visible', 'important');
 
+            // Очищаем локальные сдвиги и масштабы с элементов историй, чтобы не было двойного сжатия
             const items = storiesContainer.querySelectorAll('[class*="HorizontalScroll__in" i] > *, [class*="StoriesItem" i], [class*="StoryItem" i], [class*="stories_item" i]');
             for (let i = 0; i < items.length; i++) {
                 const it = items[i];
-                if (it.getAttribute('data-vmu-scaled') !== '1') {
-                    it.setAttribute('data-vmu-scaled', '1');
-                    it.style.setProperty('transform', 'scale(0.78)', 'important');
-                    it.style.setProperty('transform-origin', 'top center', 'important');
-                    it.style.setProperty('margin-left', '-5px', 'important');
-                    it.style.setProperty('margin-right', '-5px', 'important');
-                }
+                it.removeAttribute('data-vmu-scaled');
+                it.style.removeProperty('transform');
+                it.style.removeProperty('transform-origin');
+                it.style.removeProperty('margin-left');
+                it.style.removeProperty('margin-right');
             }
         }
     }
