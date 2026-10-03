@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.31.1
+// @version      2.31.2
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Nordic, Red&Gray), принудительное кэширование интерфейса (Stale-While-Revalidate для JS, CSS, шрифтов и иконок) с очисткой кэша, раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -1415,24 +1415,26 @@
         body.vmu-page-mail [class*="SimpleCell__children"],
         body.vmu-page-mail [class*="SimpleCell__text"],
         body.vmu-page-mail [class*="SimpleCell__middle"],
-        body.vmu-page-mail [class*="SimpleCell__content"],
-        [class*="EntityName"],
-        [class*="EntityName"] *,
-        [class*="Entity__title"],
-        [class*="Entity__title"] *,
-        [class*="Entity__name"],
-        [class*="Entity__name"] *,
-        [class*="Entity"],
-        [class*="ChannelTitle"],
-        [class*="ChannelTitle"] *,
-        [class*="author_name"],
-        [class*="author_name"] *,
-        [class*="AuthorName"],
-        [class*="AuthorName"] *,
-        [class*="im-mess--author"],
-        [class*="im-mess--author"] * {
+        body.vmu-page-mail [class*="EntityName"],
+        body.vmu-page-mail [class*="EntityName"] *,
+        body.vmu-page-mail [class*="Entity__title"],
+        body.vmu-page-mail [class*="Entity__title"] *,
+        body.vmu-page-mail [class*="Entity__name"],
+        body.vmu-page-mail [class*="Entity__name"] *,
+        body.vmu-page-mail [class*="ChannelTitle"],
+        body.vmu-page-mail [class*="ChannelTitle"] *,
+        body.vmu-page-mail [class*="author_name"],
+        body.vmu-page-mail [class*="author_name"] *,
+        body.vmu-page-mail [class*="AuthorName"],
+        body.vmu-page-mail [class*="AuthorName"] * {
             background-color: transparent !important;
             background: transparent !important;
+        }
+
+        /* 2.6. СОХРАНЕНИЕ ОРИГИНАЛЬНЫХ ОБЛАЧЕК СООБЩЕНИЙ В ЧАТАХ */
+        :is(.im-mess--bubble, [class*="im-mess--bubble"], [class*="im-mess__bubble"], [class*="MessageBubble"]) {
+            visibility: visible !important;
+            opacity: 1 !important;
         }
 
         /* 2.5. ПОЛНОЕ УСТРАНЕНИЕ ТЕМНЫХ ПЯТЕН И ГРАДИЕНТНЫХ МАСОК В ЛЕНТЕ И ПОСТАХ */
@@ -2311,7 +2313,10 @@
         [class*="PeerName"],
         [class*="peer-name"],
         [class*="MessageAuthor"],
-        [class*="im-mess--author"],
+        [class*="im-mess--author"] a,
+        [class*="im-mess--author"] [class*="author" i],
+        [class*="im-mess--author-name"],
+        [class*="im-mess-stack--pname"],
         [class*="nim-dialog--name"],
         [class*="author"] a,
         a[class*="author"],
@@ -4411,7 +4416,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.31.1</div>
+            <div>• <b>Script Version:</b> v2.31.2</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>UI Cache:</b> ${isUiCacheEnabled}</div>
