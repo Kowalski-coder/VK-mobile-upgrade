@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.31.2
+// @version      2.31.3
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Nordic, Red&Gray), принудительное кэширование интерфейса (Stale-While-Revalidate для JS, CSS, шрифтов и иконок) с очисткой кэша, раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -1160,8 +1160,8 @@
             fill: #000000 !important;
         }
 
-        /* 1.3. ЗНАЧОК ДОБАВЛЕНИЯ ИСТОРИИ НА АВАТАРКЕ (ИДЕАЛЬНЫЙ КРУГ ЦВЕТА ТЕМЫ И БЕЛЫЙ ПЛЮС) */
-        :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i], .vkuiAvatar__badge, .vkuiImageBase__badge) {
+        /* 1.3. ЗНАЧОК ДОБАВЛЕНИЯ ИСТОРИИ НА АВАТАРКЕ (ИДЕАЛЬНЫЙ КРУГ ЦВЕТА ТЕМЫ И БЕЛЫЙ ПЛЮС) СТРОГО В БЛОКЕ ИСТОРИЙ */
+        :is([class*="Stories" i], [class*="stories" i], .stories_feed_wrap, [data-feed-block*="stories" i]) :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i], .vkuiAvatar__badge, .vkuiImageBase__badge) {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -1180,46 +1180,46 @@
             overflow: hidden !important;
         }
 
-        :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i], .vkuiAvatar__badge, .vkuiImageBase__badge) svg {
+        :is([class*="Stories" i], [class*="stories" i], .stories_feed_wrap, [data-feed-block*="stories" i]) :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i], .vkuiAvatar__badge, .vkuiImageBase__badge) svg {
             display: block !important;
             width: 14px !important;
             height: 14px !important;
             background: transparent !important;
         }
 
-        :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i], .vkuiAvatar__badge, .vkuiImageBase__badge) :is(path, line, polyline) {
+        :is([class*="Stories" i], [class*="stories" i], .stories_feed_wrap, [data-feed-block*="stories" i]) :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i], .vkuiAvatar__badge, .vkuiImageBase__badge) :is(path, line, polyline) {
             fill: #ffffff !important;
             stroke: #ffffff !important;
         }
 
-        :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i], .vkuiAvatar__badge, .vkuiImageBase__badge) * {
+        :is([class*="Stories" i], [class*="stories" i], .stories_feed_wrap, [data-feed-block*="stories" i]) :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i], .vkuiAvatar__badge, .vkuiImageBase__badge) * {
             background: transparent !important;
             background-color: transparent !important;
         }
 
-        html[data-theme="light"] :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]),
-        html[scheme="bright_light"] :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]) {
+        html[data-theme="light"] :is([class*="Stories" i], [class*="stories" i], .stories_feed_wrap, [data-feed-block*="stories" i]) :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]),
+        html[scheme="bright_light"] :is([class*="Stories" i], [class*="stories" i], .stories_feed_wrap, [data-feed-block*="stories" i]) :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]) {
             background-color: #2688eb !important;
             background: #2688eb !important;
             border-color: #ffffff !important;
         }
 
-        html[data-theme="dark"] :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]),
-        html[scheme="space_gray"] :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]) {
+        html[data-theme="dark"] :is([class*="Stories" i], [class*="stories" i], .stories_feed_wrap, [data-feed-block*="stories" i]) :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]),
+        html[scheme="space_gray"] :is([class*="Stories" i], [class*="stories" i], .stories_feed_wrap, [data-feed-block*="stories" i]) :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]) {
             background-color: #71aaeb !important;
             background: #71aaeb !important;
             border-color: #19191a !important;
         }
 
-        html.vmu-theme-nord :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]),
-        html[data-theme="nord"] :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]) {
+        html.vmu-theme-nord :is([class*="Stories" i], [class*="stories" i], .stories_feed_wrap, [data-feed-block*="stories" i]) :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]),
+        html[data-theme="nord"] :is([class*="Stories" i], [class*="stories" i], .stories_feed_wrap, [data-feed-block*="stories" i]) :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]) {
             background-color: #88c0d0 !important;
             background: #88c0d0 !important;
             border-color: #2e3440 !important;
         }
 
-        html.vmu-theme-snow-black :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]),
-        html[data-theme="snow_black"] :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]) {
+        html.vmu-theme-snow-black :is([class*="Stories" i], [class*="stories" i], .stories_feed_wrap, [data-feed-block*="stories" i]) :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]),
+        html[data-theme="snow_black"] :is([class*="Stories" i], [class*="stories" i], .stories_feed_wrap, [data-feed-block*="stories" i]) :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]) {
             background-color: #ff5c5c !important;
             background: #ff5c5c !important;
             border-color: #000000 !important;
@@ -1356,77 +1356,21 @@
             margin-bottom: 6px !important;
         }
 
-        /* 2.4. ВОССТАНОВЛЕНИЕ ОРИГИНАЛЬНОГО ИНДИКАТОРА «ПЕЧАТАЕТ» В ЧАТАХ */
-        .TypingIndicator,
-        [class*="TypingIndicator"],
-        .ConvoHistoryTyping,
-        [class*="ConvoHistoryTyping"] {
-            display: inline-flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            vertical-align: middle !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-
-        :is(.TypingIndicator--text, [class*="TypingIndicator--text"]) :is(.TypingIndicator__particle, [class*="particle"]),
-        :is(.TypingIndicator--text, [class*="TypingIndicator--text"])::before,
-        :is(.TypingIndicator--text, [class*="TypingIndicator--text"])::after {
-            display: block !important;
-            width: 4px !important;
-            height: 4px !important;
-            margin: 0 1.5px !important;
-            background: currentColor !important;
-            background-color: currentColor !important;
-            border-radius: 50% !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            content: '' !important;
-            backface-visibility: hidden !important;
-        }
-
-        :is(.TypingIndicator--voice, [class*="TypingIndicator--voice"]) :is(.TypingIndicator__particle, [class*="particle"]),
-        :is(.TypingIndicator--voice, [class*="TypingIndicator--voice"])::before,
-        :is(.TypingIndicator--voice, [class*="TypingIndicator--voice"])::after {
-            display: block !important;
-            width: 3px !important;
-            height: 12px !important;
-            margin-right: 3px !important;
-            background: currentColor !important;
-            background-color: currentColor !important;
-            border-radius: 2px !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            content: '' !important;
-        }
-
-        /* Полная прозрачность элементов списка диалогов и сообщений (устранение темных рамок вокруг названий каналов и бейджей) */
-        body.vmu-page-mail [class*="ConvoList"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not([class*="Typing"]):not([class*="particle"]):not(img):not(svg):not(canvas),
-        body.vmu-page-mail .vkuiSimpleCell *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not([class*="Typing"]):not([class*="particle"]):not(img):not(svg):not(canvas),
-        body.vmu-page-mail [class*="SimpleCell"] *:not([class*="Avatar"]):not([class*="avatar"]):not([class*="Counter"]):not([class*="Badge"]):not(.vkuiCounter):not(.im_peer_counter):not([class*="Typing"]):not([class*="particle"]):not(img):not(svg):not(canvas),
-        body.vmu-page-mail .vkuiTypography,
-        body.vmu-page-mail [class*="Typography"],
-        body.vmu-page-mail .vkuiHeadline,
-        body.vmu-page-mail [class*="Headline"],
-        body.vmu-page-mail .vkuiFootnote,
-        body.vmu-page-mail [class*="Footnote"],
-        body.vmu-page-mail .vkuiSubhead,
-        body.vmu-page-mail [class*="Subhead"],
-        body.vmu-page-mail [class*="SimpleCell__children"],
-        body.vmu-page-mail [class*="SimpleCell__text"],
-        body.vmu-page-mail [class*="SimpleCell__middle"],
-        body.vmu-page-mail [class*="EntityName"],
-        body.vmu-page-mail [class*="EntityName"] *,
-        body.vmu-page-mail [class*="Entity__title"],
-        body.vmu-page-mail [class*="Entity__title"] *,
-        body.vmu-page-mail [class*="Entity__name"],
-        body.vmu-page-mail [class*="Entity__name"] *,
-        body.vmu-page-mail [class*="ChannelTitle"],
-        body.vmu-page-mail [class*="ChannelTitle"] *,
-        body.vmu-page-mail [class*="author_name"],
-        body.vmu-page-mail [class*="author_name"] *,
-        body.vmu-page-mail [class*="AuthorName"],
-        body.vmu-page-mail [class*="AuthorName"] * {
+        /* 2.4. ПРОЗРАЧНОСТЬ НАЗВАНИЙ КАНАЛОВ И ЧАТОВ В СПИСКЕ ДИАЛОГОВ */
+        :is([class*="ConvoList"], [class*="ConversationList"]) :is(
+            [class*="EntityName"],
+            [class*="Entity__title"],
+            [class*="Entity__name"],
+            [class*="ChannelTitle"],
+            [class*="author_name"],
+            [class*="AuthorName"],
+            [class*="ConvoItem__name"],
+            [class*="ConvoItem__title"],
+            [class*="ConversationItem__title"],
+            [class*="ConversationItem__name"],
+            [class*="im-dialog--title"],
+            [class*="im-dialog--name"]
+        ) {
             background-color: transparent !important;
             background: transparent !important;
         }
@@ -2723,27 +2667,13 @@
             return true;
         }
 
-        // 3. Наличие элементов чата в DOM (строка ввода сообщений WriteBar)
-        const writeBar = document.querySelector(
-            '[class*="WriteBar"], [class*="writeBar"], [class*="Writebar"], [class*="write_bar"], [class*="im-chat-input"], [class*="writebox"], textarea[placeholder*="сообщен" i], textarea[placeholder*="Сообщен" i], [data-testid*="writebar" i]'
-        );
-        if (writeBar && (writeBar.offsetWidth > 0 || writeBar.offsetHeight > 0 || writeBar.offsetParent !== null)) {
-            return true;
-        }
-
-        // 4. Наличие истории сообщений или контейнера чата
-        const chatMessages = document.querySelector(
-            '[class*="ChatHistory"], [class*="MessagesList"], .vkmChat, [class*="vkmChat"], [class*="im-history"], [class*="im-chat"], [class*="im-page--chat"], [class*="MessageBubble"], [class*="MessageStack"]'
-        );
-        if (chatMessages && (chatMessages.offsetWidth > 0 || chatMessages.offsetHeight > 0 || chatMessages.offsetParent !== null)) {
-            return true;
-        }
-
-        // 5. Наличие шапки чата (ChatHeader)
-        const chatHeader = document.querySelector(
-            '.vkmChatHeader, [class*="vkmChatHeader"], [class*="ChatHeader"], [class*="im-chat--header"], [data-testid*="chat-header" i]'
-        );
-        if (chatHeader && (chatHeader.offsetWidth > 0 || chatHeader.offsetHeight > 0 || chatHeader.offsetParent !== null)) {
+        // 3. Наличие элементов чата в DOM (ввод, сообщения, шапка чата)
+        if (document.querySelector(
+            '.vkmChat, [class*="vkmChat"], .vkmChatHeader, [class*="ChatHeader"], [class*="im-chat--header"], ' +
+            '[class*="im-chat"], [class*="im-history"], [class*="MessagesList"], [class*="ChatHistory"], ' +
+            '[class*="WriteBar"], [class*="writeBar"], [class*="Writebar"], [class*="im-chat-input"], [class*="writebox"], ' +
+            '[data-testid*="writebar" i], [class*="im-mess"]'
+        )) {
             return true;
         }
 
@@ -2842,14 +2772,21 @@
             if (document.documentElement) document.documentElement.classList.remove('vmu-page-feed');
         }
 
-        const isMail = isMainMailListPage();
-        if (isMail) {
-            if (!document.body.classList.contains('vmu-page-mail')) {
-                document.body.classList.add('vmu-page-mail');
-            }
+        const isChat = isInChatPage();
+        if (isChat) {
+            document.body.classList.add('vmu-in-chat');
+            document.body.classList.remove('vmu-page-mail');
         } else {
-            if (document.body.classList.contains('vmu-page-mail')) {
-                document.body.classList.remove('vmu-page-mail');
+            document.body.classList.remove('vmu-in-chat');
+            const isMail = isMainMailListPage();
+            if (isMail) {
+                if (!document.body.classList.contains('vmu-page-mail')) {
+                    document.body.classList.add('vmu-page-mail');
+                }
+            } else {
+                if (document.body.classList.contains('vmu-page-mail')) {
+                    document.body.classList.remove('vmu-page-mail');
+                }
             }
         }
 
@@ -4416,7 +4353,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.31.2</div>
+            <div>• <b>Script Version:</b> v2.31.3</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>UI Cache:</b> ${isUiCacheEnabled}</div>
@@ -5512,9 +5449,31 @@
         }
     }
 
-    // 3. Значок плюсика на аватарке историй (круг цвета темы с белым плюсиком)
+    // 3. Значок плюсика на аватарке историй (круг цвета темы с белым плюсиком) СТРОГО в блоке историй
     function fixStoriesAvatarBadge() {
-        const badges = document.querySelectorAll(
+        // Очищаем случайно измененные бейджи вне блока историй (например, индикаторы набора текста в чатах)
+        const strayPlus = document.querySelectorAll('svg[data-vmu-plus="1"]');
+        for (let i = 0; i < strayPlus.length; i++) {
+            const svg = strayPlus[i];
+            if (!svg.closest(':is([class*="Stories" i], [class*="stories" i], .stories_feed_wrap, [data-feed-block*="stories" i])')) {
+                const parent = svg.parentElement;
+                svg.remove();
+                if (parent) {
+                    parent.style.removeProperty('background-color');
+                    parent.style.removeProperty('background');
+                    parent.style.removeProperty('border');
+                    parent.style.removeProperty('border-color');
+                    parent.style.removeProperty('border-radius');
+                    parent.style.removeProperty('width');
+                    parent.style.removeProperty('height');
+                }
+            }
+        }
+
+        const storiesContainer = document.querySelector(':is([class*="Stories" i], [class*="stories" i], .stories_feed_wrap, [data-feed-block*="stories" i])');
+        if (!storiesContainer) return;
+
+        const badges = storiesContainer.querySelectorAll(
             ':is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i], .vkuiAvatar__badge, .vkuiImageBase__badge)'
         );
         if (!badges || badges.length === 0) return;
