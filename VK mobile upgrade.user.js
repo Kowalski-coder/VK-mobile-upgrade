@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.30.0
+// @version      2.30.1
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Nordic, Red&Gray), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -38,6 +38,7 @@
         HIDE_VIDEO_MSGS: 'vmu_hide_video_msgs',
         GHOST_TYPING: 'vmu_ghost_typing',
         GHOST_READ: 'vmu_ghost_read',
+        GHOST_STORY_READ: 'vmu_ghost_story_read',
         SAVE_DELETED_MSGS: 'vmu_save_deleted_msgs',
         SPY_REMOVE_FRIEND: 'vmu_spy_remove_friend',
         SPY_ONLINE_OFFLINE: 'vmu_spy_online_offline',
@@ -96,6 +97,7 @@
     let isHideVideoMsgsEnabled = getSetting(STORAGE_KEYS.HIDE_VIDEO_MSGS, false);
     let isGhostTypingEnabled = getSetting(STORAGE_KEYS.GHOST_TYPING, false);
     let isGhostReadEnabled = getSetting(STORAGE_KEYS.GHOST_READ, false);
+    let isGhostStoryReadEnabled = getSetting(STORAGE_KEYS.GHOST_STORY_READ, false);
     let isSaveDeletedMsgsEnabled = getSetting(STORAGE_KEYS.SAVE_DELETED_MSGS, false);
     let isSpyRemoveFriendEnabled = getSetting(STORAGE_KEYS.SPY_REMOVE_FRIEND, false);
     let isSpyOnlineOfflineEnabled = getSetting(STORAGE_KEYS.SPY_ONLINE_OFFLINE, false);
@@ -227,6 +229,23 @@
 
     const TYPING_PATTERNS = ['setactivity', 'messages.setactivity', 'act=a_typing', 'act=set_activity', 'act=typing', 'type=typing', 'type=audiomessage', '"type":"typing"'];
     const READ_PATTERNS = ['markasread', 'messages.markasread', 'act=a_read_message', 'act=a_mark_read', 'act=mark_as_read', 'markaslistened', 'messages.markaslistened', 'act=mark_read'];
+    const STORY_READ_PATTERNS = [
+        'stories.trackevents',
+        'stories.seen',
+        'stories.markseen',
+        'stories.trackview',
+        'stories.trackseen',
+        'al_stories.php?act=seen',
+        'al_stories.php?act=track_events',
+        'act=track_events',
+        'act=stories_seen',
+        'act=seen&story',
+        'story_seen',
+        'stories_seen',
+        '"type":"seen"',
+        '"event":"seen"',
+        'event_type=seen'
+    ];
 
     const AD_NETWORK_PATTERNS = [
         'act=get_audio_ad',
@@ -347,6 +366,14 @@
                     });
                 }
 
+                // Нечиталка историй
+                if (isGhostStoryReadEnabled && matchesPattern(combined, STORY_READ_PATTERNS)) {
+                    return new Response(JSON.stringify({ response: 1, payload: [0, []] }), {
+                        status: 200,
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                }
+
                 // Нечиталка
                 if (isGhostReadEnabled && matchesPattern(combined, READ_PATTERNS)) {
                     return new Response(JSON.stringify({ response: 1, payload: [0, []] }), {
@@ -404,6 +431,16 @@
                 return;
             }
 
+            // Нечиталка историй
+            if (isGhostStoryReadEnabled && matchesPattern(combined, STORY_READ_PATTERNS)) {
+                Object.defineProperty(this, 'readyState', { value: 4, writable: true });
+                Object.defineProperty(this, 'status', { value: 200, writable: true });
+                Object.defineProperty(this, 'responseText', { value: '{"response":1,"payload":[0,[]]}', writable: true });
+                if (typeof this.onreadystatechange === 'function') this.onreadystatechange();
+                if (typeof this.onload === 'function') this.onload();
+                return;
+            }
+
             // Нечиталка
             if (isGhostReadEnabled && matchesPattern(combined, READ_PATTERNS)) {
                 Object.defineProperty(this, 'readyState', { value: 4, writable: true });
@@ -426,7 +463,7 @@
             return origSend.apply(this, arguments);
         };
 
-        // 3. Hook WebSocket (для блокировки отправки печати и прочтения по сокетам)
+        // 3. Hook WebSocket (для блокировки отправки печати, прочтения и просмотра историй по сокетам)
         if (targetWin.WebSocket && typeof targetWin.WebSocket.prototype.send === 'function') {
             const origWsSend = targetWin.WebSocket.prototype.send;
             targetWin.WebSocket.prototype.send = function(data) {
@@ -442,9 +479,29 @@
                         if (isGhostReadEnabled && matchesPattern(lower, READ_PATTERNS)) {
                             return; // отменяем отправку статуса прочтения
                         }
+                        if (isGhostStoryReadEnabled && matchesPattern(lower, STORY_READ_PATTERNS)) {
+                            return; // отменяем отправку отметки о просмотре истории
+                        }
                     }
                 } catch (e) {}
                 return origWsSend.apply(this, arguments);
+            };
+        }
+
+        // 4. Hook navigator.sendBeacon (для предотвращения отправки отметки о просмотре истории в фоне)
+        if (targetWin.navigator && typeof targetWin.navigator.sendBeacon === 'function') {
+            const origSendBeacon = targetWin.navigator.sendBeacon;
+            targetWin.navigator.sendBeacon = function(url, data) {
+                try {
+                    const combined = (String(url) + ' ' + extractStringBody(data)).toLowerCase();
+                    if (isGhostStoryReadEnabled && matchesPattern(combined, STORY_READ_PATTERNS)) {
+                        return true;
+                    }
+                    if (matchesPattern(combined, AD_NETWORK_PATTERNS)) {
+                        return true;
+                    }
+                } catch (e) {}
+                return origSendBeacon.apply(this, arguments);
             };
         }
     }
@@ -879,7 +936,14 @@
         }
 
         /* 1.1. СЧЁТЧИК НА НИЖНЕЙ ПАНЕЛИ: ВСЕГДА КРАСНЫЙ КРУЖОК С БЕЛЫМ ЧИСЛОМ (В ЛЮБОЙ ТЕМЕ И ПРИ ЛЮБОЙ АКТИВНОЙ ВКЛАДКЕ) */
-        :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav) :is([class*="TabbarItem__indicator"], [class*="TabbarItem__badge"], [class*="Counter"], .vkuiCounter, [class*="Badge"], .vkuiBadge, .vmu-restored-badge) {
+        :is(.vkuiTabbar, [class*="Tabbar" i], .bottom_nav, .vmu-tab-selected, .vkuiTabbarItem--selected, [class*="TabbarItem--selected" i]) :is(
+            [class*="indicator" i],
+            [class*="badge" i],
+            [class*="counter" i],
+            .vkuiCounter,
+            .vkuiBadge,
+            .vmu-restored-badge
+        ) {
             background-color: #ff3347 !important;
             background: #ff3347 !important;
             color: #ffffff !important;
@@ -896,7 +960,14 @@
             opacity: 1 !important;
         }
 
-        :is(.vkuiTabbar, [class*="Tabbar"], .bottom_nav) :is([class*="TabbarItem__indicator"], [class*="TabbarItem__badge"], [class*="Counter"], .vkuiCounter, [class*="Badge"], .vkuiBadge, .vmu-restored-badge) * {
+        :is(.vkuiTabbar, [class*="Tabbar" i], .bottom_nav, .vmu-tab-selected, .vkuiTabbarItem--selected, [class*="TabbarItem--selected" i]) :is(
+            [class*="indicator" i],
+            [class*="badge" i],
+            [class*="counter" i],
+            .vkuiCounter,
+            .vkuiBadge,
+            .vmu-restored-badge
+        ) :is(*, span, div) {
             color: #ffffff !important;
             fill: #ffffff !important;
             background: transparent !important;
@@ -931,15 +1002,15 @@
             .vkuiCounter--mode-secondary,
             [class*="Counter--mode-inherit"],
             .vkuiCounter--mode-inherit,
-            [class*="muted"] [class*="Counter"],
-            [class*="mute"] [class*="Counter"],
-            [data-muted] [class*="Counter"],
-            :has([class*="volume_outline"]) [class*="Counter"],
-            :has([class*="muted"]) [class*="Counter"],
-            :has([class*="mute"]) [class*="Counter"],
-            :has(use[*|href*="volume" i]) [class*="Counter"],
-            :has(use[*|href*="mute" i]) [class*="Counter"]
-        ) {
+            [class*="muted"],
+            [class*="mute"],
+            [data-muted],
+            :has([class*="volume_outline"]),
+            :has([class*="muted"]),
+            :has([class*="mute"]),
+            :has(use[*|href*="volume" i]),
+            :has(use[*|href*="mute" i])
+        ) :is([class*="Counter"], .vkuiCounter, .im_peer_counter) {
             background-color: #76787a !important;
             background: #76787a !important;
         }
@@ -969,52 +1040,103 @@
             fill: #000000 !important;
         }
 
-        /* 1.3. ЗНАЧОК ДОБАВЛЕНИЯ ИСТОРИИ НА АВАТАРКЕ (ИДЕАЛЬНЫЙ КРУГ, ТЕМАТИЧЕСКИЙ ФОН И БЕЛЫЙ ПЛЮС) */
-        :is([class*="Avatar__badge"], [class*="ImageBase__badge"], [class*="AvatarBadge"], [class*="ImageBaseBadge"], .vkuiAvatar__badge, .vkuiImageBase__badge) {
-            display: flex !important;
+        /* 1.3. ЗНАЧОК ДОБАВЛЕНИЯ ИСТОРИИ НА АВАТАРКЕ (ИДЕАЛЬНЫЙ КРУГ ЦВЕТА ТЕМЫ И БЕЛЫЙ ПЛЮС) */
+        :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i], .vkuiAvatar__badge, .vkuiImageBase__badge) {
+            display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
             padding: 0 !important;
             margin: 0 !important;
-            width: 24px !important;
-            height: 24px !important;
-            min-width: 24px !important;
-            min-height: 24px !important;
+            width: 22px !important;
+            height: 22px !important;
+            min-width: 22px !important;
+            min-height: 22px !important;
             border-radius: 50% !important;
             box-sizing: border-box !important;
-            background-color: var(--vkui--color_background_accent, var(--color_background_accent, #2688eb)) !important;
-            background: var(--vkui--color_background_accent, var(--color_background_accent, #2688eb)) !important;
+            background-color: var(--vkui--color_background_accent, #2688eb) !important;
+            background: var(--vkui--color_background_accent, #2688eb) !important;
             border: 2px solid var(--vkui--color_background, #19191a) !important;
             box-shadow: none !important;
+            overflow: hidden !important;
         }
 
-        :is([class*="Avatar__badge"], [class*="ImageBase__badge"], [class*="AvatarBadge"], [class*="ImageBaseBadge"], .vkuiAvatar__badge, .vkuiImageBase__badge) :is(svg, path, *):not([class*="Counter"]):not([class*="Badge"]) {
-            color: #ffffff !important;
+        :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i], .vkuiAvatar__badge, .vkuiImageBase__badge) svg {
+            display: block !important;
+            width: 14px !important;
+            height: 14px !important;
+            background: transparent !important;
+        }
+
+        :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i], .vkuiAvatar__badge, .vkuiImageBase__badge) :is(path, line, polyline) {
             fill: #ffffff !important;
             stroke: #ffffff !important;
         }
 
-        html.vmu-theme-nord :is([class*="Avatar__badge"], [class*="ImageBase__badge"], [class*="AvatarBadge"], [class*="ImageBaseBadge"]) {
+        :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i], .vkuiAvatar__badge, .vkuiImageBase__badge) :is(circle, rect, [class*="background" i]) {
+            fill: inherit !important;
+            background-color: inherit !important;
+        }
+
+        html[data-theme="light"] :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]),
+        html[scheme="bright_light"] :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]) {
+            background-color: #2688eb !important;
+            background: #2688eb !important;
+            border-color: #ffffff !important;
+        }
+
+        html[data-theme="dark"] :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]),
+        html[scheme="space_gray"] :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]) {
+            background-color: #71aaeb !important;
+            background: #71aaeb !important;
+            border-color: #19191a !important;
+        }
+
+        html.vmu-theme-nord :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]),
+        html[data-theme="nord"] :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]) {
             background-color: #88c0d0 !important;
             background: #88c0d0 !important;
             border-color: #2e3440 !important;
         }
 
-        html.vmu-theme-snow-black :is([class*="Avatar__badge"], [class*="ImageBase__badge"], [class*="AvatarBadge"], [class*="ImageBaseBadge"]),
-        html[data-theme="snow_black"] :is([class*="Avatar__badge"], [class*="ImageBase__badge"], [class*="AvatarBadge"], [class*="ImageBaseBadge"]) {
+        html.vmu-theme-snow-black :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]),
+        html[data-theme="snow_black"] :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]) {
             background-color: #ff5c5c !important;
             background: #ff5c5c !important;
             border-color: #000000 !important;
         }
 
         /* 1.4. АККУРАТНЫЙ КОМПАКТНЫЙ МАСШТАБ ИСТОРИЙ НА ГЛАВНОЙ ВКЛАДКЕ */
-        body.vmu-page-feed :is([class*="StoriesFeed"], [class*="stories_feed"], [class*="StoriesBlock"], [class*="StoriesSection"], [data-feed-block*="stories"]) {
-            zoom: 0.84 !important;
+        :is([class*="StoriesFeed" i], [class*="stories_feed" i], [class*="StoriesBlock" i], [class*="StoriesSection" i], [class*="StoriesList" i], [class*="storiesList" i], [data-feed-block*="stories" i], .stories_feed_wrap, [class*="stories_feed_wrap" i]) {
+            zoom: 0.82 !important;
             margin-top: -2px !important;
-            margin-bottom: 2px !important;
+            margin-bottom: -4px !important;
         }
 
-        /* 1.5. КНОПКА НЕПРОЧИТАННОГО В ШАПКЕ МЕССЕНДЖЕРА И ИКОНКИ НАСТРОЕК */
+        /* 1.5. ВСЕГДА АКТИВНАЯ ФИЛЬТРАЦИЯ ЛЕНТЫ: РЕКЛАМА, ПРОМО, РЕКОМЕНДАЦИИ И КЛИПЫ */
+        .wall_marked_as_ads,
+        .ads_ad_box,
+        [data-ad-block],
+        [data-ad-view],
+        [data-ad-id],
+        [data-ad],
+        [class*="AdsPost" i],
+        [class*="PromotedPost" i],
+        [data-feed-block*="ad" i],
+        [data-feed-block*="promo" i],
+        [data-feed-block*="friends" i],
+        [data-feed-block*="recommended" i],
+        [data-feed-block*="clips" i],
+        [class*="RecommendedFriends" i],
+        [class*="recommended_friends" i],
+        [class*="RecommendedGroups" i],
+        [class*="recommended_groups" i],
+        [class*="FeedClipsBlock" i],
+        [class*="feed_clips_block" i],
+        .vmu-feed-filtered {
+            display: none !important;
+        }
+
+        /* 1.6. КНОПКА НЕПРОЧИТАННОГО В ШАПКЕ МЕССЕНДЖЕРА И ИКОНКИ НАСТРОЕК */
         #vmu-top-unread-btn {
             color: inherit !important;
         }
@@ -1481,18 +1603,14 @@
         /* ==========================================
            NORD THEME (POLAR NIGHT, SNOW STORM, FROST)
            ========================================== */
+        *, *::before, *::after,
+        :root, html, body,
         html.vmu-theme-nord,
         html[data-theme="nord"],
-        html.vmu-theme-nord :root,
-        html[data-theme="nord"] :root,
+        [data-theme="nord"] body,
         html.vmu-theme-nord body,
-        html[data-theme="nord"] body,
-        html.vmu-theme-nord [scheme],
-        html[data-theme="nord"] [scheme],
-        html.vmu-theme-nord div#root,
-        html.vmu-theme-nord div#vk_wrap,
-        html.vmu-theme-nord #vk_area_wrap,
-        html.vmu-theme-nord .layout {
+        .vk__page, .vkui__root, .vkuiRoot, .vkuiAppRoot,
+        [scheme], [data-theme="nord"], div#root, div#vk_wrap, #vk_area_wrap, .layout {
             /* ФОНОВЫЕ ЦВЕТА (POLAR NIGHT) */
             --vkui--color_background: #2e3440 !important;
             --color_background: #2e3440 !important;
@@ -1869,23 +1987,10 @@
     }
 
     const COLOR_SWAP_CSS = `
-        /* ПОЛНАЯ ЗАМЕНА ТОКЕНОВ И ПЕРЕМЕННЫХ VKUI И VK MOBILE */
-        html.vmu-theme-snow-black,
-        html[data-theme="snow_black"],
-        html.vmu-color-swap,
-        html.vmu-theme-snow-black :root,
-        html[data-theme="snow_black"] :root,
-        html.vmu-color-swap :root,
-        html.vmu-theme-snow-black body,
-        html[data-theme="snow_black"] body,
-        html.vmu-color-swap body,
-        html.vmu-theme-snow-black [scheme],
-        html[data-theme="snow_black"] [scheme],
-        html.vmu-color-swap [scheme],
-        html.vmu-theme-snow-black div#root,
-        html.vmu-theme-snow-black div#vk_wrap,
-        html.vmu-theme-snow-black #vk_area_wrap,
-        html.vmu-theme-snow-black .layout {
+        *, *::before, *::after,
+        :root, html, body,
+        .vk__page, .vkui__root, .vkuiRoot, .vkuiAppRoot,
+        [scheme], [data-theme], div#root, div#vk_wrap, #vk_area_wrap, .layout {
             /* АКЦЕНТНЫЕ ЦВЕТА И ИМЕНА В ЧАТАХ -> #FF5C5C */
             --vkui--color_im_text_name: ${COLOR_ACCENT_SWAPPED} !important;
             --color_im_text_name: ${COLOR_ACCENT_SWAPPED} !important;
@@ -2472,6 +2577,16 @@
 
     function updatePageBodyClasses() {
         if (!document.body) return;
+        const currentPath = window.location.pathname.toLowerCase();
+        const isFeed = currentPath === '/' || currentPath.startsWith('/feed') || currentPath.startsWith('/news');
+        if (isFeed) {
+            document.body.classList.add('vmu-page-feed');
+            if (document.documentElement) document.documentElement.classList.add('vmu-page-feed');
+        } else {
+            document.body.classList.remove('vmu-page-feed');
+            if (document.documentElement) document.documentElement.classList.remove('vmu-page-feed');
+        }
+
         const isMail = isMainMailListPage();
         if (isMail) {
             if (!document.body.classList.contains('vmu-page-mail')) {
@@ -3790,6 +3905,18 @@
         );
         card.appendChild(rowGhostRead);
 
+        // 7.1. Нечиталка историй (анонимный просмотр)
+        const rowGhostStoryRead = createSwitchRow(
+            'Нечиталка историй',
+            'Анонимный просмотр историй без отправки отметки о просмотре автору',
+            isGhostStoryReadEnabled,
+            (checked) => {
+                isGhostStoryReadEnabled = checked;
+                setSetting(STORAGE_KEYS.GHOST_STORY_READ, isGhostStoryReadEnabled);
+            }
+        );
+        card.appendChild(rowGhostStoryRead);
+
         // 8. Сохранять удаленные сообщения
         const rowSaveDeleted = createSwitchRow(
             'Сохранять удаленные сообщения',
@@ -3959,10 +4086,10 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.29.1</div>
+            <div>• <b>Script Version:</b> v2.30.1</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
-            <div>• <b>Stealth Features:</b> Ghost typing: ${isGhostTypingEnabled}, Ghost read: ${isGhostReadEnabled}, Save deleted: ${isSaveDeletedMsgsEnabled}</div>
+            <div>• <b>Stealth Features:</b> Ghost typing: ${isGhostTypingEnabled}, Ghost read: ${isGhostReadEnabled}, Ghost stories: ${isGhostStoryReadEnabled}, Save deleted: ${isSaveDeletedMsgsEnabled}</div>
             <div>• <b>Hide Labels:</b> ${isHideLabelsEnabled}</div>
             <div>• <b>Hide Folders:</b> ${isHideFoldersEnabled}</div>
             <div>• <b>Hide Calls / Circles:</b> ${isHideCallsEnabled} / ${isHideVideoMsgsEnabled}</div>
@@ -4671,6 +4798,28 @@
         const isNativeCounter = existingCounter && !existingCounter.classList.contains('vmu-restored-badge');
 
         if (isNativeCounter && existingCounter.textContent.trim().length > 0) {
+            existingCounter.style.setProperty('background-color', '#ff3347', 'important');
+            existingCounter.style.setProperty('background', '#ff3347', 'important');
+            existingCounter.style.setProperty('color', '#ffffff', 'important');
+            existingCounter.style.setProperty('border-radius', '9px', 'important');
+            existingCounter.style.setProperty('min-width', '18px', 'important');
+            existingCounter.style.setProperty('height', '18px', 'important');
+            existingCounter.style.setProperty('line-height', '18px', 'important');
+            existingCounter.style.setProperty('padding', '0 4px', 'important');
+            existingCounter.style.setProperty('box-sizing', 'border-box', 'important');
+            existingCounter.style.setProperty('display', 'inline-flex', 'important');
+            existingCounter.style.setProperty('align-items', 'center', 'important');
+            existingCounter.style.setProperty('justify-content', 'center', 'important');
+            existingCounter.style.setProperty('visibility', 'visible', 'important');
+            existingCounter.style.setProperty('opacity', '1', 'important');
+            const inners = existingCounter.querySelectorAll('*');
+            for (let j = 0; j < inners.length; j++) {
+                inners[j].style.setProperty('color', '#ffffff', 'important');
+                inners[j].style.setProperty('fill', '#ffffff', 'important');
+                inners[j].style.setProperty('background', 'transparent', 'important');
+                inners[j].style.setProperty('opacity', '1', 'important');
+            }
+
             const countText = existingCounter.textContent.trim();
             const num = parseInt(countText, 10);
             if (!isNaN(num) && num > 0) {
@@ -4909,31 +5058,156 @@
     }
 
     
-    // Постоянная очистка ленты новостей от рекламных постов
-    function removeAdPostsFromFeed() {
-        const posts = document.querySelectorAll('.post, .wall_item, [data-post-id], [class*="Post"], [class*="FeedBlock"]');
-        for (let i = 0; i < posts.length; i++) {
-            const p = posts[i];
-            if (p.classList.contains('vmu-ad-processed')) continue;
-            
-            // Проверка на рекламу по классам и атрибутам
-            const isAd = p.classList.contains('wall_marked_as_ads') ||
-                         p.classList.contains('ads_ad_box') ||
-                         p.hasAttribute('data-ad-block') ||
-                         p.hasAttribute('data-ad-view') ||
-                         p.querySelector('.wall_marked_as_ads, .ads_ad_box, [data-ad-view], [class*="AdsPost"], [class*="PromotedPost"]');
-            
-            if (isAd) {
-                p.classList.add('vmu-ad-processed');
-                p.style.setProperty('display', 'none', 'important');
-                continue;
+    // 1. Постоянная фильтрация ленты новостей (Реклама, рекомендации друзей и групп, клипы)
+    function filterNewsFeed() {
+        const feedBlocks = document.querySelectorAll(
+            '.post, .wall_item, [data-post-id], [class*="Post"], [class*="FeedBlock"], [class*="feed_row"], [data-feed-block], [class*="FeedCard"]'
+        );
+        for (let i = 0; i < feedBlocks.length; i++) {
+            const block = feedBlocks[i];
+            if (block.classList.contains('vmu-feed-filtered')) continue;
+
+            let shouldHide = false;
+
+            // 1. Реклама и промо-посты
+            if (
+                block.classList.contains('wall_marked_as_ads') ||
+                block.classList.contains('ads_ad_box') ||
+                block.hasAttribute('data-ad-block') ||
+                block.hasAttribute('data-ad-view') ||
+                block.hasAttribute('data-ad-id') ||
+                block.hasAttribute('data-ad') ||
+                block.querySelector('.wall_marked_as_ads, .ads_ad_box, [data-ad-view], [class*="AdsPost" i], [class*="PromotedPost" i]')
+            ) {
+                shouldHide = true;
             }
 
-            // Проверка по тексту "Реклама" в шапке поста
-            const headerLabel = p.querySelector('[class*="PostHeader__label"], [class*="Header__label"], [class*="Post__author"], .author');
-            if (headerLabel && headerLabel.textContent.trim().toLowerCase() === 'реклама') {
-                p.classList.add('vmu-ad-processed');
-                p.style.setProperty('display', 'none', 'important');
+            // 2. Блоки клипов в ленте
+            if (!shouldHide) {
+                const feedBlockAttr = (block.getAttribute('data-feed-block') || '').toLowerCase();
+                const className = (block.className || '').toString().toLowerCase();
+                if (
+                    feedBlockAttr.includes('clip') ||
+                    className.includes('feedclips') ||
+                    className.includes('feed_clips') ||
+                    className.includes('clipsblock')
+                ) {
+                    shouldHide = true;
+                }
+            }
+
+            // 3. Возможные друзья / Рекомендации групп
+            if (!shouldHide) {
+                const feedBlockAttr = (block.getAttribute('data-feed-block') || '').toLowerCase();
+                const className = (block.className || '').toString().toLowerCase();
+                if (
+                    feedBlockAttr.includes('friend') ||
+                    feedBlockAttr.includes('group') ||
+                    feedBlockAttr.includes('recommended') ||
+                    feedBlockAttr.includes('promo') ||
+                    feedBlockAttr.includes('widget') ||
+                    className.includes('recommended')
+                ) {
+                    shouldHide = true;
+                }
+            }
+
+            // 4. Текстовые метки в шапке (Реклама, Возможные друзья, Рекомендуемые сообщества и т.д.)
+            if (!shouldHide) {
+                const headerLabel = block.querySelector('[class*="PostHeader__label" i], [class*="Header__label" i], [class*="Post__author" i], .author, [class*="FeedCard__header" i], [class*="Header__content" i], [class*="Title" i]');
+                if (headerLabel) {
+                    const txt = headerLabel.textContent.trim().toLowerCase();
+                    if (
+                        txt === 'реклама' ||
+                        txt.includes('рекламная запись') ||
+                        txt.includes('платная реклама') ||
+                        txt.includes('возможные друзья') ||
+                        txt.includes('вы можете их знать') ||
+                        txt.includes('рекомендуемые сообщества') ||
+                        txt.includes('рекомендуем подписаться') ||
+                        txt.includes('клипы')
+                    ) {
+                        shouldHide = true;
+                    }
+                }
+            }
+
+            // 5. Проверка на erid: / vk.com/ads в тексте поста
+            if (!shouldHide) {
+                const postText = block.querySelector('.wall_post_text, [class*="PostText" i]');
+                if (postText && (postText.textContent.includes('erid:') || postText.textContent.includes('erid='))) {
+                    shouldHide = true;
+                }
+            }
+
+            if (shouldHide) {
+                block.classList.add('vmu-feed-filtered');
+                block.style.setProperty('display', 'none', 'important');
+            }
+        }
+    }
+
+    // 2. Масштабирование блока историй на главной
+    function scaleStoriesBlock() {
+        const storiesContainers = document.querySelectorAll(
+            '[class*="StoriesFeed" i], [class*="stories_feed" i], [class*="StoriesBlock" i], [class*="StoriesSection" i], [class*="StoriesList" i], [class*="storiesList" i], [data-feed-block*="stories" i], .stories_feed_wrap, [class*="stories_feed_wrap" i]'
+        );
+        for (let i = 0; i < storiesContainers.length; i++) {
+            const el = storiesContainers[i];
+            if (el.style.zoom !== '0.82') {
+                el.style.setProperty('zoom', '0.82', 'important');
+            }
+        }
+    }
+
+    // 3. Значок плюсика на аватарке историй (круг цвета темы с белым плюсиком)
+    function fixStoriesAvatarBadge() {
+        const badges = document.querySelectorAll(
+            ':is([class*="StoriesFeed" i], [class*="stories_feed" i], [class*="StoriesBlock" i], [class*="stories" i], .stories_feed_wrap) :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i], .vkuiAvatar__badge, .vkuiImageBase__badge)'
+        );
+        if (!badges || badges.length === 0) return;
+
+        let accentColor = '#71aaeb';
+        let borderColor = '#19191a';
+        if (currentThemeMode === 'nord') {
+            accentColor = '#88c0d0';
+            borderColor = '#2e3440';
+        } else if (currentThemeMode === 'snow_black') {
+            accentColor = '#ff5c5c';
+            borderColor = '#000000';
+        } else if (currentThemeMode === 'light') {
+            accentColor = '#2688eb';
+            borderColor = '#ffffff';
+        }
+
+        for (let i = 0; i < badges.length; i++) {
+            const b = badges[i];
+            b.style.setProperty('background-color', accentColor, 'important');
+            b.style.setProperty('background', accentColor, 'important');
+            b.style.setProperty('border-color', borderColor, 'important');
+            b.style.setProperty('border', `2px solid ${borderColor}`, 'important');
+            b.style.setProperty('border-radius', '50%', 'important');
+            b.style.setProperty('display', 'inline-flex', 'important');
+            b.style.setProperty('align-items', 'center', 'important');
+            b.style.setProperty('justify-content', 'center', 'important');
+            b.style.setProperty('overflow', 'hidden', 'important');
+
+            let svg = b.querySelector('svg');
+            if (!svg) {
+                b.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/></svg>`;
+            } else {
+                const circles = svg.querySelectorAll('circle, rect');
+                for (let c = 0; c < circles.length; c++) {
+                    circles[c].setAttribute('fill', accentColor);
+                    circles[c].style.setProperty('fill', accentColor, 'important');
+                }
+                const paths = svg.querySelectorAll('path, line, polyline');
+                for (let p = 0; p < paths.length; p++) {
+                    paths[p].setAttribute('fill', '#ffffff');
+                    paths[p].setAttribute('stroke', '#ffffff');
+                    paths[p].style.setProperty('fill', '#ffffff', 'important');
+                    paths[p].style.setProperty('stroke', '#ffffff', 'important');
+                }
             }
         }
     }
@@ -4984,7 +5258,9 @@
             try { hideCallsAndVideoMessages(); } catch (e) {}
             try { updateCustomTabs(); } catch (e) {}
             try { decorateDeletedMessagesInChat(); } catch (e) {}
-            try { removeAdPostsFromFeed(); } catch (e) {}
+            try { filterNewsFeed(); } catch (e) {}
+            try { scaleStoriesBlock(); } catch (e) {}
+            try { fixStoriesAvatarBadge(); } catch (e) {}
             try { fixPostHeaderFades(); } catch (e) {}
             try { bypassAgeRestrictions(); } catch (e) {}
             try { enhanceProfileInfo(); } catch (e) {}
