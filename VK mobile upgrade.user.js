@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.30.3
-// @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Nordic, Red&Gray), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
+// @version      2.31.0
+// @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Nordic, Red&Gray), принудительное кэширование интерфейса (Stale-While-Revalidate для JS, CSS, шрифтов и иконок) с очисткой кэша, раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
 // @match        *://m.vk.com/*
@@ -40,6 +40,7 @@
         GHOST_READ: 'vmu_ghost_read',
         GHOST_STORY_READ: 'vmu_ghost_story_read',
         SAVE_DELETED_MSGS: 'vmu_save_deleted_msgs',
+        UI_CACHE: 'vmu_ui_cache',
         SPY_REMOVE_FRIEND: 'vmu_spy_remove_friend',
         SPY_ONLINE_OFFLINE: 'vmu_spy_online_offline',
         SPY_INVISIBLE_MODE: 'vmu_spy_invisible_mode',
@@ -99,9 +100,104 @@
     let isGhostReadEnabled = getSetting(STORAGE_KEYS.GHOST_READ, false);
     let isGhostStoryReadEnabled = getSetting(STORAGE_KEYS.GHOST_STORY_READ, false);
     let isSaveDeletedMsgsEnabled = getSetting(STORAGE_KEYS.SAVE_DELETED_MSGS, false);
+    let isUiCacheEnabled = getSetting(STORAGE_KEYS.UI_CACHE, true);
     let isSpyRemoveFriendEnabled = getSetting(STORAGE_KEYS.SPY_REMOVE_FRIEND, false);
     let isSpyOnlineOfflineEnabled = getSetting(STORAGE_KEYS.SPY_ONLINE_OFFLINE, false);
     let isSpyInvisibleEnabled = getSetting(STORAGE_KEYS.SPY_INVISIBLE_MODE, false);
+
+    // ==========================================
+    //   КЭШИРОВАНИЕ ИНТЕРФЕЙСА (CACHE STORAGE)
+    // ==========================================
+    const UI_CACHE_NAME = 'vmu-ui-cache-v1';
+
+    function isUiAssetUrl(url, method) {
+        if (method && method.toUpperCase() !== 'GET') return false;
+        if (!url || typeof url !== 'string') return false;
+
+        const lower = url.toLowerCase();
+
+        // 1. Исключаем динамические API, запросы чатов, push, longpoll, авторизацию
+        if (
+            lower.includes('/api.php') ||
+            lower.includes('al_') ||
+            lower.includes('/method/') ||
+            lower.includes('api.vk.com') ||
+            lower.includes('im.vk.com') ||
+            lower.includes('/queue') ||
+            lower.includes('longpoll') ||
+            lower.includes('oauth') ||
+            lower.includes('login')
+        ) {
+            return false;
+        }
+
+        // 2. Исключаем ЛЮБОЙ медиа-контент пользователя (фотографии, аватарки, посты, вложения, сторис, видео, аудио)
+        if (
+            lower.includes('userapi.com') ||
+            lower.includes('vkuser.net') ||
+            lower.includes('vkvd.net') ||
+            lower.includes('vkuseraudio.net') ||
+            lower.includes('/doc') ||
+            lower.includes('attach') ||
+            lower.endsWith('.jpg') ||
+            lower.endsWith('.jpeg') ||
+            lower.endsWith('.png') ||
+            lower.endsWith('.webp') ||
+            lower.endsWith('.gif') ||
+            lower.endsWith('.mp4') ||
+            lower.endsWith('.mp3') ||
+            lower.endsWith('.ogg') ||
+            lower.endsWith('.m3u8') ||
+            lower.endsWith('.ts')
+        ) {
+            return false;
+        }
+
+        // 3. Проверяем файлы интерфейса (скрипты UI, стили CSS, веб-шрифты и системные SVG иконки)
+        if (
+            lower.endsWith('.js') ||
+            lower.includes('.js?') ||
+            lower.endsWith('.css') ||
+            lower.includes('.css?') ||
+            lower.endsWith('.woff2') ||
+            lower.includes('.woff2?') ||
+            lower.endsWith('.woff') ||
+            lower.includes('.woff?') ||
+            lower.endsWith('.ttf') ||
+            lower.includes('.ttf?') ||
+            lower.endsWith('.svg') ||
+            lower.includes('.svg?') ||
+            lower.includes('/dist/') ||
+            lower.includes('/web_common/')
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    async function getUiCacheStats() {
+        try {
+            const targetWin = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
+            if (targetWin.caches) {
+                const cache = await targetWin.caches.open(UI_CACHE_NAME);
+                const keys = await cache.keys();
+                return keys.length;
+            }
+        } catch (e) {}
+        return 0;
+    }
+
+    async function clearUiCache() {
+        try {
+            const targetWin = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
+            if (targetWin.caches) {
+                await targetWin.caches.delete(UI_CACHE_NAME);
+                return true;
+            }
+        } catch (e) {}
+        return false;
+    }
 
     // ==========================================
     //   СЕТЕВОЙ ПЕРЕХВАТЧИК: НЕЧИТАЛКА, НЕПИСАЛКА И СОХРАНЕНИЕ УДАЛЁННЫХ СООБЩЕНИЙ
@@ -380,6 +476,30 @@
                         status: 200,
                         headers: { 'Content-Type': 'application/json' }
                     });
+                }
+
+                // Принудительное кэширование интерфейса (Stale-While-Revalidate для JS, CSS, шрифтов и SVG)
+                if (isUiCacheEnabled && targetWin.caches && isUiAssetUrl(url, init ? init.method : 'GET')) {
+                    try {
+                        const cache = await targetWin.caches.open(UI_CACHE_NAME);
+                        const cachedResponse = await cache.match(url);
+
+                        const networkPromise = origFetch.apply(this, arguments).then(netRes => {
+                            if (netRes && (netRes.status === 200 || netRes.type === 'opaque')) {
+                                try {
+                                    cache.put(url, netRes.clone());
+                                } catch (e) {}
+                            }
+                            return netRes;
+                        }).catch(() => null);
+
+                        if (cachedResponse) {
+                            return cachedResponse;
+                        }
+
+                        const netRes = await networkPromise;
+                        if (netRes) return netRes;
+                    } catch (e) {}
                 }
 
                 const response = await origFetch.apply(this, arguments);
@@ -4026,6 +4146,69 @@
         rowSaveDeleted.style.borderBottom = '1px solid var(--vkui--color_separator_primary_alpha, rgba(255, 255, 255, 0.08))';
         card.appendChild(rowSaveDeleted);
 
+        // РАЗДЕЛ: УСКОРЕНИЕ И КЭШ
+        const cacheTitle = document.createElement('div');
+        cacheTitle.style.cssText = 'font-size: 15px; font-weight: 600; color: var(--vkui--color_text_primary, #eceff4); margin: 16px 0 8px 0; padding-top: 12px; border-top: 1px solid var(--vkui--color_separator_primary_alpha, rgba(255,255,255,0.1));';
+        cacheTitle.textContent = '⚡ Ускорение и кэш';
+        card.appendChild(cacheTitle);
+
+        const rowUiCache = createSwitchRow(
+            'Кэширование интерфейса',
+            'Принудительно сохраняет скрипты, стили и шрифты интерфейса в быстрый локальный кэш (Stale-While-Revalidate). Не затрагивает фото и посты.',
+            isUiCacheEnabled,
+            (checked) => {
+                isUiCacheEnabled = checked;
+                setSetting(STORAGE_KEYS.UI_CACHE, isUiCacheEnabled);
+            }
+        );
+        card.appendChild(rowUiCache);
+
+        // Кнопка очистки кэша интерфейса
+        const clearCacheBox = document.createElement('div');
+        clearCacheBox.style.cssText = 'padding: 8px 16px 14px 16px; border-bottom: 1px solid var(--vkui--color_separator_primary_alpha, rgba(255,255,255,0.08));';
+
+        const clearBtn = document.createElement('button');
+        clearBtn.style.cssText = `
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--vkui--color_separator_secondary, rgba(255, 255, 255, 0.15));
+            background: var(--vkui--color_background_secondary, rgba(255, 255, 255, 0.08));
+            color: var(--vkui--color_text_primary, #eceff4);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            touch-action: manipulation;
+            transition: background 0.2s, opacity 0.2s;
+        `;
+        clearBtn.innerHTML = '<span>🗑️</span><span>Очистить кэш интерфейса</span>';
+
+        getUiCacheStats().then(count => {
+            if (count > 0) {
+                clearBtn.innerHTML = `<span>🗑️</span><span>Очистить кэш интерфейса (${count} файлов)</span>`;
+            }
+        });
+
+        clearBtn.onclick = async (e) => {
+            e.preventDefault();
+            clearBtn.disabled = true;
+            clearBtn.style.opacity = '0.6';
+            await clearUiCache();
+            clearBtn.innerHTML = '<span>✓</span><span>Кэш интерфейса очищен (0 файлов)</span>';
+            setTimeout(() => {
+                clearBtn.disabled = false;
+                clearBtn.style.opacity = '1';
+                clearBtn.innerHTML = '<span>🗑️</span><span>Очистить кэш интерфейса</span>';
+            }, 2500);
+        };
+
+        clearCacheBox.appendChild(clearBtn);
+        card.appendChild(clearCacheBox);
+
         // РАЗДЕЛ: ШПИОН И АКТИВНОСТЬ
         const spyTitle = document.createElement('div');
         spyTitle.style.cssText = 'font-size: 15px; font-weight: 600; color: var(--vkui--color_text_primary, #eceff4); margin: 16px 0 8px 0; padding-top: 12px; border-top: 1px solid var(--vkui--color_separator_primary_alpha, rgba(255,255,255,0.1));';
@@ -4182,9 +4365,10 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.30.3</div>
+            <div>• <b>Script Version:</b> v2.31.0</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
+            <div>• <b>UI Cache:</b> ${isUiCacheEnabled}</div>
             <div>• <b>Stealth Features:</b> Ghost typing: ${isGhostTypingEnabled}, Ghost read: ${isGhostReadEnabled}, Ghost stories: ${isGhostStoryReadEnabled}, Save deleted: ${isSaveDeletedMsgsEnabled}</div>
             <div>• <b>Hide Labels:</b> ${isHideLabelsEnabled}</div>
             <div>• <b>Hide Folders:</b> ${isHideFoldersEnabled}</div>
@@ -4237,11 +4421,12 @@
             cursor: pointer;
             touch-action: manipulation;
         `;
-        clearCacheBtn.onclick = (e) => {
+        clearCacheBtn.onclick = async (e) => {
             e.preventDefault();
             try {
                 localStorage.removeItem('vmu_cached_unread_count');
-                alert('Кэш счетчиков очищен!');
+                await clearUiCache();
+                alert('Кэш счетчиков и интерфейса очищен!');
             } catch(e) {}
         };
 
