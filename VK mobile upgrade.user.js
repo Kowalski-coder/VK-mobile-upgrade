@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         VK mobile upgrade
 // @namespace    https://github.com/Kowalski-coder/VK-mobile-upgrade
-// @version      2.30.1
+// @version      2.30.2
 // @description  Улучшение интерфейса m.vk.ru: выбор тем (Светлая, Тёмная, Nordic, Red&Gray), раздел Мессенджер в настройках Внешнего вида, поддержка PWA/веб-приложений (выбор стартовой вкладки, стилизация загрузочного экрана, тематические иконки и название VK), ручная настройка размера и толщины значков на нижней панели, кастомизация кнопки «Поиск», скрытие подписей, круглые счетчики, кнопка «Только непрочитанные» в шапке, скрытие меню действий в списке чатов, скрытие категорий чатов, отключение звонков и видеосообщений.
 // @author       Kowalski-coder
 // @match        *://m.vk.ru/*
@@ -1072,9 +1072,9 @@
             stroke: #ffffff !important;
         }
 
-        :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i], .vkuiAvatar__badge, .vkuiImageBase__badge) :is(circle, rect, [class*="background" i]) {
-            fill: inherit !important;
-            background-color: inherit !important;
+        :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i], .vkuiAvatar__badge, .vkuiImageBase__badge) * {
+            background: transparent !important;
+            background-color: transparent !important;
         }
 
         html[data-theme="light"] :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i]),
@@ -1106,10 +1106,17 @@
         }
 
         /* 1.4. АККУРАТНЫЙ КОМПАКТНЫЙ МАСШТАБ ИСТОРИЙ НА ГЛАВНОЙ ВКЛАДКЕ */
-        :is([class*="StoriesFeed" i], [class*="stories_feed" i], [class*="StoriesBlock" i], [class*="StoriesSection" i], [class*="StoriesList" i], [class*="storiesList" i], [data-feed-block*="stories" i], .stories_feed_wrap, [class*="stories_feed_wrap" i]) {
-            zoom: 0.82 !important;
+        :is([class*="StoriesFeed" i], [class*="stories_feed" i], [class*="StoriesBlock" i], [class*="StoriesSection" i], [class*="StoriesList" i], [class*="storiesList" i], [data-feed-block*="stories" i], .stories_feed_wrap, [class*="stories_feed_wrap" i], .vmu-stories-container, [data-vmu-stories="1"]) {
+            zoom: 0.78 !important;
             margin-top: -2px !important;
             margin-bottom: -4px !important;
+        }
+
+        :is([class*="StoriesFeed" i], [class*="stories_feed" i], [class*="StoriesBlock" i], [class*="StoriesSection" i], [class*="StoriesList" i], [class*="storiesList" i], [data-feed-block*="stories" i], .stories_feed_wrap, [class*="stories_feed_wrap" i], .vmu-stories-container, [data-vmu-stories="1"]) :is([class*="StoriesItem" i], [class*="StoryItem" i], [class*="stories_item" i], [class*="Item" i], [role="listitem"]) {
+            transform: scale(0.78) !important;
+            transform-origin: top center !important;
+            margin-left: -5px !important;
+            margin-right: -5px !important;
         }
 
         /* 1.5. ВСЕГДА АКТИВНАЯ ФИЛЬТРАЦИЯ ЛЕНТЫ: РЕКЛАМА, ПРОМО, РЕКОМЕНДАЦИИ И КЛИПЫ */
@@ -1143,9 +1150,67 @@
         #vmu-top-unread-btn svg {
             color: inherit !important;
         }
-        .vmu-custom-settings-item .vkuiIcon,
-        .vmu-custom-settings-item svg {
+        .vmu-custom-settings-item :is(.vkuiSimpleCell__before, [class*="SimpleCell__before"], [class*="Cell__before"]) :is(.vkuiIcon, svg) {
             color: var(--vkui--color_icon_accent, var(--color_icon_accent, currentColor)) !important;
+        }
+        .vmu-custom-settings-item :is(.vkuiSimpleCell__after, [class*="SimpleCell__after"], [class*="Cell__after"]) :is(.vkuiIcon, svg) {
+            color: var(--vkui--color_icon_secondary, var(--color_icon_secondary, #828282)) !important;
+        }
+
+        /* 1.7. СКРЫТИЕ СТАТУСА "ПОДКЛЮЧЕНИЕ..." В ШАПКЕ МЕССЕНДЖЕРА */
+        body.vmu-page-mail :is(
+            [class*="PanelHeader__subhead" i],
+            [class*="im-page--header-status" i],
+            [class*="HeaderStatus" i],
+            [class*="ConnectionStatus" i],
+            [class*="ConnectionBanner" i],
+            [class*="connection_status" i],
+            .vmu-hidden-status
+        ) {
+            display: none !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+
+        /* 1.8. КОМПАКТНАЯ КНОПКА «ПОДПИСАТЬСЯ» (ПЛЮСИК) В ШАПКЕ ПОСТОВ ЛЕНТЫ */
+        .vmu-compact-sub-btn,
+        button.vmu-compact-sub-btn,
+        [class*="Button"].vmu-compact-sub-btn {
+            width: 28px !important;
+            min-width: 28px !important;
+            max-width: 28px !important;
+            height: 28px !important;
+            min-height: 28px !important;
+            max-height: 28px !important;
+            padding: 0 !important;
+            border-radius: 50% !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex-shrink: 0 !important;
+            box-sizing: border-box !important;
+            margin-left: 6px !important;
+            margin-right: 4px !important;
+        }
+        .vmu-compact-sub-btn svg {
+            display: block !important;
+            width: 16px !important;
+            height: 16px !important;
+            margin: auto !important;
+        }
+        .vmu-compact-sub-btn :is([class*="Button__in"], [class*="Button__content"], span) {
+            padding: 0 !important;
+            margin: 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+            height: 100% !important;
         }
 
         /* 2. АККУРАТНЫЙ ОТСТУП СПИСКА ДИАЛОГОВ ПОД ШТОРКОЙ КАТЕГОРИЙ */
@@ -3681,6 +3746,12 @@
             textElMenu.textContent = 'Меню скрипта';
         }
 
+        const afterMenu = itemMenu.querySelector('.vkuiSimpleCell__after, [class*="SimpleCell__after"], [class*="Cell__after"]');
+        if (afterMenu) {
+            const svgM = afterMenu.querySelector('svg');
+            if (svgM) svgM.style.setProperty('color', 'var(--vkui--color_icon_secondary, #828282)', 'important');
+        }
+
         itemMenu.onclick = (e) => {
             e.preventDefault();
             window.history.pushState(null, '', '/settings?act=vmu_menu');
@@ -3712,6 +3783,12 @@
         }
         if (!setD) {
             textElDebug.textContent = 'Debug script';
+        }
+
+        const afterDebug = itemDebug.querySelector('.vkuiSimpleCell__after, [class*="SimpleCell__after"], [class*="Cell__after"]');
+        if (afterDebug) {
+            const svgD = afterDebug.querySelector('svg');
+            if (svgD) svgD.style.setProperty('color', 'var(--vkui--color_icon_secondary, #828282)', 'important');
         }
 
         itemDebug.onclick = (e) => {
@@ -4086,7 +4163,7 @@
 
         diagBox.innerHTML = `
             <div style="color: #71aaeb; font-weight: bold; margin-bottom: 8px;">🐞 СИСТЕМНАЯ ДИАГНОСТИКА:</div>
-            <div>• <b>Script Version:</b> v2.30.1</div>
+            <div>• <b>Script Version:</b> v2.30.2</div>
             <div>• <b>Theme Mode:</b> ${currentThemeMode} (color swap: ${isColorSwapEnabled})</div>
             <div>• <b>Custom Tab Slot:</b> ${tabInfo}</div>
             <div>• <b>Stealth Features:</b> Ghost typing: ${isGhostTypingEnabled}, Ghost read: ${isGhostReadEnabled}, Ghost stories: ${isGhostStoryReadEnabled}, Save deleted: ${isSaveDeletedMsgsEnabled}</div>
@@ -5149,13 +5226,31 @@
 
     // 2. Масштабирование блока историй на главной
     function scaleStoriesBlock() {
-        const storiesContainers = document.querySelectorAll(
-            '[class*="StoriesFeed" i], [class*="stories_feed" i], [class*="StoriesBlock" i], [class*="StoriesSection" i], [class*="StoriesList" i], [class*="storiesList" i], [data-feed-block*="stories" i], .stories_feed_wrap, [class*="stories_feed_wrap" i]'
-        );
-        for (let i = 0; i < storiesContainers.length; i++) {
-            const el = storiesContainers[i];
-            if (el.style.zoom !== '0.82') {
-                el.style.setProperty('zoom', '0.82', 'important');
+        const badge = document.querySelector(':is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i], .vkuiAvatar__badge, .vkuiImageBase__badge)');
+        let storiesContainer = null;
+        if (badge) {
+            storiesContainer = badge.closest('[class*="HorizontalScroll" i], [class*="Stories" i], [class*="stories" i], [data-feed-block], [class*="Group" i]');
+        }
+        if (!storiesContainer) {
+            storiesContainer = document.querySelector('[class*="Stories" i], [class*="stories" i], [data-feed-block*="stories" i], .stories_feed_wrap, [class*="stories_feed_wrap" i]');
+        }
+        if (storiesContainer) {
+            if (!storiesContainer.classList.contains('vmu-stories-container')) {
+                storiesContainer.classList.add('vmu-stories-container');
+                storiesContainer.setAttribute('data-vmu-stories', '1');
+            }
+            storiesContainer.style.setProperty('zoom', '0.78', 'important');
+
+            const items = storiesContainer.querySelectorAll('[class*="HorizontalScroll__in" i] > *, [class*="StoriesItem" i], [class*="StoryItem" i], [class*="stories_item" i]');
+            for (let i = 0; i < items.length; i++) {
+                const it = items[i];
+                if (it.getAttribute('data-vmu-scaled') !== '1') {
+                    it.setAttribute('data-vmu-scaled', '1');
+                    it.style.setProperty('transform', 'scale(0.78)', 'important');
+                    it.style.setProperty('transform-origin', 'top center', 'important');
+                    it.style.setProperty('margin-left', '-5px', 'important');
+                    it.style.setProperty('margin-right', '-5px', 'important');
+                }
             }
         }
     }
@@ -5163,7 +5258,7 @@
     // 3. Значок плюсика на аватарке историй (круг цвета темы с белым плюсиком)
     function fixStoriesAvatarBadge() {
         const badges = document.querySelectorAll(
-            ':is([class*="StoriesFeed" i], [class*="stories_feed" i], [class*="StoriesBlock" i], [class*="stories" i], .stories_feed_wrap) :is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i], .vkuiAvatar__badge, .vkuiImageBase__badge)'
+            ':is([class*="Avatar__badge" i], [class*="ImageBase__badge" i], [class*="AvatarBadge" i], [class*="ImageBaseBadge" i], .vkuiAvatar__badge, .vkuiImageBase__badge)'
         );
         if (!badges || badges.length === 0) return;
 
@@ -5192,21 +5287,73 @@
             b.style.setProperty('justify-content', 'center', 'important');
             b.style.setProperty('overflow', 'hidden', 'important');
 
-            let svg = b.querySelector('svg');
-            if (!svg) {
-                b.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 2v8M2 6h8" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/></svg>`;
-            } else {
-                const circles = svg.querySelectorAll('circle, rect');
-                for (let c = 0; c < circles.length; c++) {
-                    circles[c].setAttribute('fill', accentColor);
-                    circles[c].style.setProperty('fill', accentColor, 'important');
+            if (!b.querySelector('svg[data-vmu-plus="1"]')) {
+                b.innerHTML = `<svg data-vmu-plus="1" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none" style="display:block!important;margin:auto!important;pointer-events:none!important;"><path d="M6 2v8M2 6h8" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+            }
+        }
+    }
+
+    // 4. Скрытие нефункционального статуса "подключение..." в шапке мессенджера
+    function hideMessengerConnectionStatus() {
+        if (!document.body.classList.contains('vmu-page-mail')) return;
+
+        const statusEls = document.querySelectorAll(
+            'body.vmu-page-mail :is([class*="PanelHeader__subhead" i], [class*="im-page--header-status" i], [class*="HeaderStatus" i], [class*="ConnectionStatus" i], [class*="ConnectionBanner" i], [class*="connection_status" i], [class*="vkmListHeader"] [class*="Subhead" i], [class*="vkmListHeader"] [class*="Footnote" i])'
+        );
+        for (let i = 0; i < statusEls.length; i++) {
+            const el = statusEls[i];
+            el.style.setProperty('display', 'none', 'important');
+            el.style.setProperty('height', '0', 'important');
+            el.style.setProperty('margin', '0', 'important');
+            el.style.setProperty('padding', '0', 'important');
+        }
+
+        const topHeader = document.querySelector('body.vmu-page-mail :is(.vkuiPanelHeader, [class*="PanelHeader"], [class*="vkmListHeader"], header)');
+        if (topHeader && topHeader.parentElement) {
+            const nodes = topHeader.parentElement.querySelectorAll('*');
+            for (let i = 0; i < nodes.length; i++) {
+                const n = nodes[i];
+                if (n.classList.contains('vkuiSearch') || n.closest('.vkuiSearch, [class*="Search"]')) break;
+                if (n.children.length === 0 && n.textContent) {
+                    const txt = n.textContent.trim().toLowerCase();
+                    if (txt.startsWith('подключение') || txt.startsWith('соединение') || txt.startsWith('обновление')) {
+                        n.style.setProperty('display', 'none', 'important');
+                        n.style.setProperty('height', '0', 'important');
+                        n.style.setProperty('margin', '0', 'important');
+                        n.style.setProperty('padding', '0', 'important');
+                        if (n.parentElement && n.parentElement !== topHeader && n.parentElement.children.length === 1) {
+                            n.parentElement.style.setProperty('display', 'none', 'important');
+                            n.parentElement.style.setProperty('height', '0', 'important');
+                            n.parentElement.style.setProperty('margin', '0', 'important');
+                            n.parentElement.style.setProperty('padding', '0', 'important');
+                        }
+                    }
                 }
-                const paths = svg.querySelectorAll('path, line, polyline');
-                for (let p = 0; p < paths.length; p++) {
-                    paths[p].setAttribute('fill', '#ffffff');
-                    paths[p].setAttribute('stroke', '#ffffff');
-                    paths[p].style.setProperty('fill', '#ffffff', 'important');
-                    paths[p].style.setProperty('stroke', '#ffffff', 'important');
+            }
+        }
+    }
+
+    // 5. Замена кнопки "Подписаться" в шапке постов ленты на компактный плюсик
+    function compactSubscribeButtons() {
+        const postHeaders = document.querySelectorAll(
+            '.post, [class*="PostHeader" i], [class*="post_header" i], [class*="WallItem" i], [data-post-id]'
+        );
+        for (let i = 0; i < postHeaders.length; i++) {
+            const header = postHeaders[i];
+            const buttons = header.querySelectorAll('button, [role="button"]');
+            for (let j = 0; j < buttons.length; j++) {
+                const btn = buttons[j];
+                const txt = btn.textContent.trim().toLowerCase();
+                if (txt === 'подписаться' || txt === 'вступить') {
+                    btn.setAttribute('title', btn.textContent.trim());
+                    btn.setAttribute('aria-label', btn.textContent.trim());
+                    btn.classList.add('vmu-compact-sub-btn');
+                    btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" style="display:block!important;margin:auto!important;pointer-events:none!important;"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`;
+                } else if (txt === 'подписан' || txt === 'вы подписаны') {
+                    btn.setAttribute('title', btn.textContent.trim());
+                    btn.setAttribute('aria-label', btn.textContent.trim());
+                    btn.classList.add('vmu-compact-sub-btn');
+                    btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" style="display:block!important;margin:auto!important;pointer-events:none!important;"><path d="M3.5 8.5L6.5 11.5L12.5 4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
                 }
             }
         }
@@ -5261,6 +5408,8 @@
             try { filterNewsFeed(); } catch (e) {}
             try { scaleStoriesBlock(); } catch (e) {}
             try { fixStoriesAvatarBadge(); } catch (e) {}
+            try { hideMessengerConnectionStatus(); } catch (e) {}
+            try { compactSubscribeButtons(); } catch (e) {}
             try { fixPostHeaderFades(); } catch (e) {}
             try { bypassAgeRestrictions(); } catch (e) {}
             try { enhanceProfileInfo(); } catch (e) {}
